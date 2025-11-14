@@ -72,7 +72,7 @@ jobs:
         with:
           host: 134.209.13.154
           username: root
-          password: ${{ secrets.DROPLET_PASSWORD }}
+          key: ${{ secrets.DROPLET_SSH_KEY }}
           script: |
             cd /opt/sheetissmart
             git pull origin main
