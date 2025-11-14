@@ -1,8 +1,9 @@
 # Dependencies
 node_modules/
-package-lock.json
 yarn.lock
 pnpm-lock.yaml
+
+# Note: We DO commit package-lock.json for reproducible builds
 
 # Build output
 dist/

@@ -3,6 +3,8 @@ node_modules/
 .pnp
 .pnp.js
 
+# Note: We DO commit package-lock.json for reproducible builds
+
 # Testing
 coverage/
 
