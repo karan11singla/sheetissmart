@@ -1,0 +1,35 @@
+import { Router } from 'express';
+import {
+  createSheet,
+  getSheet,
+  getAllSheets,
+  updateSheet,
+  deleteSheet,
+  createColumn,
+  createRow,
+  updateCell,
+} from '../controllers/sheet.controller';
+import { authenticate } from '../middleware/auth';
+
+const router = Router();
+
+// All sheet routes require authentication
+router.use(authenticate);
+
+// Sheet CRUD
+router.post('/', createSheet);
+router.get('/', getAllSheets);
+router.get('/:id', getSheet);
+router.put('/:id', updateSheet);
+router.delete('/:id', deleteSheet);
+
+// Column operations
+router.post('/:id/columns', createColumn);
+
+// Row operations
+router.post('/:id/rows', createRow);
+
+// Cell operations
+router.put('/:id/cells/:cellId', updateCell);
+
+export default router;

@@ -1,0 +1,136 @@
+// Prisma schema for SheetIsSmart
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User Model for Authentication
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  sheets         Sheet[]
+  sharesCreated  SheetShare[] @relation("ShareCreator")
+  sharesReceived SheetShare[] @relation("ShareRecipient")
+
+  @@map("users")
+}
+
+// Core Models for MVP - Sheet functionality
+
+model Sheet {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  userId      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  columns     Column[]
+  rows        Row[]
+  cells       Cell[]
+  shares      SheetShare[]
+
+  @@map("sheets")
+}
+
+model Column {
+  id        String   @id @default(cuid())
+  sheetId   String
+  name      String
+  type      ColumnType @default(TEXT)
+  position  Int
+  width     Int?     @default(150)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  sheet     Sheet    @relation(fields: [sheetId], references: [id], onDelete: Cascade)
+  cells     Cell[]
+
+  @@unique([sheetId, position])
+  @@map("columns")
+}
+
+model Row {
+  id        String   @id @default(cuid())
+  sheetId   String
+  position  Int
+  height    Int?     @default(35)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  sheet     Sheet    @relation(fields: [sheetId], references: [id], onDelete: Cascade)
+  cells     Cell[]
+
+  @@unique([sheetId, position])
+  @@map("rows")
+}
+
+model Cell {
+  id        String   @id @default(cuid())
+  sheetId   String
+  rowId     String
+  columnId  String
+  value     String?  // Store as JSON string for complex types
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  sheet     Sheet    @relation(fields: [sheetId], references: [id], onDelete: Cascade)
+  row       Row      @relation(fields: [rowId], references: [id], onDelete: Cascade)
+  column    Column   @relation(fields: [columnId], references: [id], onDelete: Cascade)
+
+  @@unique([rowId, columnId])
+  @@index([sheetId])
+  @@map("cells")
+}
+
+// Sheet Sharing Model
+model SheetShare {
+  id             String         @id @default(cuid())
+  sheetId        String
+  sharedById     String
+  sharedWithId   String?
+  sharedWithEmail String
+  permission     SharePermission @default(VIEWER)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  // Relations
+  sheet          Sheet          @relation(fields: [sheetId], references: [id], onDelete: Cascade)
+  sharedBy       User           @relation("ShareCreator", fields: [sharedById], references: [id], onDelete: Cascade)
+  sharedWith     User?          @relation("ShareRecipient", fields: [sharedWithId], references: [id])
+
+  @@unique([sheetId, sharedWithEmail])
+  @@map("sheet_shares")
+}
+
+// Enums
+enum ColumnType {
+  TEXT
+  NUMBER
+  DATE
+  DROPDOWN
+  CHECKBOX
+  FORMULA
+}
+
+enum SharePermission {
+  VIEWER
+  EDITOR
+}

@@ -1,0 +1,322 @@
+# SheetIsSmart - Claude Code Configuration
+
+## Project Context
+
+**SheetIsSmart** is a B2B SaaS workspace management platform inspired by Smartsheet. The core product is a powerful spreadsheet-like interface (Excel on steroids) that enables teams to manage data, build reports, dashboards, and create automated workflows.
+
+## Project Owner
+- **Name**: Karan Singla
+- **Expertise**: Backend Engineering
+- **Previous Experience**: Worked at Smartsheet, understands the product deeply
+
+## Project Structure
+
+This is a monorepo with three main directories:
+
+1. **backend-service/** - Node.js + TypeScript + Express + Prisma + PostgreSQL
+2. **frontend/** - React + TypeScript + Vite + Tailwind CSS
+3. **infra/** - Docker, Docker Compose, Nginx, deployment scripts
+
+## Tech Stack
+
+### Backend
+- **Runtime**: Node.js 18+
+- **Language**: TypeScript
+- **Framework**: Express.js
+- **Database**: PostgreSQL 16
+- **ORM**: Prisma
+- **Authentication**: JWT (Phase 2)
+- **Key Libraries**: helmet, cors, morgan, winston, joi
+
+### Frontend
+- **Framework**: React 18
+- **Language**: TypeScript
+- **Build**: Vite
+- **Router**: React Router v6
+- **State**: React Query + Zustand
+- **Styling**: Tailwind CSS
+- **Icons**: Lucide React
+- **HTTP**: Axios
+
+### Infrastructure
+- **Containerization**: Docker + Docker Compose
+- **Reverse Proxy**: Nginx
+- **Hosting**: Digital Ocean Droplet (134.209.13.154)
+- **OS**: Ubuntu
+- **SSL**: Let's Encrypt (planned)
+
+## Database Schema
+
+Core entities for MVP:
+
+### Sheet
+- Main container for data
+- Has name, description, timestamps
+- Contains multiple columns and rows
+
+### Column
+- Defines structure of data
+- Has name, type (TEXT, NUMBER, DATE, DROPDOWN, CHECKBOX, FORMULA)
+- Position determines order
+- Configurable width
+
+### Row
+- Represents a row in the sheet
+- Position determines order
+- Configurable height
+- Contains cells
+
+### Cell
+- Individual data point (intersection of row/column)
+- Stores value as JSON string
+- Belongs to one sheet, row, and column
+
+## API Endpoints (Backend)
+
+Base URL: `/api/v1`
+
+**Sheets**
+- `GET /sheets` - List all sheets
+- `GET /sheets/:id` - Get sheet by ID (includes columns, rows, cells)
+- `POST /sheets` - Create new sheet
+- `PUT /sheets/:id` - Update sheet
+- `DELETE /sheets/:id` - Delete sheet
+
+**Columns**
+- `POST /sheets/:id/columns` - Add column to sheet
+
+**Rows**
+- `POST /sheets/:id/rows` - Add row to sheet (auto-creates cells)
+
+**Cells**
+- `PUT /sheets/:id/cells/:cellId` - Update cell value
+
+## Development Workflow
+
+### Backend Setup
+```bash
+cd backend-service
+npm install
+cp .env.example .env
+# Edit .env with DATABASE_URL
+npm run db:generate
+npm run db:push
+npm run dev  # Runs on port 3000
+```
+
+### Frontend Setup
+```bash
+cd frontend
+npm install
+cp .env.example .env
+# Edit .env with VITE_API_URL
+npm run dev  # Runs on port 5173
+```
+
+### Infrastructure (Docker)
+```bash
+cd infra
+cp .env.example .env
+docker-compose up -d
+```
+
+## Deployment Information
+
+### Digital Ocean Droplet
+- **IP**: 134.209.13.154
+- **User**: root
+- **Password**: L&AnpRRw34P6m=u
+- **SSH**: `ssh root@134.209.13.154`
+
+### Deploy to Droplet
+```bash
+cd infra
+./deploy.sh
+```
+
+The deployment script:
+1. Packages the application
+2. Uploads to droplet via sshpass
+3. Installs Docker & Docker Compose
+4. Builds and starts containers
+5. Runs database migrations
+
+### Access After Deployment
+- **Frontend**: http://134.209.13.154
+- **Backend API**: http://134.209.13.154/api
+- **Health Check**: http://134.209.13.154/health
+
+## Current Development Phase
+
+**Phase 1: MVP - Basic Sheet Functionality** (Current)
+- ✅ Project structure created
+- ✅ Backend API with CRUD operations
+- ✅ Frontend React app with basic UI
+- ✅ Docker infrastructure
+- ✅ Deployment scripts
+- ⏳ Testing basic sheet operations
+- ⏳ Add more column types support
+- ⏳ Implement keyboard shortcuts
+- ⏳ Add cell formatting
+
+**Phase 2: User Management** (Next)
+- User authentication (JWT)
+- Multi-tenant architecture
+- Role-based access control (RBAC)
+- Team/workspace management
+- User permissions
+
+**Phase 3: Advanced Features** (Future)
+- Reports and dashboards
+- Workflow automation
+- Real-time collaboration (WebSockets)
+- Formula engine
+- API integrations
+- Bulk operations
+- Import/export (CSV, Excel)
+
+## Key Features to Build
+
+### Core Smartsheet-like Features
+1. **Grid Interface**: Excel-like grid with cell editing
+2. **Column Types**: TEXT, NUMBER, DATE, DROPDOWN, CHECKBOX, FORMULA
+3. **Row/Column Operations**: Add, delete, reorder, resize
+4. **Cell Formatting**: Bold, italic, colors, alignment
+5. **Formulas**: Basic calculations (SUM, AVG, etc.)
+6. **Attachments**: Upload files to rows
+7. **Comments**: Row-level discussions
+8. **Filtering & Sorting**: Data manipulation
+9. **Views**: Save different views of the same sheet
+10. **Reports**: Aggregate data from multiple sheets
+11. **Dashboards**: Visual charts and widgets
+12. **Automations**: Trigger-based workflows
+13. **Integrations**: Connect to external tools
+
+## Important Notes
+
+### For Backend Work
+- Use Prisma for all database operations
+- Follow RESTful API conventions
+- Add proper error handling with AppError class
+- Use asyncHandler for route handlers
+- Validate input data (consider adding Joi schemas)
+- Log important operations using winston
+- Keep services separate from controllers
+
+### For Frontend Work
+- Use React Query for server state
+- Keep components small and focused
+- Use TypeScript strictly (avoid `any`)
+- Follow Tailwind utility-first approach
+- Handle loading and error states
+- Use proper form validation
+- Implement optimistic updates where appropriate
+
+### Security Considerations
+- Sanitize user input
+- Prevent SQL injection (Prisma handles this)
+- Prevent XSS attacks
+- Implement rate limiting
+- Use HTTPS in production
+- Secure JWT tokens
+- Hash passwords with bcrypt
+- Validate all API inputs
+
+## Known Issues / TODO
+
+1. No user authentication yet (Phase 2)
+2. No real-time collaboration
+3. No formula engine
+4. No cell formatting
+5. No keyboard shortcuts
+6. No undo/redo
+7. No copy/paste support
+8. No bulk operations
+9. Need to add comprehensive tests
+10. Need to set up CI/CD
+
+## Testing the Application
+
+### Local Testing
+1. Start backend: `cd backend-service && npm run dev`
+2. Start frontend: `cd frontend && npm run dev`
+3. Open browser: http://localhost:5173
+4. Create a sheet
+5. Add columns and rows
+6. Edit cell values
+
+### Production Testing (After Deployment)
+1. Deploy: `cd infra && ./deploy.sh`
+2. Wait for containers to start
+3. Visit: http://134.209.13.154
+4. Test CRUD operations
+5. Check logs: `ssh root@134.209.13.154 "cd /opt/sheetissmart/infra && docker-compose logs"`
+
+## Useful Commands
+
+### Backend
+- `npm run dev` - Start dev server
+- `npm run build` - Build for production
+- `npm run db:generate` - Generate Prisma Client
+- `npm run db:push` - Push schema to database
+- `npm run db:migrate` - Run migrations
+- `npm run db:studio` - Open Prisma Studio GUI
+
+### Frontend
+- `npm run dev` - Start dev server
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build
+
+### Docker
+- `docker-compose up -d` - Start all services
+- `docker-compose down` - Stop all services
+- `docker-compose logs -f` - View logs
+- `docker-compose ps` - List containers
+- `docker-compose restart` - Restart services
+
+### Database
+- `docker-compose exec postgres psql -U sheetissmart` - Connect to DB
+- `docker-compose exec backend npx prisma studio` - Open Prisma Studio
+
+## Project Philosophy
+
+1. **Start Simple**: Build MVP first, add complexity later
+2. **B2B Focus**: Enterprise-ready, scalable, secure
+3. **User-Centric**: Clean UI, intuitive UX
+4. **Performance**: Fast, responsive, optimized
+5. **Code Quality**: Clean, maintainable, well-documented
+6. **Security First**: Always consider security implications
+
+## Resources
+
+- **Smartsheet**: https://www.smartsheet.com (reference for features)
+- **Prisma Docs**: https://www.prisma.io/docs
+- **React Query**: https://tanstack.com/query/latest
+- **Tailwind CSS**: https://tailwindcss.com/docs
+- **Digital Ocean**: https://www.digitalocean.com/docs
+
+## Session Context Updates
+
+**Last Updated**: 2025-11-13
+
+**What Was Built This Session**:
+1. ✅ Complete backend service with Express + Prisma
+2. ✅ Complete frontend with React + Tailwind
+3. ✅ Docker infrastructure with compose
+4. ✅ Nginx reverse proxy configuration
+5. ✅ Deployment script for Digital Ocean
+6. ✅ Comprehensive documentation
+7. ✅ All READMEs and configuration files
+
+**Ready to Test**:
+- Local development environment is fully set up
+- Ready to install dependencies and run locally
+- Ready to deploy to droplet (134.209.13.154)
+
+**Next Session Goals**:
+1. Test local development setup
+2. Deploy to Digital Ocean droplet
+3. Test production deployment
+4. Add more column type support
+5. Implement keyboard navigation
+6. Add cell formatting options
