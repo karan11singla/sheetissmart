@@ -77,3 +77,25 @@ export async function me(req: Request, res: Response, next: NextFunction) {
     next(error);
   }
 }
+
+export async function getAllUsers(req: Request, res: Response, next: NextFunction) {
+  try {
+    if (!req.user) {
+      res.status(401).json({
+        success: false,
+        message: 'Not authenticated',
+      });
+      return;
+    }
+
+    const search = req.query.search as string | undefined;
+    const users = await authService.getAllUsers(search);
+
+    res.status(200).json({
+      success: true,
+      data: users,
+    });
+  } catch (error) {
+    next(error);
+  }
+}

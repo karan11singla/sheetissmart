@@ -106,3 +106,27 @@ export async function getUserById(userId: string) {
 
   return user;
 }
+
+export async function getAllUsers(search?: string) {
+  const users = await prisma.user.findMany({
+    where: search
+      ? {
+          OR: [
+            { email: { contains: search, mode: 'insensitive' } },
+            { name: { contains: search, mode: 'insensitive' } },
+          ],
+        }
+      : undefined,
+    select: {
+      id: true,
+      email: true,
+      name: true,
+    },
+    orderBy: {
+      name: 'asc',
+    },
+    take: 50, // Limit to 50 users
+  });
+
+  return users;
+}

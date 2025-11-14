@@ -1,5 +1,6 @@
-import { useState, FormEvent } from 'react';
-import { X, Mail, Trash2, UserPlus } from 'lucide-react';
+import { useState, FormEvent, useEffect, useRef } from 'react';
+import { X, Mail, Trash2, UserPlus, ChevronDown } from 'lucide-react';
+import axios from 'axios';
 
 interface Share {
   id: string;
@@ -20,6 +21,12 @@ interface ShareModalProps {
   onRemoveShare: (shareId: string) => Promise<void>;
 }
 
+interface User {
+  id: string;
+  email: string;
+  name: string;
+}
+
 export default function ShareModal({
   isOpen,
   onClose,
@@ -31,6 +38,65 @@ export default function ShareModal({
   const [permission, setPermission] = useState<'VIEWER' | 'EDITOR'>('VIEWER');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [users, setUsers] = useState<User[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Fetch all users when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      fetchUsers();
+    }
+  }, [isOpen]);
+
+  // Filter users as email input changes
+  useEffect(() => {
+    if (email.trim() === '') {
+      setFilteredUsers(users);
+    } else {
+      const filtered = users.filter(
+        (user) =>
+          user.email.toLowerCase().includes(email.toLowerCase()) ||
+          user.name.toLowerCase().includes(email.toLowerCase())
+      );
+      setFilteredUsers(filtered);
+    }
+  }, [email, users]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const fetchUsers = async () => {
+    setIsLoadingUsers(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL}/api/v1/auth/users`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      setUsers(response.data.data);
+      setFilteredUsers(response.data.data);
+    } catch (err) {
+      console.error('Failed to fetch users:', err);
+    } finally {
+      setIsLoadingUsers(false);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -87,17 +153,64 @@ export default function ShareModal({
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                   Email address
                 </label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <input
-                    type="email"
-                    id="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="colleague@example.com"
-                    required
-                  />
+                <div className="relative" ref={dropdownRef}>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
+                    <input
+                      type="text"
+                      id="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      onFocus={() => setShowDropdown(true)}
+                      className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Type to search users..."
+                      autoComplete="off"
+                    />
+                    <ChevronDown
+                      className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 cursor-pointer"
+                      onClick={() => setShowDropdown(!showDropdown)}
+                    />
+                  </div>
+
+                  {/* Dropdown */}
+                  {showDropdown && (
+                    <div className="absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                      {isLoadingUsers ? (
+                        <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                          Loading users...
+                        </div>
+                      ) : filteredUsers.length === 0 ? (
+                        <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                          {email ? 'No users found' : 'No users available'}
+                        </div>
+                      ) : (
+                        filteredUsers.map((user) => (
+                          <div
+                            key={user.id}
+                            onClick={() => {
+                              setEmail(user.email);
+                              setShowDropdown(false);
+                            }}
+                            className="px-4 py-3 hover:bg-gray-100 cursor-pointer transition-colors border-b last:border-b-0"
+                          >
+                            <div className="flex items-center space-x-3">
+                              <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                <span className="text-sm font-medium text-blue-600">
+                                  {user.name.charAt(0).toUpperCase()}
+                                </span>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-900 truncate">
+                                  {user.name}
+                                </p>
+                                <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
