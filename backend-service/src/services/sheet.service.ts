@@ -121,9 +121,33 @@ export async function getSheetById(id: string, userId: string) {
     throw new AppError('Access denied', 403);
   }
 
+  // Evaluate formulas for all cells
+  const rowsWithComputedValues = await Promise.all(
+    sheet.rows.map(async (row) => {
+      const cellsWithComputed = await Promise.all(
+        row.cells.map(async (cell) => {
+          if (cell.value) {
+            try {
+              const parsedValue = JSON.parse(cell.value);
+              if (typeof parsedValue === 'string' && parsedValue.trim().startsWith('=')) {
+                const computedValue = await FormulaEngine.evaluate(id, parsedValue);
+                return { ...cell, computedValue };
+              }
+            } catch (error) {
+              // If parsing fails, just return the cell as is
+            }
+          }
+          return cell;
+        })
+      );
+      return { ...row, cells: cellsWithComputed };
+    })
+  );
+
   // Add permission info to the response
   return {
     ...sheet,
+    rows: rowsWithComputedValues,
     isOwner,
     permission: isOwner ? 'OWNER' : sharedAccess?.permission,
   };
@@ -362,10 +386,27 @@ export async function updateCell(cellId: string, value: any, userId: string) {
   // Store the value (formula or plain value)
   const stringValue = value !== null ? value.toString() : null;
 
-  return await prisma.cell.update({
+  // Check if it's a formula and evaluate it
+  let computedValue = null;
+  if (stringValue && stringValue.trim().startsWith('=')) {
+    try {
+      computedValue = await FormulaEngine.evaluate(cell.sheetId, stringValue);
+    } catch (error) {
+      console.error('Formula evaluation error:', error);
+      // Store the formula anyway, but return null for computed value
+    }
+  }
+
+  const updatedCell = await prisma.cell.update({
     where: { id: cellId },
     data: { value: stringValue !== null ? JSON.stringify(stringValue) : null },
   });
+
+  // Return the cell with computed value if it's a formula
+  return {
+    ...updatedCell,
+    computedValue: computedValue !== null ? computedValue : undefined,
+  };
 }
 
 // Export sheet to CSV

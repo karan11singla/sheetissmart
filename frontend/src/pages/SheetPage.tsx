@@ -1,7 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Share2, Download, Edit2, ArrowUp, ArrowDown } from 'lucide-react';
+import { ArrowLeft, Plus, Share2, Download, Edit2, ArrowUp, ArrowDown, Filter, X } from 'lucide-react';
 import { sheetApi } from '../services/api';
 import ShareModal from '../components/ShareModal';
 import type { Column, Row, Cell } from '../types';
@@ -17,6 +17,11 @@ export default function SheetPage() {
   const [isEditingName, setIsEditingName] = useState(false);
   const [sheetName, setSheetName] = useState('');
   const [sortConfig, setSortConfig] = useState<{ columnId: string; direction: 'asc' | 'desc' } | null>(null);
+  const [filters, setFilters] = useState<Record<string, string>>({});
+  const [activeFilterColumn, setActiveFilterColumn] = useState<string | null>(null);
+  const filterPopupRef = useRef<HTMLDivElement>(null);
+  const [selectedCell, setSelectedCell] = useState<{ rowIndex: number; colIndex: number } | null>(null);
+  const tableRef = useRef<HTMLDivElement>(null);
 
   const { data: sheet, isLoading } = useQuery({
     queryKey: ['sheets', id],
@@ -76,9 +81,12 @@ export default function SheetPage() {
     },
   });
 
-  const handleCellClick = (cell: Cell) => {
+  const handleCellClick = (cell: Cell, rowIndex?: number, colIndex?: number) => {
     setEditingCell(cell.id);
     setCellValue(cell.value ? JSON.parse(cell.value) : '');
+    if (rowIndex !== undefined && colIndex !== undefined) {
+      setSelectedCell({ rowIndex, colIndex });
+    }
   };
 
   const handleCellBlur = (cellId: string) => {
@@ -124,11 +132,64 @@ export default function SheetPage() {
     }
   };
 
-  // Sort rows based on sortConfig
-  const sortedRows = useMemo(() => {
-    if (!sheet?.rows || !sortConfig) return sheet?.rows || [];
+  // Close filter popup when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (filterPopupRef.current && !filterPopupRef.current.contains(event.target as Node)) {
+        setActiveFilterColumn(null);
+      }
+    };
 
-    const sorted = [...sheet.rows].sort((a, b) => {
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleFilterChange = (columnId: string, value: string) => {
+    if (value === '') {
+      const newFilters = { ...filters };
+      delete newFilters[columnId];
+      setFilters(newFilters);
+    } else {
+      setFilters({ ...filters, [columnId]: value });
+    }
+  };
+
+  const clearFilter = (columnId: string) => {
+    const newFilters = { ...filters };
+    delete newFilters[columnId];
+    setFilters(newFilters);
+  };
+
+  const clearAllFilters = () => {
+    setFilters({});
+  };
+
+  // Filter and sort rows based on filters and sortConfig
+  const filteredAndSortedRows = useMemo(() => {
+    if (!sheet?.rows) return [];
+
+    // First apply filters
+    let filtered = sheet.rows;
+    if (Object.keys(filters).length > 0) {
+      filtered = sheet.rows.filter((row) => {
+        return Object.entries(filters).every(([columnId, filterValue]) => {
+          const cell = row.cells?.find((c) => c.columnId === columnId);
+          if (!cell || !cell.value) return filterValue === '';
+
+          try {
+            const value = JSON.parse(cell.value);
+            return String(value).toLowerCase().includes(filterValue.toLowerCase());
+          } catch {
+            return false;
+          }
+        });
+      });
+    }
+
+    // Then apply sorting
+    if (!sortConfig) return filtered;
+
+    const sorted = [...filtered].sort((a, b) => {
       const cellA = a.cells?.find((c) => c.columnId === sortConfig.columnId);
       const cellB = b.cells?.find((c) => c.columnId === sortConfig.columnId);
 
@@ -162,7 +223,98 @@ export default function SheetPage() {
     });
 
     return sorted;
-  }, [sheet?.rows, sortConfig]);
+  }, [sheet?.rows, sortConfig, filters]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!selectedCell || !sheet?.columns || !filteredAndSortedRows.length) return;
+      if (editingCell) return; // Don't navigate while editing
+
+      const { rowIndex, colIndex } = selectedCell;
+      const numRows = filteredAndSortedRows.length;
+      const numCols = sheet.columns.length;
+
+      let newRowIndex = rowIndex;
+      let newColIndex = colIndex;
+
+      switch (e.key) {
+        case 'ArrowUp':
+          e.preventDefault();
+          newRowIndex = Math.max(0, rowIndex - 1);
+          break;
+        case 'ArrowDown':
+          e.preventDefault();
+          newRowIndex = Math.min(numRows - 1, rowIndex + 1);
+          break;
+        case 'ArrowLeft':
+          e.preventDefault();
+          newColIndex = Math.max(0, colIndex - 1);
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          newColIndex = Math.min(numCols - 1, colIndex + 1);
+          break;
+        case 'Tab':
+          e.preventDefault();
+          if (e.shiftKey) {
+            // Shift+Tab: move left
+            newColIndex = colIndex - 1;
+            if (newColIndex < 0) {
+              newColIndex = numCols - 1;
+              newRowIndex = Math.max(0, rowIndex - 1);
+            }
+          } else {
+            // Tab: move right
+            newColIndex = colIndex + 1;
+            if (newColIndex >= numCols) {
+              newColIndex = 0;
+              newRowIndex = Math.min(numRows - 1, rowIndex + 1);
+            }
+          }
+          break;
+        case 'Enter':
+          e.preventDefault();
+          if (e.shiftKey) {
+            // Shift+Enter: move up
+            newRowIndex = Math.max(0, rowIndex - 1);
+          } else {
+            // Enter: move down or start editing
+            const row = filteredAndSortedRows[rowIndex];
+            const column = sheet.columns[colIndex];
+            const cell = row.cells?.find((c) => c.columnId === column.id);
+            if (cell) {
+              handleCellClick(cell);
+              return;
+            }
+          }
+          break;
+        case 'Escape':
+          e.preventDefault();
+          setSelectedCell(null);
+          return;
+        default:
+          // Start editing on alphanumeric keys
+          if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+            const row = filteredAndSortedRows[rowIndex];
+            const column = sheet.columns[colIndex];
+            const cell = row.cells?.find((c) => c.columnId === column.id);
+            if (cell) {
+              setCellValue(e.key);
+              handleCellClick(cell);
+            }
+          }
+          return;
+      }
+
+      setSelectedCell({ rowIndex: newRowIndex, colIndex: newColIndex });
+    };
+
+    if (tableRef.current) {
+      tableRef.current.addEventListener('keydown', handleKeyDown as any);
+      return () => tableRef.current?.removeEventListener('keydown', handleKeyDown as any);
+    }
+  }, [selectedCell, sheet, filteredAndSortedRows, editingCell]);
 
   const handleSort = (columnId: string) => {
     setSortConfig((current) => {
@@ -267,30 +419,56 @@ export default function SheetPage() {
 
       {/* Toolbar */}
       <div className="bg-white border-b border-gray-200 px-6 py-3">
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={() => addColumnMutation.mutate()}
-            disabled={addColumnMutation.isPending}
-            className="inline-flex items-center px-3 py-1.5 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Plus className="h-4 w-4 mr-1.5" />
-            Column
-          </button>
-          <button
-            onClick={() => addRowMutation.mutate()}
-            disabled={addRowMutation.isPending}
-            className="inline-flex items-center px-3 py-1.5 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Plus className="h-4 w-4 mr-1.5" />
-            Row
-          </button>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => addColumnMutation.mutate()}
+              disabled={addColumnMutation.isPending}
+              className="inline-flex items-center px-3 py-1.5 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Plus className="h-4 w-4 mr-1.5" />
+              Column
+            </button>
+            <button
+              onClick={() => addRowMutation.mutate()}
+              disabled={addRowMutation.isPending}
+              className="inline-flex items-center px-3 py-1.5 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Plus className="h-4 w-4 mr-1.5" />
+              Row
+            </button>
+          </div>
+          {Object.keys(filters).length > 0 && (
+            <div className="flex items-center space-x-2">
+              <span className="text-xs text-gray-600">
+                {Object.keys(filters).length} filter{Object.keys(filters).length > 1 ? 's' : ''} active
+              </span>
+              <button
+                onClick={clearAllFilters}
+                className="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
+              >
+                <X className="h-3 w-3 mr-1" />
+                Clear all
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Sheet Grid */}
       <div className="flex-1 overflow-auto bg-gray-50 p-6">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          <div className="overflow-auto">
+          <div
+            ref={tableRef}
+            className="overflow-auto outline-none"
+            tabIndex={0}
+            onFocus={() => {
+              // Auto-select first cell if none selected
+              if (!selectedCell && filteredAndSortedRows.length > 0 && sheet?.columns?.length) {
+                setSelectedCell({ rowIndex: 0, colIndex: 0 });
+              }
+            }}
+          >
             <table className="min-w-full border-collapse">
               <thead>
                 <tr>
@@ -301,14 +479,18 @@ export default function SheetPage() {
                     <th
                       key={column.id}
                       style={{ minWidth: column.width || 180, maxWidth: column.width || 180 }}
-                      className={`sticky top-0 z-10 px-4 py-2.5 text-left text-xs font-semibold text-gray-700 bg-gray-50 border-b-2 border-gray-300 cursor-pointer hover:bg-gray-100 transition-colors ${
+                      className={`sticky top-0 z-10 px-4 py-2.5 text-left text-xs font-semibold text-gray-700 bg-gray-50 border-b-2 border-gray-300 ${
                         index !== 0 ? 'border-l border-gray-200' : ''
                       }`}
-                      onClick={() => handleSort(column.id)}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-1">
-                          <span className="truncate">{column.name}</span>
+                          <span
+                            className="truncate cursor-pointer hover:text-gray-900"
+                            onClick={() => handleSort(column.id)}
+                          >
+                            {column.name}
+                          </span>
                           {sortConfig?.columnId === column.id && (
                             <span className="text-blue-600">
                               {sortConfig.direction === 'asc' ? (
@@ -318,6 +500,52 @@ export default function SheetPage() {
                               )}
                             </span>
                           )}
+                          <div className="relative">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveFilterColumn(activeFilterColumn === column.id ? null : column.id);
+                              }}
+                              className={`p-0.5 rounded hover:bg-gray-200 transition-colors ${
+                                filters[column.id] ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'
+                              }`}
+                            >
+                              <Filter className="h-3 w-3" />
+                            </button>
+                            {activeFilterColumn === column.id && (
+                              <div
+                                ref={filterPopupRef}
+                                className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-50 w-64"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <div className="flex items-center justify-between mb-2">
+                                  <span className="text-xs font-semibold text-gray-700">Filter by {column.name}</span>
+                                  <button
+                                    onClick={() => setActiveFilterColumn(null)}
+                                    className="text-gray-400 hover:text-gray-600"
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </button>
+                                </div>
+                                <input
+                                  type="text"
+                                  value={filters[column.id] || ''}
+                                  onChange={(e) => handleFilterChange(column.id, e.target.value)}
+                                  placeholder="Type to filter..."
+                                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  autoFocus
+                                />
+                                {filters[column.id] && (
+                                  <button
+                                    onClick={() => clearFilter(column.id)}
+                                    className="mt-2 text-xs text-blue-600 hover:text-blue-700 font-medium"
+                                  >
+                                    Clear filter
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         </div>
                         <span className="text-[10px] text-gray-400 ml-2 uppercase tracking-wider">
                           {column.type}
@@ -328,8 +556,8 @@ export default function SheetPage() {
                 </tr>
               </thead>
               <tbody>
-                {sortedRows && sortedRows.length > 0 ? (
-                  sortedRows.map((row: Row, rowIndex: number) => (
+                {filteredAndSortedRows && filteredAndSortedRows.length > 0 ? (
+                  filteredAndSortedRows.map((row: Row, rowIndex: number) => (
                     <tr
                       key={row.id}
                       className={rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}
@@ -342,14 +570,22 @@ export default function SheetPage() {
                       {sheet.columns?.map((column: Column, colIndex: number) => {
                         const cell = getCellValue(row, column);
                         const isEditing = editingCell === cell?.id;
+                        const isSelected = selectedCell?.rowIndex === rowIndex && selectedCell?.colIndex === colIndex;
 
                         return (
                           <td
                             key={`${row.id}-${column.id}`}
                             className={`px-4 py-0 text-sm text-gray-900 border-b border-gray-200 ${
                               colIndex !== 0 ? 'border-l border-gray-200' : ''
-                            } ${!isEditing ? 'cursor-pointer hover:bg-blue-50/50' : ''}`}
-                            onClick={() => !isEditing && cell && handleCellClick(cell)}
+                            } ${!isEditing ? 'cursor-pointer hover:bg-blue-50/50' : ''} ${
+                              isSelected && !isEditing ? 'ring-2 ring-inset ring-blue-500 bg-blue-50/30' : ''
+                            }`}
+                            onClick={() => {
+                              if (!isEditing && cell) {
+                                setSelectedCell({ rowIndex, colIndex });
+                                handleCellClick(cell, rowIndex, colIndex);
+                              }
+                            }}
                           >
                             {isEditing ? (
                               <input
@@ -370,7 +606,16 @@ export default function SheetPage() {
                               />
                             ) : (
                               <div className="h-10 flex items-center py-2 truncate">
-                                {cell?.value ? JSON.parse(cell.value) : ''}
+                                {cell?.value ? (() => {
+                                  const parsedValue = JSON.parse(cell.value);
+                                  // If it's a formula and we have a computed value, show that
+                                  if (typeof parsedValue === 'string' && parsedValue.startsWith('=')) {
+                                    return (cell as any).computedValue !== undefined
+                                      ? (cell as any).computedValue
+                                      : parsedValue;
+                                  }
+                                  return parsedValue;
+                                })() : ''}
                               </div>
                             )}
                           </td>
