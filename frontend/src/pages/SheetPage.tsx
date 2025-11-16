@@ -103,134 +103,155 @@ export default function SheetPage() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <button
-            onClick={() => navigate('/')}
-            className="p-2 text-gray-600 hover:text-gray-900"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </button>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">{sheet.name}</h1>
-            {sheet.description && (
-              <p className="text-gray-600 mt-1">{sheet.description}</p>
-            )}
+    <div className="h-full flex flex-col bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={() => navigate('/')}
+              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+            <div>
+              <h1 className="text-2xl font-semibold text-gray-900">{sheet.name}</h1>
+              {sheet.description && (
+                <p className="text-sm text-gray-500 mt-0.5">{sheet.description}</p>
+              )}
+            </div>
           </div>
+          {(sheet as any).isOwner !== false && (
+            <button
+              onClick={() => setIsShareModalOpen(true)}
+              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm text-sm font-medium"
+            >
+              <Share2 className="h-4 w-4 mr-2" />
+              Share
+            </button>
+          )}
         </div>
-        {(sheet as any).isOwner !== false && (
-          <button
-            onClick={() => setIsShareModalOpen(true)}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            <Share2 className="h-4 w-4 mr-2" />
-            Share
-          </button>
-        )}
       </div>
 
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
-        <div className="flex items-center justify-between p-4 border-b">
-          <div className="flex space-x-2">
-            <button
-              onClick={() => addColumnMutation.mutate()}
-              disabled={addColumnMutation.isPending}
-              className="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-            >
-              <Plus className="h-4 w-4 mr-1" />
-              Add Column
-            </button>
-            <button
-              onClick={() => addRowMutation.mutate()}
-              disabled={addRowMutation.isPending}
-              className="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-            >
-              <Plus className="h-4 w-4 mr-1" />
-              Add Row
-            </button>
-          </div>
+      {/* Toolbar */}
+      <div className="bg-white border-b border-gray-200 px-6 py-3">
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={() => addColumnMutation.mutate()}
+            disabled={addColumnMutation.isPending}
+            className="inline-flex items-center px-3 py-1.5 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Plus className="h-4 w-4 mr-1.5" />
+            Column
+          </button>
+          <button
+            onClick={() => addRowMutation.mutate()}
+            disabled={addRowMutation.isPending}
+            className="inline-flex items-center px-3 py-1.5 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Plus className="h-4 w-4 mr-1.5" />
+            Row
+          </button>
         </div>
+      </div>
 
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="w-12 px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  #
-                </th>
-                {sheet.columns?.map((column: Column) => (
-                  <th
-                    key={column.id}
-                    style={{ width: column.width || 150 }}
-                    className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-l"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span>{column.name}</span>
-                      <span className="text-xs text-gray-400 ml-2">
-                        {column.type}
-                      </span>
-                    </div>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {sheet.rows && sheet.rows.length > 0 ? (
-                sheet.rows.map((row: Row, rowIndex: number) => (
-                  <tr key={row.id} className="hover:bg-gray-50">
-                    <td className="px-2 py-2 whitespace-nowrap text-sm text-gray-500 bg-gray-50 font-medium">
-                      {rowIndex + 1}
-                    </td>
-                    {sheet.columns?.map((column: Column) => {
-                      const cell = getCellValue(row, column);
-                      const isEditing = editingCell === cell?.id;
-
-                      return (
-                        <td
-                          key={`${row.id}-${column.id}`}
-                          className="px-3 py-2 text-sm text-gray-900 border-l cursor-pointer hover:bg-blue-50"
-                          onClick={() => cell && handleCellClick(cell)}
-                        >
-                          {isEditing ? (
-                            <input
-                              type="text"
-                              value={cellValue}
-                              onChange={(e) => setCellValue(e.target.value)}
-                              onBlur={() => cell && handleCellBlur(cell.id)}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                  cell && handleCellBlur(cell.id);
-                                } else if (e.key === 'Escape') {
-                                  setEditingCell(null);
-                                  setCellValue('');
-                                }
-                              }}
-                              autoFocus
-                              className="w-full px-2 py-1 border border-primary-500 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
-                            />
-                          ) : (
-                            <div className="min-h-[24px]">
-                              {cell?.value ? JSON.parse(cell.value) : ''}
-                            </div>
-                          )}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))
-              ) : (
+      {/* Sheet Grid */}
+      <div className="flex-1 overflow-auto bg-gray-50 p-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          <div className="overflow-auto">
+            <table className="min-w-full border-collapse">
+              <thead>
                 <tr>
-                  <td
-                    colSpan={(sheet.columns?.length || 0) + 1}
-                    className="px-6 py-12 text-center text-sm text-gray-500"
-                  >
-                    No rows yet. Click "Add Row" to get started.
-                  </td>
+                  <th className="sticky top-0 left-0 z-20 w-12 px-3 py-2.5 text-center text-xs font-semibold text-gray-600 bg-gray-50 border-b-2 border-r border-gray-300">
+                    #
+                  </th>
+                  {sheet.columns?.map((column: Column, index: number) => (
+                    <th
+                      key={column.id}
+                      style={{ minWidth: column.width || 180, maxWidth: column.width || 180 }}
+                      className={`sticky top-0 z-10 px-4 py-2.5 text-left text-xs font-semibold text-gray-700 bg-gray-50 border-b-2 border-gray-300 ${
+                        index !== 0 ? 'border-l border-gray-200' : ''
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="truncate">{column.name}</span>
+                        <span className="text-[10px] text-gray-400 ml-2 uppercase tracking-wider">
+                          {column.type}
+                        </span>
+                      </div>
+                    </th>
+                  ))}
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {sheet.rows && sheet.rows.length > 0 ? (
+                  sheet.rows.map((row: Row, rowIndex: number) => (
+                    <tr
+                      key={row.id}
+                      className={rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}
+                    >
+                      <td className="sticky left-0 z-10 px-3 py-0 text-center text-xs font-medium text-gray-500 bg-gray-50 border-r border-b border-gray-200">
+                        <div className="h-10 flex items-center justify-center">
+                          {rowIndex + 1}
+                        </div>
+                      </td>
+                      {sheet.columns?.map((column: Column, colIndex: number) => {
+                        const cell = getCellValue(row, column);
+                        const isEditing = editingCell === cell?.id;
+
+                        return (
+                          <td
+                            key={`${row.id}-${column.id}`}
+                            className={`px-4 py-0 text-sm text-gray-900 border-b border-gray-200 ${
+                              colIndex !== 0 ? 'border-l border-gray-200' : ''
+                            } ${!isEditing ? 'cursor-pointer hover:bg-blue-50/50' : ''}`}
+                            onClick={() => !isEditing && cell && handleCellClick(cell)}
+                          >
+                            {isEditing ? (
+                              <input
+                                type="text"
+                                value={cellValue}
+                                onChange={(e) => setCellValue(e.target.value)}
+                                onBlur={() => cell && handleCellBlur(cell.id)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    cell && handleCellBlur(cell.id);
+                                  } else if (e.key === 'Escape') {
+                                    setEditingCell(null);
+                                    setCellValue('');
+                                  }
+                                }}
+                                autoFocus
+                                className="w-full h-10 px-2 py-2 border-2 border-blue-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white shadow-sm"
+                              />
+                            ) : (
+                              <div className="h-10 flex items-center py-2 truncate">
+                                {cell?.value ? JSON.parse(cell.value) : (
+                                  <span className="text-gray-400 text-xs">Empty</span>
+                                )}
+                              </div>
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td
+                      colSpan={(sheet.columns?.length || 0) + 1}
+                      className="px-6 py-16 text-center"
+                    >
+                      <div className="text-gray-400">
+                        <p className="text-sm font-medium">No rows yet</p>
+                        <p className="text-xs mt-1">Click "Add Row" to get started</p>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
