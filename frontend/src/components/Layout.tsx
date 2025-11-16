@@ -1,18 +1,19 @@
 import { Outlet, Link } from 'react-router-dom';
-import { Sheet, LogOut } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import Logo from './Logo';
 
 export default function Layout() {
   const { user, logout } = useAuth();
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm border-b">
+      <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <Link to="/" className="flex items-center space-x-2">
-              <Sheet className="h-8 w-8 text-blue-600" />
-              <span className="text-xl font-bold text-gray-900">
+            <Link to="/" className="flex items-center space-x-3 group">
+              <Logo className="h-9 w-9 transition-transform group-hover:scale-105" />
+              <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
                 SheetIsSmart
               </span>
             </Link>
