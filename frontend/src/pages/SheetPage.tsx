@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Share2, Download, Edit2 } from 'lucide-react';
+import { ArrowLeft, Plus, Share2, Download, Edit2, ArrowUp, ArrowDown } from 'lucide-react';
 import { sheetApi } from '../services/api';
 import ShareModal from '../components/ShareModal';
 import type { Column, Row, Cell } from '../types';
@@ -16,6 +16,7 @@ export default function SheetPage() {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [sheetName, setSheetName] = useState('');
+  const [sortConfig, setSortConfig] = useState<{ columnId: string; direction: 'asc' | 'desc' } | null>(null);
 
   const { data: sheet, isLoading } = useQuery({
     queryKey: ['sheets', id],
@@ -121,6 +122,62 @@ export default function SheetPage() {
     } else {
       setIsEditingName(false);
     }
+  };
+
+  // Sort rows based on sortConfig
+  const sortedRows = useMemo(() => {
+    if (!sheet?.rows || !sortConfig) return sheet?.rows || [];
+
+    const sorted = [...sheet.rows].sort((a, b) => {
+      const cellA = a.cells?.find((c) => c.columnId === sortConfig.columnId);
+      const cellB = b.cells?.find((c) => c.columnId === sortConfig.columnId);
+
+      let valueA: string | number = '';
+      let valueB: string | number = '';
+
+      try {
+        valueA = cellA?.value ? JSON.parse(cellA.value) : '';
+        valueB = cellB?.value ? JSON.parse(cellB.value) : '';
+      } catch {
+        valueA = cellA?.value || '';
+        valueB = cellB?.value || '';
+      }
+
+      // Try to parse as numbers
+      const numA = typeof valueA === 'string' ? parseFloat(valueA) : valueA;
+      const numB = typeof valueB === 'string' ? parseFloat(valueB) : valueB;
+
+      // If both are valid numbers, compare numerically
+      if (!isNaN(numA) && !isNaN(numB)) {
+        return sortConfig.direction === 'asc' ? numA - numB : numB - numA;
+      }
+
+      // Otherwise compare as strings
+      const strA = String(valueA).toLowerCase();
+      const strB = String(valueB).toLowerCase();
+
+      if (strA < strB) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (strA > strB) return sortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return sorted;
+  }, [sheet?.rows, sortConfig]);
+
+  const handleSort = (columnId: string) => {
+    setSortConfig((current) => {
+      if (current?.columnId === columnId) {
+        // Toggle direction or clear sort
+        if (current.direction === 'asc') {
+          return { columnId, direction: 'desc' };
+        } else {
+          return null; // Clear sort
+        }
+      } else {
+        // New column, start with ascending
+        return { columnId, direction: 'asc' };
+      }
+    });
   };
 
   if (isLoading) {
@@ -244,12 +301,24 @@ export default function SheetPage() {
                     <th
                       key={column.id}
                       style={{ minWidth: column.width || 180, maxWidth: column.width || 180 }}
-                      className={`sticky top-0 z-10 px-4 py-2.5 text-left text-xs font-semibold text-gray-700 bg-gray-50 border-b-2 border-gray-300 ${
+                      className={`sticky top-0 z-10 px-4 py-2.5 text-left text-xs font-semibold text-gray-700 bg-gray-50 border-b-2 border-gray-300 cursor-pointer hover:bg-gray-100 transition-colors ${
                         index !== 0 ? 'border-l border-gray-200' : ''
                       }`}
+                      onClick={() => handleSort(column.id)}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="truncate">{column.name}</span>
+                        <div className="flex items-center space-x-1">
+                          <span className="truncate">{column.name}</span>
+                          {sortConfig?.columnId === column.id && (
+                            <span className="text-blue-600">
+                              {sortConfig.direction === 'asc' ? (
+                                <ArrowUp className="h-3 w-3" />
+                              ) : (
+                                <ArrowDown className="h-3 w-3" />
+                              )}
+                            </span>
+                          )}
+                        </div>
                         <span className="text-[10px] text-gray-400 ml-2 uppercase tracking-wider">
                           {column.type}
                         </span>
@@ -259,8 +328,8 @@ export default function SheetPage() {
                 </tr>
               </thead>
               <tbody>
-                {sheet.rows && sheet.rows.length > 0 ? (
-                  sheet.rows.map((row: Row, rowIndex: number) => (
+                {sortedRows && sortedRows.length > 0 ? (
+                  sortedRows.map((row: Row, rowIndex: number) => (
                     <tr
                       key={row.id}
                       className={rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}
