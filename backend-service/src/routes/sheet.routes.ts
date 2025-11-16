@@ -8,6 +8,7 @@ import {
   createColumn,
   createRow,
   updateCell,
+  exportSheet,
 } from '../controllers/sheet.controller';
 import { authenticate } from '../middleware/auth';
 
@@ -31,5 +32,8 @@ router.post('/:id/rows', createRow);
 
 // Cell operations
 router.put('/:id/cells/:cellId', updateCell);
+
+// Export operations
+router.get('/:id/export', exportSheet);
 
 export default router;

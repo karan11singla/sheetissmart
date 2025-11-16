@@ -141,3 +141,23 @@ export const updateCell = asyncHandler(async (req: Request, res: Response) => {
     data: { cell },
   });
 });
+
+export const exportSheet = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  if (!req.user) {
+    throw new AppError('Not authenticated', 401);
+  }
+
+  const sheet = await sheetService.getSheetById(id, req.user.userId);
+  const csv = await sheetService.exportSheetToCSV(id, req.user.userId);
+
+  // Get sheet name for filename
+  const filename = sheet
+    ? `${sheet.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_export.csv`
+    : 'sheet_export.csv';
+
+  res.setHeader('Content-Type', 'text/csv');
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  res.status(200).send(csv);
+});

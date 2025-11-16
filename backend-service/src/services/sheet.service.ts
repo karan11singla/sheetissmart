@@ -367,3 +367,35 @@ export async function updateCell(cellId: string, value: any, userId: string) {
     data: { value: stringValue !== null ? JSON.stringify(stringValue) : null },
   });
 }
+
+// Export sheet to CSV
+export async function exportSheetToCSV(sheetId: string, userId: string): Promise<string> {
+  const sheet = await getSheetById(sheetId, userId);
+
+  if (!sheet || !sheet.columns || !sheet.rows) {
+    return '';
+  }
+
+  // Build CSV header
+  const headers = sheet.columns.map((col) => `"${col.name.replace(/"/g, '""')}"`);
+  let csv = headers.join(',') + '\n';
+
+  // Build CSV rows
+  for (const row of sheet.rows) {
+    const rowData = sheet.columns!.map((col) => {
+      const cell = row.cells?.find((c) => c.columnId === col.id);
+      if (!cell || !cell.value) return '""';
+
+      try {
+        const value = JSON.parse(cell.value);
+        // Escape quotes and wrap in quotes
+        return `"${String(value).replace(/"/g, '""')}"`;
+      } catch {
+        return '""';
+      }
+    });
+    csv += rowData.join(',') + '\n';
+  }
+
+  return csv;
+}
