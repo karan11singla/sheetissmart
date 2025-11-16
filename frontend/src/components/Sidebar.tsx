@@ -1,12 +1,10 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, FileText, Plus } from 'lucide-react';
+import { Home, FileText, Settings } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { sheetApi } from '../services/api';
-import { useState } from 'react';
 
 export default function Sidebar() {
   const location = useLocation();
-  const [isCreating, setIsCreating] = useState(false);
 
   const { data: sheets = [] } = useQuery({
     queryKey: ['sheets'],
@@ -27,6 +25,18 @@ export default function Sidebar() {
         >
           <Home className="h-5 w-5 mr-3" />
           Home
+        </Link>
+
+        <Link
+          to="/account"
+          className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+            location.pathname === '/account'
+              ? 'bg-blue-50 text-blue-700'
+              : 'text-gray-700 hover:bg-gray-100'
+          }`}
+        >
+          <Settings className="h-5 w-5 mr-3" />
+          Account
         </Link>
 
         {/* Divider */}

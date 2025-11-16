@@ -99,3 +99,86 @@ export async function getAllUsers(req: Request, res: Response, next: NextFunctio
     next(error);
   }
 }
+
+export async function updateProfile(req: Request, res: Response, next: NextFunction) {
+  try {
+    if (!req.user) {
+      res.status(401).json({
+        success: false,
+        message: 'Not authenticated',
+      });
+      return;
+    }
+
+    const { name, email } = req.body;
+
+    const user = await authService.updateProfile(req.user.userId, { name, email });
+
+    res.status(200).json({
+      success: true,
+      data: user,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function changePassword(req: Request, res: Response, next: NextFunction) {
+  try {
+    if (!req.user) {
+      res.status(401).json({
+        success: false,
+        message: 'Not authenticated',
+      });
+      return;
+    }
+
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      res.status(400).json({
+        success: false,
+        message: 'Current password and new password are required',
+      });
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      res.status(400).json({
+        success: false,
+        message: 'New password must be at least 6 characters long',
+      });
+      return;
+    }
+
+    const result = await authService.changePassword(req.user.userId, currentPassword, newPassword);
+
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getUserStats(req: Request, res: Response, next: NextFunction) {
+  try {
+    if (!req.user) {
+      res.status(401).json({
+        success: false,
+        message: 'Not authenticated',
+      });
+      return;
+    }
+
+    const stats = await authService.getUserStats(req.user.userId);
+
+    res.status(200).json({
+      success: true,
+      data: stats,
+    });
+  } catch (error) {
+    next(error);
+  }
+}

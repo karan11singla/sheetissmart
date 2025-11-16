@@ -130,3 +130,78 @@ export async function getAllUsers(search?: string) {
 
   return users;
 }
+
+export async function updateProfile(userId: string, data: { name?: string; email?: string }) {
+  // If email is being updated, check if it's already taken
+  if (data.email) {
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        email: data.email,
+        NOT: { id: userId },
+      },
+    });
+
+    if (existingUser) {
+      throw new AppError('Email already in use', 400);
+    }
+  }
+
+  const user = await prisma.user.update({
+    where: { id: userId },
+    data,
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+
+  return user;
+}
+
+export async function changePassword(userId: string, currentPassword: string, newPassword: string) {
+  // Get user with password
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    throw new AppError('User not found', 404);
+  }
+
+  // Verify current password
+  const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+
+  if (!isPasswordValid) {
+    throw new AppError('Current password is incorrect', 401);
+  }
+
+  // Hash new password
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+  // Update password
+  await prisma.user.update({
+    where: { id: userId },
+    data: { password: hashedPassword },
+  });
+
+  return { message: 'Password changed successfully' };
+}
+
+export async function getUserStats(userId: string) {
+  const [ownedSheets, sharedWithMe] = await Promise.all([
+    prisma.sheet.count({
+      where: { ownerId: userId },
+    }),
+    prisma.sheetShare.count({
+      where: { userId },
+    }),
+  ]);
+
+  return {
+    ownedSheets,
+    sharedWithMe,
+  };
+}

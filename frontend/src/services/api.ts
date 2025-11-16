@@ -98,4 +98,37 @@ export const sheetApi = {
   },
 };
 
+// Auth API
+export const authApi = {
+  getMe: async () => {
+    const { data } = await api.get('/api/v1/auth/me');
+    return data.data;
+  },
+
+  getUsers: async (search?: string) => {
+    const { data } = await api.get('/api/v1/auth/users', {
+      params: { search },
+    });
+    return data.data;
+  },
+
+  updateProfile: async (profile: { name?: string; email?: string }) => {
+    const { data } = await api.put('/api/v1/auth/profile', profile);
+    return data.data;
+  },
+
+  changePassword: async (currentPassword: string, newPassword: string) => {
+    const { data } = await api.post('/api/v1/auth/change-password', {
+      currentPassword,
+      newPassword,
+    });
+    return data.data;
+  },
+
+  getStats: async () => {
+    const { data } = await api.get('/api/v1/auth/stats');
+    return data.data;
+  },
+};
+
 export default api;

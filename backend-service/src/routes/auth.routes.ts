@@ -11,5 +11,8 @@ router.post('/login', authController.login);
 // Protected routes
 router.get('/me', authenticate, authController.me);
 router.get('/users', authenticate, authController.getAllUsers);
+router.put('/profile', authenticate, authController.updateProfile);
+router.post('/change-password', authenticate, authController.changePassword);
+router.get('/stats', authenticate, authController.getUserStats);
 
 export default router;

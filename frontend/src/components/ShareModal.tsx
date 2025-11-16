@@ -1,6 +1,6 @@
 import { useState, FormEvent, useEffect, useRef } from 'react';
 import { X, Mail, Trash2, UserPlus, ChevronDown } from 'lucide-react';
-import axios from 'axios';
+import { authApi } from '../services/api';
 
 interface Share {
   id: string;
@@ -80,17 +80,9 @@ export default function ShareModal({
   const fetchUsers = async () => {
     setIsLoadingUsers(true);
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/v1/auth/users`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      setUsers(response.data.data);
-      setFilteredUsers(response.data.data);
+      const data = await authApi.getUsers();
+      setUsers(data);
+      setFilteredUsers(data);
     } catch (err) {
       console.error('Failed to fetch users:', err);
     } finally {
