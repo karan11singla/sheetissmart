@@ -1,5 +1,6 @@
 import prisma from '../config/database';
 import { AppError } from '../middleware/errorHandler';
+import { FormulaEngine } from './formula.service';
 
 interface CreateSheetInput {
   name: string;
@@ -358,8 +359,11 @@ export async function updateCell(cellId: string, value: any, userId: string) {
     throw new AppError('Access denied. Editor permission required.', 403);
   }
 
+  // Store the value (formula or plain value)
+  const stringValue = value !== null ? value.toString() : null;
+
   return await prisma.cell.update({
     where: { id: cellId },
-    data: { value: value !== null ? JSON.stringify(value) : null },
+    data: { value: stringValue !== null ? JSON.stringify(stringValue) : null },
   });
 }
