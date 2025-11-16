@@ -52,6 +52,8 @@ jobs:
           push: true
           tags: ${{ steps.meta-frontend.outputs.tags }}
           labels: ${{ steps.meta-frontend.outputs.labels }}
+          build-args: |
+            VITE_API_URL=https://ridgeport.finance
 
       - name: Build and push backend image
         uses: docker/build-push-action@v5
