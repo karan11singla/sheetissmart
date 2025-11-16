@@ -226,9 +226,7 @@ export default function SheetPage() {
                               />
                             ) : (
                               <div className="h-10 flex items-center py-2 truncate">
-                                {cell?.value ? JSON.parse(cell.value) : (
-                                  <span className="text-gray-400 text-xs">Empty</span>
-                                )}
+                                {cell?.value ? JSON.parse(cell.value) : ''}
                               </div>
                             )}
                           </td>
