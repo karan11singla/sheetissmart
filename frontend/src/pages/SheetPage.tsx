@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Share2 } from 'lucide-react';
+import { ArrowLeft, Plus, Share2, Download, Edit2 } from 'lucide-react';
 import { sheetApi } from '../services/api';
 import ShareModal from '../components/ShareModal';
 import type { Column, Row, Cell } from '../types';
+import api from '../services/api';
 
 export default function SheetPage() {
   const { id } = useParams<{ id: string }>();
@@ -13,6 +14,8 @@ export default function SheetPage() {
   const [editingCell, setEditingCell] = useState<string | null>(null);
   const [cellValue, setCellValue] = useState<string>('');
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [sheetName, setSheetName] = useState('');
 
   const { data: sheet, isLoading } = useQuery({
     queryKey: ['sheets', id],
@@ -85,6 +88,41 @@ export default function SheetPage() {
     return row.cells?.find((cell) => cell.columnId === column.id);
   };
 
+  const handleDownloadCSV = async () => {
+    try {
+      const response = await api.get(`/api/v1/sheets/${id}/export`, {
+        responseType: 'blob',
+      });
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${sheet?.name || 'sheet'}_export.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Failed to download CSV:', error);
+    }
+  };
+
+  const updateSheetMutation = useMutation({
+    mutationFn: (data: { name: string; description?: string }) => sheetApi.update(id!, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sheets', id] });
+      setIsEditingName(false);
+    },
+  });
+
+  const handleSaveName = () => {
+    if (sheetName.trim() && sheetName !== sheet?.name) {
+      updateSheetMutation.mutate({ name: sheetName });
+    } else {
+      setIsEditingName(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="text-center py-12">
@@ -115,21 +153,58 @@ export default function SheetPage() {
               <ArrowLeft className="h-5 w-5" />
             </button>
             <div>
-              <h1 className="text-2xl font-semibold text-gray-900">{sheet.name}</h1>
+              {isEditingName ? (
+                <input
+                  type="text"
+                  value={sheetName}
+                  onChange={(e) => setSheetName(e.target.value)}
+                  onBlur={handleSaveName}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleSaveName();
+                    if (e.key === 'Escape') setIsEditingName(false);
+                  }}
+                  autoFocus
+                  className="text-2xl font-semibold text-gray-900 border-b-2 border-blue-500 px-2 py-1 focus:outline-none"
+                />
+              ) : (
+                <div className="flex items-center space-x-2 group">
+                  <h1 className="text-2xl font-semibold text-gray-900">{sheet.name}</h1>
+                  {(sheet as any).isOwner !== false && (
+                    <button
+                      onClick={() => {
+                        setSheetName(sheet.name);
+                        setIsEditingName(true);
+                      }}
+                      className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-100 rounded transition-opacity"
+                    >
+                      <Edit2 className="h-4 w-4 text-gray-500" />
+                    </button>
+                  )}
+                </div>
+              )}
               {sheet.description && (
                 <p className="text-sm text-gray-500 mt-0.5">{sheet.description}</p>
               )}
             </div>
           </div>
-          {(sheet as any).isOwner !== false && (
+          <div className="flex items-center space-x-2">
             <button
-              onClick={() => setIsShareModalOpen(true)}
-              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm text-sm font-medium"
+              onClick={handleDownloadCSV}
+              className="inline-flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors shadow-sm text-sm font-medium"
             >
-              <Share2 className="h-4 w-4 mr-2" />
-              Share
+              <Download className="h-4 w-4 mr-2" />
+              Export CSV
             </button>
-          )}
+            {(sheet as any).isOwner !== false && (
+              <button
+                onClick={() => setIsShareModalOpen(true)}
+                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm text-sm font-medium"
+              >
+                <Share2 className="h-4 w-4 mr-2" />
+                Share
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
