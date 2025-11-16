@@ -193,10 +193,10 @@ export async function changePassword(userId: string, currentPassword: string, ne
 export async function getUserStats(userId: string) {
   const [ownedSheets, sharedWithMe] = await Promise.all([
     prisma.sheet.count({
-      where: { ownerId: userId },
+      where: { userId },
     }),
     prisma.sheetShare.count({
-      where: { userId },
+      where: { sharedWithId: userId },
     }),
   ]);
 
