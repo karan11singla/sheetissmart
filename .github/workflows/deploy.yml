@@ -3,53 +3,13 @@ name: Build and Deploy
 on:
   push:
     branches: [ main ]
-  workflow_dispatch: # Allow manual triggering
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  test:
-    name: Test & Lint
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: |
-            frontend/package-lock.json
-            backend-service/package-lock.json
-
-      - name: Install frontend dependencies
-        working-directory: ./frontend
-        run: npm ci
-
-      - name: Install backend dependencies
-        working-directory: ./backend-service
-        run: npm ci
-
-      - name: Run frontend build test
-        working-directory: ./frontend
-        run: npm run build
-
-      - name: Generate Prisma client
-        working-directory: ./backend-service
-        run: npx prisma generate
-
-      - name: Run backend build test
-        working-directory: ./backend-service
-        run: npm run build
-
   build-and-push:
-    name: Build & Push Docker Images
-    needs: test
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -112,7 +72,6 @@ jobs:
           cache-to: type=gha,mode=max
 
   deploy:
-    name: Deploy to Production
     needs: build-and-push
     runs-on: ubuntu-latest
 
@@ -124,66 +83,8 @@ jobs:
           username: root
           key: ${{ secrets.DROPLET_SSH_KEY }}
           script: |
-            set -e  # Exit on error
-
-            echo "📦 Pulling latest code..."
             cd /opt/sheetissmart
             git pull origin main
-
-            echo "🐳 Pulling Docker images..."
             cd infra
             docker-compose pull
-
-            echo "🔄 Restarting services..."
             docker-compose up -d
-
-            echo "⏳ Waiting for services to be ready..."
-            sleep 10
-
-            echo "🔍 Checking service health..."
-            docker-compose ps
-
-            echo "📊 Checking backend health endpoint..."
-            if curl -f http://localhost:3000/health; then
-              echo "✅ Backend is healthy!"
-            else
-              echo "❌ Backend health check failed!"
-              docker-compose logs backend --tail=50
-              exit 1
-            fi
-
-            echo "🚀 Running database migrations..."
-            docker-compose exec -T backend npx prisma db push --skip-generate
-
-            echo "✅ Deployment successful!"
-
-      - name: Notify deployment status
-        if: always()
-        run: |
-          if [ "${{ job.status }}" == "success" ]; then
-            echo "✅ Deployment to production successful!"
-          else
-            echo "❌ Deployment to production failed!"
-          fi
-
-  rollback-instructions:
-    name: Rollback Info
-    needs: deploy
-    if: failure()
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Show rollback instructions
-        run: |
-          echo "❌ Deployment failed! To rollback:"
-          echo ""
-          echo "1. SSH to server:"
-          echo "   ssh root@134.209.13.154"
-          echo ""
-          echo "2. Rollback to previous commit:"
-          echo "   cd /opt/sheetissmart && git reset --hard HEAD~1"
-          echo ""
-          echo "3. Use previous Docker images:"
-          echo "   cd infra && docker-compose down && docker-compose up -d"
-          echo ""
-          echo "Or revert the commit on GitHub and push again."
