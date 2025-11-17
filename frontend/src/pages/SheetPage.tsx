@@ -889,7 +889,13 @@ export default function SheetPage() {
                                   fontWeight: cell && cellFormats[cell.id]?.bold ? 'bold' : 'normal',
                                   fontStyle: cell && cellFormats[cell.id]?.italic ? 'italic' : 'normal',
                                   textDecoration: cell && cellFormats[cell.id]?.underline ? 'underline' : 'none',
-                                  textAlign: cell && cellFormats[cell.id]?.align ? cellFormats[cell.id]!.align : 'left',
+                                  justifyContent: cell && cellFormats[cell.id]?.align
+                                    ? cellFormats[cell.id]!.align === 'left'
+                                      ? 'flex-start'
+                                      : cellFormats[cell.id]!.align === 'right'
+                                      ? 'flex-end'
+                                      : 'center'
+                                    : 'flex-start',
                                   fontSize: cell && cellFormats[cell.id]?.fontSize ? `${cellFormats[cell.id]!.fontSize}px` : '14px',
                                   color: cell && cellFormats[cell.id]?.color ? cellFormats[cell.id]!.color : '#000000',
                                   width: '100%',
