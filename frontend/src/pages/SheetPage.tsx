@@ -35,6 +35,7 @@ export default function SheetPage() {
     align?: 'left' | 'center' | 'right';
     fontSize?: number;
     color?: string;
+    backgroundColor?: string;
   };
   const [cellFormats, setCellFormats] = useState<Record<string, CellFormat>>({});
 
@@ -394,6 +395,12 @@ export default function SheetPage() {
     const cell = getCurrentCell();
     if (!cell) return;
     applyFormat({ color });
+  };
+
+  const setBackgroundColor = (backgroundColor: string) => {
+    const cell = getCurrentCell();
+    if (!cell) return;
+    applyFormat({ backgroundColor });
   };
 
   // Get current cell format
@@ -785,14 +792,22 @@ export default function SheetPage() {
                 <option value={20}>20</option>
                 <option value={24}>24</option>
               </select>
-              <div className="relative">
+              <div className="relative" title="Text Color">
                 <input
                   type="color"
                   value={getCurrentFormat().color || '#000000'}
                   onChange={(e) => setTextColor(e.target.value)}
                   disabled={!selectedCell}
                   className="w-8 h-8 rounded border border-gray-300 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
-                  title="Text Color"
+                />
+              </div>
+              <div className="relative" title="Background Color">
+                <input
+                  type="color"
+                  value={getCurrentFormat().backgroundColor || '#ffffff'}
+                  onChange={(e) => setBackgroundColor(e.target.value)}
+                  disabled={!selectedCell}
+                  className="w-8 h-8 rounded border border-gray-300 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
                 />
               </div>
             </div>
@@ -1053,6 +1068,7 @@ export default function SheetPage() {
                                     : 'flex-start',
                                   fontSize: cell && cellFormats[cell.id]?.fontSize ? `${cellFormats[cell.id]!.fontSize}px` : '14px',
                                   color: cell && cellFormats[cell.id]?.color ? cellFormats[cell.id]!.color : '#000000',
+                                  backgroundColor: cell && cellFormats[cell.id]?.backgroundColor ? cellFormats[cell.id]!.backgroundColor : 'transparent',
                                   width: '100%',
                                 }}
                               >
