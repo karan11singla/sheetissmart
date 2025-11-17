@@ -153,7 +153,7 @@ jobs:
             fi
 
             echo "🚀 Running database migrations..."
-            docker-compose exec -T backend npx prisma db push
+            docker-compose exec -T backend npx prisma db push --skip-generate
 
             echo "✅ Deployment successful!"
 
