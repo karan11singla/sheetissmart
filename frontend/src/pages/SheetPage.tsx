@@ -23,7 +23,6 @@ export default function SheetPage() {
   const [selectedCell, setSelectedCell] = useState<{ rowIndex: number; colIndex: number } | null>(null);
   const tableRef = useRef<HTMLDivElement>(null);
   const cellInputRef = useRef<HTMLInputElement>(null);
-  const [shouldPreventBlur, setShouldPreventBlur] = useState(false);
   const [showFormulaAutocomplete, setShowFormulaAutocomplete] = useState(false);
   const [formulaSuggestions, setFormulaSuggestions] = useState<string[]>([]);
 
@@ -147,13 +146,11 @@ export default function SheetPage() {
   const handleCellClick = (cell: Cell, rowIndex?: number, colIndex?: number) => {
     // If we're in formula mode and clicking a different cell, insert its reference
     if (isInFormulaMode() && editingCell !== cell.id && rowIndex !== undefined && colIndex !== undefined) {
-      setShouldPreventBlur(true);
       const cellRef = getCellReference(rowIndex, colIndex);
       setCellValue(cellValue + cellRef);
       // Keep focus on the input
       setTimeout(() => {
         cellInputRef.current?.focus();
-        setShouldPreventBlur(false);
       }, 0);
       return;
     }
@@ -167,11 +164,19 @@ export default function SheetPage() {
   };
 
   const handleCellBlur = (cellId: string) => {
-    if (shouldPreventBlur) {
-      return;
-    }
     setShowFormulaAutocomplete(false);
-    updateCellMutation.mutate({ cellId, value: cellValue });
+
+    // Auto-close unclosed parentheses in formulas
+    let finalValue = cellValue;
+    if (finalValue.startsWith('=')) {
+      const openParens = (finalValue.match(/\(/g) || []).length;
+      const closeParens = (finalValue.match(/\)/g) || []).length;
+      if (openParens > closeParens) {
+        finalValue += ')'.repeat(openParens - closeParens);
+      }
+    }
+
+    updateCellMutation.mutate({ cellId, value: finalValue });
   };
 
   const handleCellValueChange = (value: string) => {
@@ -181,19 +186,28 @@ export default function SheetPage() {
     if (value.startsWith('=')) {
       // Extract the function name being typed (after = and before ()
       const match = value.match(/=([A-Z]*)$/i);
-      if (match && match[1]) {
+      if (match) {
         const searchTerm = match[1].toUpperCase();
-        const suggestions = FORMULA_FUNCTIONS
-          .filter(f => f.name.startsWith(searchTerm))
-          .map(f => f.name);
 
-        if (suggestions.length > 0) {
-          setFormulaSuggestions(suggestions);
+        if (searchTerm === '') {
+          // Show all functions when just "=" is typed
+          setFormulaSuggestions(FORMULA_FUNCTIONS.map(f => f.name));
           setShowFormulaAutocomplete(true);
         } else {
-          setShowFormulaAutocomplete(false);
+          // Filter functions as user types
+          const suggestions = FORMULA_FUNCTIONS
+            .filter(f => f.name.startsWith(searchTerm))
+            .map(f => f.name);
+
+          if (suggestions.length > 0) {
+            setFormulaSuggestions(suggestions);
+            setShowFormulaAutocomplete(true);
+          } else {
+            setShowFormulaAutocomplete(false);
+          }
         }
       } else {
+        // Hide autocomplete once function is complete (has parenthesis)
         setShowFormulaAutocomplete(false);
       }
     } else {
@@ -910,6 +924,12 @@ export default function SheetPage() {
                                 ? 'cursor-pointer hover:bg-blue-50'
                                 : ''
                             } ${isSelected && !isEditing ? 'ring-2 ring-inset ring-blue-600 bg-blue-50/50' : ''}`}
+                            onMouseDown={(e) => {
+                              // Prevent blur on input when clicking cells in formula mode
+                              if (inFormulaMode) {
+                                e.preventDefault();
+                              }
+                            }}
                             onClick={() => {
                               if (cell) {
                                 setSelectedCell({ rowIndex, colIndex });
