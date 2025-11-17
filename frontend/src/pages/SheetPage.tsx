@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Share2, Download, Edit2, ArrowUp, ArrowDown, Filter, X, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Trash2 } from 'lucide-react';
+import { useParams } from 'react-router-dom';
+import { Plus, ArrowUp, ArrowDown, Filter, X, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Trash2, Star } from 'lucide-react';
 import { sheetApi } from '../services/api';
 import ShareModal from '../components/ShareModal';
 import type { Column, Row, Cell } from '../types';
@@ -9,7 +9,6 @@ import api from '../services/api';
 
 export default function SheetPage() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [editingCell, setEditingCell] = useState<string | null>(null);
   const [cellValue, setCellValue] = useState<string>('');
@@ -285,24 +284,24 @@ export default function SheetPage() {
     return row.cells?.find((cell) => cell.columnId === column.id);
   };
 
-  const handleDownloadCSV = async () => {
-    try {
-      const response = await api.get(`/api/v1/sheets/${id}/export`, {
-        responseType: 'blob',
-      });
-
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `${sheet?.name || 'sheet'}_export.csv`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Failed to download CSV:', error);
-    }
-  };
+  // Export functionality - can be added to File menu later
+  // const handleDownloadCSV = async () => {
+  //   try {
+  //     const response = await api.get(`/api/v1/sheets/${id}/export`, {
+  //       responseType: 'blob',
+  //     });
+  //     const url = window.URL.createObjectURL(new Blob([response.data]));
+  //     const link = document.createElement('a');
+  //     link.href = url;
+  //     link.setAttribute('download', `${sheet?.name || 'sheet'}_export.csv`);
+  //     document.body.appendChild(link);
+  //     link.click();
+  //     link.remove();
+  //     window.URL.revokeObjectURL(url);
+  //   } catch (error) {
+  //     console.error('Failed to download CSV:', error);
+  //   }
+  // };
 
   const updateSheetMutation = useMutation({
     mutationFn: (data: { name: string; description?: string }) => sheetApi.update(id!, data),
