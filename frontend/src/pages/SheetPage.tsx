@@ -273,6 +273,18 @@ export default function SheetPage() {
     applyFormat({ align });
   };
 
+  const setFontSize = (fontSize: number) => {
+    const cell = getCurrentCell();
+    if (!cell) return;
+    applyFormat({ fontSize });
+  };
+
+  const setTextColor = (color: string) => {
+    const cell = getCurrentCell();
+    if (!cell) return;
+    applyFormat({ color });
+  };
+
   // Get current cell format
   const getCurrentFormat = (): CellFormat => {
     const cell = getCurrentCell();
@@ -643,6 +655,35 @@ export default function SheetPage() {
                 <AlignRight className="h-4 w-4" />
               </button>
             </div>
+
+            {/* Font Size and Color */}
+            <div className="flex items-center space-x-1 border-l border-gray-300 pl-4">
+              <select
+                value={getCurrentFormat().fontSize || 14}
+                onChange={(e) => setFontSize(Number(e.target.value))}
+                disabled={!selectedCell}
+                className="px-2 py-1 text-xs border border-gray-300 rounded bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all disabled:opacity-30 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500"
+                title="Font Size"
+              >
+                <option value={10}>10</option>
+                <option value={12}>12</option>
+                <option value={14}>14</option>
+                <option value={16}>16</option>
+                <option value={18}>18</option>
+                <option value={20}>20</option>
+                <option value={24}>24</option>
+              </select>
+              <div className="relative">
+                <input
+                  type="color"
+                  value={getCurrentFormat().color || '#000000'}
+                  onChange={(e) => setTextColor(e.target.value)}
+                  disabled={!selectedCell}
+                  className="w-8 h-8 rounded border border-gray-300 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                  title="Text Color"
+                />
+              </div>
+            </div>
           </div>
           {Object.keys(filters).length > 0 && (
             <div className="flex items-center space-x-2">
@@ -849,6 +890,8 @@ export default function SheetPage() {
                                   fontStyle: cell && cellFormats[cell.id]?.italic ? 'italic' : 'normal',
                                   textDecoration: cell && cellFormats[cell.id]?.underline ? 'underline' : 'none',
                                   textAlign: cell && cellFormats[cell.id]?.align ? cellFormats[cell.id]!.align : 'left',
+                                  fontSize: cell && cellFormats[cell.id]?.fontSize ? `${cellFormats[cell.id]!.fontSize}px` : '14px',
+                                  color: cell && cellFormats[cell.id]?.color ? cellFormats[cell.id]!.color : '#000000',
                                   width: '100%',
                                 }}
                               >
