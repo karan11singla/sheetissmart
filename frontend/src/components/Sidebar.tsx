@@ -5,7 +5,11 @@ import { sheetApi } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import Logo from './Logo';
 
-export default function Sidebar() {
+interface SidebarProps {
+  onNavigate?: () => void;
+}
+
+export default function Sidebar({ onNavigate }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -68,6 +72,7 @@ export default function Sidebar() {
             <Link
               key={item.path}
               to={item.path}
+              onClick={onNavigate}
               className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
                 isActive
                   ? 'bg-slate-700 text-white shadow-lg'
@@ -85,6 +90,7 @@ export default function Sidebar() {
       <div className="p-4 border-t border-slate-700 space-y-2">
         <Link
           to="/account"
+          onClick={onNavigate}
           className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
             location.pathname === '/account'
               ? 'bg-slate-700 text-white'

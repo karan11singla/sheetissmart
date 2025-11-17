@@ -786,21 +786,21 @@ export default function SheetPage() {
     <div className="h-full flex flex-col bg-white">
       {/* Smartsheet-style Menu Bar */}
       <div className="bg-white border-b border-gray-200">
-        <div className="flex items-center justify-between px-4 h-12">
-          <div className="flex items-center space-x-4">
-            <button className="text-sm text-gray-700 hover:text-gray-900 px-2 py-1 hover:bg-gray-100 rounded transition-colors">
+        <div className="flex items-center justify-between px-2 sm:px-4 h-12">
+          <div className="flex items-center space-x-1 sm:space-x-4">
+            <button className="text-xs sm:text-sm text-gray-700 hover:text-gray-900 px-1 sm:px-2 py-1 hover:bg-gray-100 rounded transition-colors">
               File
             </button>
-            <button className="text-sm text-gray-700 hover:text-gray-900 px-2 py-1 hover:bg-gray-100 rounded transition-colors">
+            <button className="hidden md:block text-sm text-gray-700 hover:text-gray-900 px-2 py-1 hover:bg-gray-100 rounded transition-colors">
               Automation
             </button>
-            <button className="text-sm text-gray-700 hover:text-gray-900 px-2 py-1 hover:bg-gray-100 rounded transition-colors">
+            <button className="hidden md:block text-sm text-gray-700 hover:text-gray-900 px-2 py-1 hover:bg-gray-100 rounded transition-colors">
               Forms
             </button>
-            <button className="text-sm text-gray-700 hover:text-gray-900 px-2 py-1 hover:bg-gray-100 rounded transition-colors">
+            <button className="hidden lg:block text-sm text-gray-700 hover:text-gray-900 px-2 py-1 hover:bg-gray-100 rounded transition-colors">
               Connections
             </button>
-            <button className="text-sm text-gray-700 hover:text-gray-900 px-2 py-1 hover:bg-gray-100 rounded transition-colors">
+            <button className="hidden lg:block text-sm text-gray-700 hover:text-gray-900 px-2 py-1 hover:bg-gray-100 rounded transition-colors">
               Dynamic View
             </button>
           </div>
@@ -843,8 +843,8 @@ export default function SheetPage() {
       </div>
 
       {/* Formatting Toolbar */}
-      <div className="bg-gray-50 border-b border-gray-200 px-4 py-2">
-        <div className="flex items-center justify-between">
+      <div className="bg-gray-50 border-b border-gray-200 px-2 sm:px-4 py-2 overflow-x-auto">
+        <div className="flex items-center justify-between min-w-max sm:min-w-0">
           {isInFormulaMode() && (
             <div className="absolute top-2 left-1/2 transform -translate-x-1/2 bg-green-100 text-green-800 px-4 py-1.5 rounded-full text-xs font-medium shadow-sm border border-green-200 z-30">
               <span className="font-semibold">Formula Mode:</span> Click cells to add references
