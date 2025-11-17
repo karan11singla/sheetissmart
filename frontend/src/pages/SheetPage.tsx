@@ -57,24 +57,9 @@ export default function SheetPage() {
   const updateCellMutation = useMutation({
     mutationFn: ({ cellId, value }: { cellId: string; value: any }) =>
       sheetApi.updateCell(id!, cellId, { value }),
-    onSuccess: (_, variables) => {
-      // Use optimistic update - update cache directly without refetch
-      queryClient.setQueryData(['sheets', id], (oldData: any) => {
-        if (!oldData) return oldData;
-
-        return {
-          ...oldData,
-          rows: oldData.rows?.map((row: any) => ({
-            ...row,
-            cells: row.cells?.map((cell: any) =>
-              cell.id === variables.cellId
-                ? { ...cell, value: JSON.stringify(variables.value) }
-                : cell
-            ),
-          })),
-        };
-      });
-
+    onSuccess: () => {
+      // Refetch to get updated computed values for all formulas
+      queryClient.invalidateQueries({ queryKey: ['sheets', id] });
       setEditingCell(null);
       setCellValue('');
     },
@@ -163,25 +148,37 @@ export default function SheetPage() {
   const handleCellClick = (cell: Cell, rowIndex?: number, colIndex?: number, shiftKey?: boolean) => {
     // If we're in formula mode and clicking a different cell, insert its reference
     if (isInFormulaMode() && editingCell !== cell.id && rowIndex !== undefined && colIndex !== undefined) {
-      let cellRef: string;
+      let newValue = cellValue;
 
       // Handle shift-click for range selection
       if (shiftKey && rangeStartCell) {
         const startRef = getCellReference(rangeStartCell.rowIndex, rangeStartCell.colIndex);
         const endRef = getCellReference(rowIndex, colIndex);
-        cellRef = `${startRef}:${endRef}`;
+        const rangeRef = `${startRef}:${endRef}`;
+
+        // Remove the last cell reference and replace with range
+        // Find the last cell reference pattern (e.g., "B2" at the end)
+        const lastCellRefMatch = cellValue.match(/([A-Z]+\d+)$/);
+        if (lastCellRefMatch) {
+          newValue = cellValue.substring(0, cellValue.lastIndexOf(lastCellRefMatch[0])) + rangeRef;
+        } else {
+          // If no cell ref at end, just append the range
+          const isFirstReference = cellValue.endsWith('(');
+          const separator = isFirstReference ? '' : ',';
+          newValue = cellValue + separator + rangeRef;
+        }
+
         setRangeStartCell(null); // Reset range start after completing range
       } else {
-        cellRef = getCellReference(rowIndex, colIndex);
+        // Regular click - add cell reference
+        const cellRef = getCellReference(rowIndex, colIndex);
+        const isFirstReference = cellValue.endsWith('(');
+        const separator = isFirstReference ? '' : ',';
+        newValue = cellValue + separator + cellRef;
         setRangeStartCell({ rowIndex, colIndex }); // Store as potential range start
       }
 
-      // Check if this is the first cell reference (right after opening parenthesis)
-      const isFirstReference = cellValue.endsWith('(');
-
-      // Add comma separator if not the first reference
-      const separator = isFirstReference ? '' : ',';
-      setCellValue(cellValue + separator + cellRef);
+      setCellValue(newValue);
 
       // Keep focus on the input
       setTimeout(() => {
@@ -193,12 +190,17 @@ export default function SheetPage() {
     // Reset range start when not in formula mode
     setRangeStartCell(null);
 
-    setEditingCell(cell.id);
-    setCellValue(cell.value ? JSON.parse(cell.value) : '');
-    setShowFormulaAutocomplete(false);
+    // Single click just selects the cell (doesn't start editing)
     if (rowIndex !== undefined && colIndex !== undefined) {
       setSelectedCell({ rowIndex, colIndex });
     }
+  };
+
+  const handleCellDoubleClick = (cell: Cell) => {
+    // Double click starts editing
+    setEditingCell(cell.id);
+    setCellValue(cell.value ? JSON.parse(cell.value) : '');
+    setShowFormulaAutocomplete(false);
   };
 
   const handleCellBlur = (cellId: string) => {
@@ -516,12 +518,12 @@ export default function SheetPage() {
             // Shift+Enter: move up
             newRowIndex = Math.max(0, rowIndex - 1);
           } else {
-            // Enter: move down or start editing
+            // Enter: start editing the selected cell
             const row = filteredAndSortedRows[rowIndex];
             const column = sheet.columns[colIndex];
             const cell = row.cells?.find((c) => c.columnId === column.id);
             if (cell) {
-              handleCellClick(cell);
+              handleCellDoubleClick(cell);
               return;
             }
           }
@@ -531,14 +533,15 @@ export default function SheetPage() {
           setSelectedCell(null);
           return;
         default:
-          // Start editing on alphanumeric keys
+          // Start editing on alphanumeric keys and clear existing content
           if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
             const row = filteredAndSortedRows[rowIndex];
             const column = sheet.columns[colIndex];
             const cell = row.cells?.find((c) => c.columnId === column.id);
             if (cell) {
-              setCellValue(e.key);
-              handleCellClick(cell);
+              setEditingCell(cell.id);
+              setCellValue(e.key); // Start with the typed key, clearing old content
+              setShowFormulaAutocomplete(false);
             }
           }
           return;
@@ -972,6 +975,11 @@ export default function SheetPage() {
                               if (cell) {
                                 setSelectedCell({ rowIndex, colIndex });
                                 handleCellClick(cell, rowIndex, colIndex, e.shiftKey);
+                              }
+                            }}
+                            onDoubleClick={() => {
+                              if (cell) {
+                                handleCellDoubleClick(cell);
                               }
                             }}
                           >
