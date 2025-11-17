@@ -23,6 +23,9 @@ export default function SheetPage() {
   const [selectedCell, setSelectedCell] = useState<{ rowIndex: number; colIndex: number } | null>(null);
   const tableRef = useRef<HTMLDivElement>(null);
   const cellInputRef = useRef<HTMLInputElement>(null);
+  const [shouldPreventBlur, setShouldPreventBlur] = useState(false);
+  const [showFormulaAutocomplete, setShowFormulaAutocomplete] = useState(false);
+  const [formulaSuggestions, setFormulaSuggestions] = useState<string[]>([]);
 
   // Cell formatting state (stored per cell ID)
   type CellFormat = {
@@ -34,6 +37,16 @@ export default function SheetPage() {
     color?: string;
   };
   const [cellFormats, setCellFormats] = useState<Record<string, CellFormat>>({});
+
+  // Available formula functions
+  const FORMULA_FUNCTIONS = [
+    { name: 'SUM', description: 'Sum of values' },
+    { name: 'AVG', description: 'Average of values' },
+    { name: 'COUNT', description: 'Count of values' },
+    { name: 'MIN', description: 'Minimum value' },
+    { name: 'MAX', description: 'Maximum value' },
+    { name: 'IF', description: 'Conditional logic' },
+  ];
 
   const { data: sheet, isLoading } = useQuery({
     queryKey: ['sheets', id],
@@ -134,22 +147,66 @@ export default function SheetPage() {
   const handleCellClick = (cell: Cell, rowIndex?: number, colIndex?: number) => {
     // If we're in formula mode and clicking a different cell, insert its reference
     if (isInFormulaMode() && editingCell !== cell.id && rowIndex !== undefined && colIndex !== undefined) {
+      setShouldPreventBlur(true);
       const cellRef = getCellReference(rowIndex, colIndex);
       setCellValue(cellValue + cellRef);
       // Keep focus on the input
-      setTimeout(() => cellInputRef.current?.focus(), 0);
+      setTimeout(() => {
+        cellInputRef.current?.focus();
+        setShouldPreventBlur(false);
+      }, 0);
       return;
     }
 
     setEditingCell(cell.id);
     setCellValue(cell.value ? JSON.parse(cell.value) : '');
+    setShowFormulaAutocomplete(false);
     if (rowIndex !== undefined && colIndex !== undefined) {
       setSelectedCell({ rowIndex, colIndex });
     }
   };
 
   const handleCellBlur = (cellId: string) => {
+    if (shouldPreventBlur) {
+      return;
+    }
+    setShowFormulaAutocomplete(false);
     updateCellMutation.mutate({ cellId, value: cellValue });
+  };
+
+  const handleCellValueChange = (value: string) => {
+    setCellValue(value);
+
+    // Check if we're typing a formula and show autocomplete
+    if (value.startsWith('=')) {
+      // Extract the function name being typed (after = and before ()
+      const match = value.match(/=([A-Z]*)$/i);
+      if (match && match[1]) {
+        const searchTerm = match[1].toUpperCase();
+        const suggestions = FORMULA_FUNCTIONS
+          .filter(f => f.name.startsWith(searchTerm))
+          .map(f => f.name);
+
+        if (suggestions.length > 0) {
+          setFormulaSuggestions(suggestions);
+          setShowFormulaAutocomplete(true);
+        } else {
+          setShowFormulaAutocomplete(false);
+        }
+      } else {
+        setShowFormulaAutocomplete(false);
+      }
+    } else {
+      setShowFormulaAutocomplete(false);
+    }
+  };
+
+  const insertFormula = (functionName: string) => {
+    // Replace the partial function name with the complete one
+    const newValue = cellValue.replace(/=([A-Z]*)$/i, `=${functionName}(`);
+    setCellValue(newValue);
+    setShowFormulaAutocomplete(false);
+    setTimeout(() => cellInputRef.current?.focus(), 0);
   };
 
   const getCellValue = (row: Row, column: Column): Cell | undefined => {
@@ -861,27 +918,59 @@ export default function SheetPage() {
                             }}
                           >
                             {isEditing ? (
-                              <input
-                                ref={cellInputRef}
-                                type="text"
-                                value={cellValue}
-                                onChange={(e) => setCellValue(e.target.value)}
-                                onBlur={() => cell && handleCellBlur(cell.id)}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') {
-                                    cell && handleCellBlur(cell.id);
-                                  } else if (e.key === 'Escape') {
-                                    setEditingCell(null);
-                                    setCellValue('');
-                                  }
-                                }}
-                                autoFocus
-                                className={`w-full h-9 px-2 py-1.5 border-2 focus:outline-none bg-white ${
-                                  isInFormulaMode()
-                                    ? 'border-green-500 focus:ring-1 focus:ring-green-500'
-                                    : 'border-blue-600 focus:ring-1 focus:ring-blue-600'
-                                }`}
-                              />
+                              <div className="relative">
+                                <input
+                                  ref={cellInputRef}
+                                  type="text"
+                                  value={cellValue}
+                                  onChange={(e) => handleCellValueChange(e.target.value)}
+                                  onBlur={() => cell && handleCellBlur(cell.id)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      if (showFormulaAutocomplete && formulaSuggestions.length > 0) {
+                                        insertFormula(formulaSuggestions[0]);
+                                        e.preventDefault();
+                                      } else {
+                                        cell && handleCellBlur(cell.id);
+                                      }
+                                    } else if (e.key === 'Escape') {
+                                      setEditingCell(null);
+                                      setCellValue('');
+                                      setShowFormulaAutocomplete(false);
+                                    } else if (e.key === 'Tab' && showFormulaAutocomplete && formulaSuggestions.length > 0) {
+                                      insertFormula(formulaSuggestions[0]);
+                                      e.preventDefault();
+                                    }
+                                  }}
+                                  autoFocus
+                                  className={`w-full h-9 px-2 py-1.5 border-2 focus:outline-none bg-white ${
+                                    isInFormulaMode()
+                                      ? 'border-green-500 focus:ring-1 focus:ring-green-500'
+                                      : 'border-blue-600 focus:ring-1 focus:ring-blue-600'
+                                  }`}
+                                />
+                                {showFormulaAutocomplete && formulaSuggestions.length > 0 && (
+                                  <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-md shadow-lg z-50 min-w-[200px]">
+                                    {formulaSuggestions.map((suggestion) => {
+                                      const func = FORMULA_FUNCTIONS.find(f => f.name === suggestion);
+                                      return (
+                                        <button
+                                          key={suggestion}
+                                          type="button"
+                                          onMouseDown={(e) => {
+                                            e.preventDefault();
+                                            insertFormula(suggestion);
+                                          }}
+                                          className="w-full text-left px-3 py-2 hover:bg-blue-50 focus:bg-blue-50 focus:outline-none border-b border-gray-100 last:border-b-0"
+                                        >
+                                          <div className="font-medium text-sm text-gray-900">{suggestion}</div>
+                                          {func && <div className="text-xs text-gray-500">{func.description}</div>}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </div>
                             ) : (
                               <div
                                 className="h-9 flex items-center px-1 truncate"
