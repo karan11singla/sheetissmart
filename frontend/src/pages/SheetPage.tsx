@@ -5,7 +5,6 @@ import { Plus, ArrowUp, ArrowDown, Filter, X, Bold, Italic, Underline, AlignLeft
 import { sheetApi } from '../services/api';
 import ShareModal from '../components/ShareModal';
 import type { Column, Row, Cell } from '../types';
-import api from '../services/api';
 
 export default function SheetPage() {
   const { id } = useParams<{ id: string }>();
