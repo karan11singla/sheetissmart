@@ -22,6 +22,7 @@ export default function SheetPage() {
   const filterPopupRef = useRef<HTMLDivElement>(null);
   const [selectedCell, setSelectedCell] = useState<{ rowIndex: number; colIndex: number } | null>(null);
   const tableRef = useRef<HTMLDivElement>(null);
+  const cellInputRef = useRef<HTMLInputElement>(null);
 
   const { data: sheet, isLoading } = useQuery({
     queryKey: ['sheets', id],
@@ -81,7 +82,37 @@ export default function SheetPage() {
     },
   });
 
+  // Helper function to convert column index to letter (0 -> A, 1 -> B, 25 -> Z, 26 -> AA)
+  const getColumnLetter = (colIndex: number): string => {
+    let letter = '';
+    let index = colIndex;
+    while (index >= 0) {
+      letter = String.fromCharCode(65 + (index % 26)) + letter;
+      index = Math.floor(index / 26) - 1;
+    }
+    return letter;
+  };
+
+  // Helper function to get cell reference (e.g., A1, B2)
+  const getCellReference = (rowIndex: number, colIndex: number): string => {
+    return `${getColumnLetter(colIndex)}${rowIndex + 1}`;
+  };
+
+  // Check if we're in formula mode (editing and value starts with =)
+  const isInFormulaMode = (): boolean => {
+    return editingCell !== null && cellValue.trim().startsWith('=');
+  };
+
   const handleCellClick = (cell: Cell, rowIndex?: number, colIndex?: number) => {
+    // If we're in formula mode and clicking a different cell, insert its reference
+    if (isInFormulaMode() && editingCell !== cell.id && rowIndex !== undefined && colIndex !== undefined) {
+      const cellRef = getCellReference(rowIndex, colIndex);
+      setCellValue(cellValue + cellRef);
+      // Keep focus on the input
+      setTimeout(() => cellInputRef.current?.focus(), 0);
+      return;
+    }
+
     setEditingCell(cell.id);
     setCellValue(cell.value ? JSON.parse(cell.value) : '');
     if (rowIndex !== undefined && colIndex !== undefined) {
@@ -420,6 +451,11 @@ export default function SheetPage() {
       {/* Toolbar */}
       <div className="bg-white border-b border-gray-200 px-6 py-3">
         <div className="flex items-center justify-between">
+          {isInFormulaMode() && (
+            <div className="absolute top-2 left-1/2 transform -translate-x-1/2 bg-green-100 text-green-800 px-4 py-1.5 rounded-full text-xs font-medium shadow-sm border border-green-200 z-30">
+              <span className="font-semibold">Formula Mode:</span> Click cells to add references
+            </div>
+          )}
           <div className="flex items-center space-x-2">
             <button
               onClick={() => addColumnMutation.mutate()}
@@ -571,17 +607,22 @@ export default function SheetPage() {
                         const cell = getCellValue(row, column);
                         const isEditing = editingCell === cell?.id;
                         const isSelected = selectedCell?.rowIndex === rowIndex && selectedCell?.colIndex === colIndex;
+                        const inFormulaMode = isInFormulaMode() && !isEditing;
 
                         return (
                           <td
                             key={`${row.id}-${column.id}`}
                             className={`px-4 py-0 text-sm text-gray-900 border-b border-gray-200 ${
                               colIndex !== 0 ? 'border-l border-gray-200' : ''
-                            } ${!isEditing ? 'cursor-pointer hover:bg-blue-50/50' : ''} ${
-                              isSelected && !isEditing ? 'ring-2 ring-inset ring-blue-500 bg-blue-50/30' : ''
-                            }`}
+                            } ${
+                              inFormulaMode
+                                ? 'cursor-crosshair hover:bg-green-100 hover:ring-2 hover:ring-inset hover:ring-green-400'
+                                : !isEditing
+                                ? 'cursor-pointer hover:bg-blue-50/50'
+                                : ''
+                            } ${isSelected && !isEditing ? 'ring-2 ring-inset ring-blue-500 bg-blue-50/30' : ''}`}
                             onClick={() => {
-                              if (!isEditing && cell) {
+                              if (cell) {
                                 setSelectedCell({ rowIndex, colIndex });
                                 handleCellClick(cell, rowIndex, colIndex);
                               }
@@ -589,6 +630,7 @@ export default function SheetPage() {
                           >
                             {isEditing ? (
                               <input
+                                ref={cellInputRef}
                                 type="text"
                                 value={cellValue}
                                 onChange={(e) => setCellValue(e.target.value)}
@@ -602,7 +644,11 @@ export default function SheetPage() {
                                   }
                                 }}
                                 autoFocus
-                                className="w-full h-10 px-2 py-2 border-2 border-blue-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white shadow-sm"
+                                className={`w-full h-10 px-2 py-2 border-2 rounded focus:outline-none focus:ring-2 bg-white shadow-sm ${
+                                  isInFormulaMode()
+                                    ? 'border-green-500 ring-green-500'
+                                    : 'border-blue-500 ring-blue-500'
+                                }`}
                               />
                             ) : (
                               <div className="h-10 flex items-center py-2 truncate">
