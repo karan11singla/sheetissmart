@@ -27,6 +27,7 @@ export default function SheetPage() {
   const [formulaSuggestions, setFormulaSuggestions] = useState<string[]>([]);
   const [rangeStartCell, setRangeStartCell] = useState<{ rowIndex: number; colIndex: number } | null>(null);
   const [resizingColumn, setResizingColumn] = useState<{ id: string; startX: number; startWidth: number } | null>(null);
+  const [copiedCell, setCopiedCell] = useState<{ cellId: string; value: string; format: CellFormat } | null>(null);
 
   // Cell formatting state (stored per cell ID)
   type CellFormat = {
@@ -37,6 +38,11 @@ export default function SheetPage() {
     fontSize?: number;
     color?: string;
     backgroundColor?: string;
+    numberFormat?: 'general' | 'number' | 'currency' | 'percentage' | 'date';
+    decimals?: number;
+    borderStyle?: 'none' | 'solid';
+    borderColor?: string;
+    borderWidth?: string;
   };
   const [cellFormats, setCellFormats] = useState<Record<string, CellFormat>>({});
 
@@ -453,6 +459,52 @@ export default function SheetPage() {
     applyFormat({ backgroundColor });
   };
 
+  const setNumberFormat = (numberFormat: 'general' | 'number' | 'currency' | 'percentage' | 'date') => {
+    const cell = getCurrentCell();
+    if (!cell) return;
+    applyFormat({ numberFormat, decimals: numberFormat === 'general' ? undefined : 2 });
+  };
+
+  const toggleBorder = () => {
+    const cell = getCurrentCell();
+    if (!cell) return;
+    const currentBorder = cellFormats[cell.id]?.borderStyle;
+    applyFormat({
+      borderStyle: currentBorder === 'solid' ? 'none' : 'solid',
+      borderColor: '#000000',
+      borderWidth: '2px',
+    });
+  };
+
+  // Format a cell value based on its number format
+  const formatCellValue = (value: any, format?: CellFormat): string => {
+    if (!format?.numberFormat || format.numberFormat === 'general') {
+      return String(value);
+    }
+
+    const num = parseFloat(value);
+    if (isNaN(num)) return String(value);
+
+    const decimals = format.decimals ?? 2;
+
+    switch (format.numberFormat) {
+      case 'number':
+        return num.toFixed(decimals);
+      case 'currency':
+        return `$${num.toFixed(decimals)}`;
+      case 'percentage':
+        return `${(num * 100).toFixed(decimals)}%`;
+      case 'date':
+        try {
+          return new Date(value).toLocaleDateString();
+        } catch {
+          return String(value);
+        }
+      default:
+        return String(value);
+    }
+  };
+
   // Get current cell format
   const getCurrentFormat = (): CellFormat => {
     const cell = getCurrentCell();
@@ -590,6 +642,44 @@ export default function SheetPage() {
           setSelectedCell(null);
           return;
         default:
+          // Handle copy (Ctrl+C or Cmd+C)
+          if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+            e.preventDefault();
+            const row = filteredAndSortedRows[rowIndex];
+            const column = sheet.columns[colIndex];
+            const cell = row.cells?.find((c) => c.columnId === column.id);
+            if (cell) {
+              setCopiedCell({
+                cellId: cell.id,
+                value: cell.value ? JSON.parse(cell.value) : '',
+                format: cellFormats[cell.id] || {},
+              });
+            }
+            return;
+          }
+
+          // Handle paste (Ctrl+V or Cmd+V)
+          if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
+            e.preventDefault();
+            if (copiedCell) {
+              const row = filteredAndSortedRows[rowIndex];
+              const column = sheet.columns[colIndex];
+              const cell = row.cells?.find((c) => c.columnId === column.id);
+              if (cell) {
+                // Paste value
+                updateCellMutation.mutate({ cellId: cell.id, value: copiedCell.value });
+                // Paste formatting
+                if (Object.keys(copiedCell.format).length > 0) {
+                  setCellFormats((prev) => ({
+                    ...prev,
+                    [cell.id]: copiedCell.format,
+                  }));
+                }
+              }
+            }
+            return;
+          }
+
           // Start editing on alphanumeric keys and clear existing content
           if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
             const row = filteredAndSortedRows[rowIndex];
@@ -861,6 +951,39 @@ export default function SheetPage() {
                 />
               </div>
             </div>
+
+            {/* Number Format */}
+            <div className="flex items-center space-x-1 border-l border-gray-300 pl-4">
+              <select
+                value={getCurrentFormat().numberFormat || 'general'}
+                onChange={(e) => setNumberFormat(e.target.value as any)}
+                disabled={!selectedCell}
+                className="px-2 py-1 text-xs border border-gray-300 rounded bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all disabled:opacity-30 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500"
+                title="Number Format"
+              >
+                <option value="general">General</option>
+                <option value="number">Number</option>
+                <option value="currency">Currency</option>
+                <option value="percentage">Percentage</option>
+                <option value="date">Date</option>
+              </select>
+            </div>
+
+            {/* Borders */}
+            <div className="flex items-center space-x-1 border-l border-gray-300 pl-4">
+              <button
+                onClick={toggleBorder}
+                disabled={!selectedCell}
+                className={`px-2 py-1.5 rounded border text-xs font-medium transition-all disabled:opacity-30 disabled:cursor-not-allowed ${
+                  getCurrentFormat().borderStyle === 'solid'
+                    ? 'bg-blue-100 border-blue-300 text-blue-700'
+                    : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400'
+                }`}
+                title="Toggle Border"
+              >
+                Border
+              </button>
+            </div>
           </div>
           {Object.keys(filters).length > 0 && (
             <div className="flex items-center space-x-2">
@@ -1030,6 +1153,7 @@ export default function SheetPage() {
                         const isEditing = editingCell === cell?.id;
                         const isSelected = selectedCell?.rowIndex === rowIndex && selectedCell?.colIndex === colIndex;
                         const inFormulaMode = isInFormulaMode() && !isEditing;
+                        const isCopied = copiedCell?.cellId === cell?.id;
 
                         return (
                           <td
@@ -1042,7 +1166,7 @@ export default function SheetPage() {
                                 : !isEditing
                                 ? 'cursor-pointer hover:bg-blue-50'
                                 : ''
-                            } ${isSelected && !isEditing ? 'ring-2 ring-inset ring-blue-600 bg-blue-50/50' : ''}`}
+                            } ${isSelected && !isEditing ? 'ring-2 ring-inset ring-blue-600 bg-blue-50/50' : ''} ${isCopied ? 'ring-2 ring-inset ring-dashed ring-green-600' : ''}`}
                             onMouseDown={(e) => {
                               // Prevent blur on input when clicking cells in formula mode
                               if (inFormulaMode) {
@@ -1132,18 +1256,25 @@ export default function SheetPage() {
                                   fontSize: cell && cellFormats[cell.id]?.fontSize ? `${cellFormats[cell.id]!.fontSize}px` : '14px',
                                   color: cell && cellFormats[cell.id]?.color ? cellFormats[cell.id]!.color : '#000000',
                                   backgroundColor: cell && cellFormats[cell.id]?.backgroundColor ? cellFormats[cell.id]!.backgroundColor : 'transparent',
+                                  border: cell && cellFormats[cell.id]?.borderStyle === 'solid'
+                                    ? `${cellFormats[cell.id]!.borderWidth || '2px'} ${cellFormats[cell.id]!.borderStyle} ${cellFormats[cell.id]!.borderColor || '#000000'}`
+                                    : 'none',
                                   width: '100%',
                                 }}
                               >
                                 {cell?.value ? (() => {
                                   const parsedValue = JSON.parse(cell.value);
+                                  let displayValue;
                                   // If it's a formula and we have a computed value, show that
                                   if (typeof parsedValue === 'string' && parsedValue.startsWith('=')) {
-                                    return (cell as any).computedValue !== undefined
+                                    displayValue = (cell as any).computedValue !== undefined
                                       ? (cell as any).computedValue
                                       : parsedValue;
+                                  } else {
+                                    displayValue = parsedValue;
                                   }
-                                  return parsedValue;
+                                  // Apply number formatting
+                                  return formatCellValue(displayValue, cell ? cellFormats[cell.id] : undefined);
                                 })() : ''}
                               </div>
                             )}
