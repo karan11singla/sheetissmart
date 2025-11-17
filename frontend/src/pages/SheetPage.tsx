@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Share2, Download, Edit2, ArrowUp, ArrowDown, Filter, X, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight } from 'lucide-react';
+import { ArrowLeft, Plus, Share2, Download, Edit2, ArrowUp, ArrowDown, Filter, X, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Trash2 } from 'lucide-react';
 import { sheetApi } from '../services/api';
 import ShareModal from '../components/ShareModal';
 import type { Column, Row, Cell } from '../types';
@@ -70,6 +70,20 @@ export default function SheetPage() {
       sheetApi.createRow(id!, {
         position: sheet?.rows?.length || 0,
       }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sheets', id] });
+    },
+  });
+
+  const deleteColumnMutation = useMutation({
+    mutationFn: (columnId: string) => sheetApi.deleteColumn(id!, columnId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sheets', id] });
+    },
+  });
+
+  const deleteRowMutation = useMutation({
+    mutationFn: (rowId: string) => sheetApi.deleteRow(id!, rowId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sheets', id] });
     },
@@ -738,6 +752,18 @@ export default function SheetPage() {
                               </div>
                             )}
                           </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (window.confirm(`Delete column "${column.name}"? This will permanently delete all data in this column.`)) {
+                                deleteColumnMutation.mutate(column.id);
+                              }
+                            }}
+                            className="p-0.5 rounded hover:bg-red-100 transition-colors text-gray-400 hover:text-red-600"
+                            title="Delete column"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
                         </div>
                       </div>
                     </th>
@@ -751,9 +777,21 @@ export default function SheetPage() {
                       key={row.id}
                       className="bg-white hover:bg-gray-50/50"
                     >
-                      <td className="sticky left-0 z-10 px-3 py-0 text-center text-xs font-medium text-gray-600 bg-gray-100 border-r border-b border-gray-200">
-                        <div className="h-9 flex items-center justify-center">
-                          {rowIndex + 1}
+                      <td className="sticky left-0 z-10 px-3 py-0 text-center text-xs font-medium text-gray-600 bg-gray-100 border-r border-b border-gray-200 group">
+                        <div className="h-9 flex items-center justify-center space-x-1">
+                          <span>{rowIndex + 1}</span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (window.confirm(`Delete row ${rowIndex + 1}? This will permanently delete all data in this row.`)) {
+                                deleteRowMutation.mutate(row.id);
+                              }
+                            }}
+                            className="p-0.5 rounded hover:bg-red-100 transition-colors text-gray-400 hover:text-red-600 opacity-0 group-hover:opacity-100"
+                            title="Delete row"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
                         </div>
                       </td>
                       {sheet.columns?.map((column: Column, colIndex: number) => {

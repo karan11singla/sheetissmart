@@ -360,6 +360,56 @@ export async function createRow(sheetId: string, data: CreateRowInput, userId: s
   });
 }
 
+export async function deleteColumn(sheetId: string, columnId: string, userId: string) {
+  // Check if sheet exists and user has access
+  const sheet = await prisma.sheet.findUnique({
+    where: { id: sheetId },
+  });
+
+  if (!sheet) {
+    throw new AppError('Sheet not found', 404);
+  }
+
+  if (sheet.userId !== userId) {
+    throw new AppError('Access denied', 403);
+  }
+
+  // Delete all cells in this column first (cascade should handle this, but being explicit)
+  await prisma.cell.deleteMany({
+    where: { columnId },
+  });
+
+  // Delete the column
+  return await prisma.column.delete({
+    where: { id: columnId },
+  });
+}
+
+export async function deleteRow(sheetId: string, rowId: string, userId: string) {
+  // Check if sheet exists and user has access
+  const sheet = await prisma.sheet.findUnique({
+    where: { id: sheetId },
+  });
+
+  if (!sheet) {
+    throw new AppError('Sheet not found', 404);
+  }
+
+  if (sheet.userId !== userId) {
+    throw new AppError('Access denied', 403);
+  }
+
+  // Delete all cells in this row first (cascade should handle this, but being explicit)
+  await prisma.cell.deleteMany({
+    where: { rowId },
+  });
+
+  // Delete the row
+  return await prisma.row.delete({
+    where: { id: rowId },
+  });
+}
+
 export async function updateCell(cellId: string, value: any, userId: string) {
   // Get cell with sheet info to check authorization
   const cell = await prisma.cell.findUnique({

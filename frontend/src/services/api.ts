@@ -71,9 +71,17 @@ export const sheetApi = {
     return data.data.column;
   },
 
+  deleteColumn: async (sheetId: string, columnId: string): Promise<void> => {
+    await api.delete(`/api/v1/sheets/${sheetId}/columns/${columnId}`);
+  },
+
   createRow: async (sheetId: string, input: CreateRowInput) => {
     const { data } = await api.post(`/api/v1/sheets/${sheetId}/rows`, input);
     return data.data.row;
+  },
+
+  deleteRow: async (sheetId: string, rowId: string): Promise<void> => {
+    await api.delete(`/api/v1/sheets/${sheetId}/rows/${rowId}`);
   },
 
   updateCell: async (sheetId: string, cellId: string, input: UpdateCellInput) => {

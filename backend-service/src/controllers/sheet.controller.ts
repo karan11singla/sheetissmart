@@ -142,6 +142,30 @@ export const updateCell = asyncHandler(async (req: Request, res: Response) => {
   });
 });
 
+export const deleteColumn = asyncHandler(async (req: Request, res: Response) => {
+  const { id, columnId } = req.params;
+
+  if (!req.user) {
+    throw new AppError('Not authenticated', 401);
+  }
+
+  await sheetService.deleteColumn(id, columnId, req.user.userId);
+
+  res.status(204).send();
+});
+
+export const deleteRow = asyncHandler(async (req: Request, res: Response) => {
+  const { id, rowId } = req.params;
+
+  if (!req.user) {
+    throw new AppError('Not authenticated', 401);
+  }
+
+  await sheetService.deleteRow(id, rowId, req.user.userId);
+
+  res.status(204).send();
+});
+
 export const exportSheet = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
 
