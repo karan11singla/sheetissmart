@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, FileText, Settings } from 'lucide-react';
+import { Home, Bell, Search, Folder, Clock, Star, Users, Grid, Plus } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { sheetApi } from '../services/api';
 
@@ -11,72 +11,64 @@ export default function Sidebar() {
     queryFn: sheetApi.getAll,
   });
 
+  const navItems = [
+    { icon: Home, label: 'Home', path: '/' },
+    { icon: Bell, label: 'Notifications', path: '/notifications' },
+    { icon: Search, label: 'Search', path: '/search' },
+    { icon: Folder, label: 'Browse', path: '/browse' },
+    { icon: Clock, label: 'Recents', path: '/recents' },
+    { icon: Star, label: 'Favorites', path: '/favorites' },
+    { icon: Users, label: 'Resource Management', path: '/resources' },
+    { icon: Grid, label: 'WorkApps', path: '/workapps' },
+  ];
+
   return (
-    <aside className="w-64 bg-white border-r border-gray-200 flex flex-col h-full">
+    <aside className="w-16 bg-gradient-to-b from-indigo-800 via-indigo-700 to-indigo-900 flex flex-col h-full shadow-lg">
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+      <nav className="flex-1 py-4 flex flex-col items-center space-y-1 overflow-y-auto">
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = location.pathname === item.path;
+
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={`group relative flex flex-col items-center justify-center w-12 h-12 rounded-lg transition-all ${
+                isActive
+                  ? 'bg-white bg-opacity-20 text-white'
+                  : 'text-white text-opacity-70 hover:bg-white hover:bg-opacity-10 hover:text-opacity-100'
+              }`}
+              title={item.label}
+            >
+              <Icon className="h-5 w-5" />
+              <span className="text-[9px] mt-0.5 font-medium">{item.label.split(' ')[0]}</span>
+
+              {/* Tooltip */}
+              <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 transition-opacity">
+                {item.label}
+              </div>
+            </Link>
+          );
+        })}
+      </nav>
+
+      {/* Create Button */}
+      <div className="p-2 border-t border-white border-opacity-20">
         <Link
           to="/"
-          className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-            location.pathname === '/'
-              ? 'bg-blue-50 text-blue-700'
-              : 'text-gray-700 hover:bg-gray-100'
-          }`}
+          onClick={(e) => {
+            e.preventDefault();
+            // This will be handled by the home page create button
+            window.location.href = '/?create=true';
+          }}
+          className="flex flex-col items-center justify-center w-12 h-12 bg-blue-500 hover:bg-blue-600 rounded-lg transition-colors text-white"
+          title="Create"
         >
-          <Home className="h-5 w-5 mr-3" />
-          Home
+          <Plus className="h-6 w-6" />
+          <span className="text-[9px] mt-0.5 font-medium">Create</span>
         </Link>
-
-        <Link
-          to="/account"
-          className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-            location.pathname === '/account'
-              ? 'bg-blue-50 text-blue-700'
-              : 'text-gray-700 hover:bg-gray-100'
-          }`}
-        >
-          <Settings className="h-5 w-5 mr-3" />
-          Account
-        </Link>
-
-        {/* Divider */}
-        <div className="pt-4 pb-2">
-          <div className="flex items-center justify-between px-3 mb-2">
-            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-              My Sheets
-            </span>
-          </div>
-        </div>
-
-        {/* Sheet List */}
-        <div className="space-y-0.5">
-          {sheets.length === 0 ? (
-            <div className="px-3 py-2 text-xs text-gray-400">
-              No sheets yet
-            </div>
-          ) : (
-            sheets.map((sheet: any) => (
-              <Link
-                key={sheet.id}
-                to={`/sheet/${sheet.id}`}
-                className={`flex items-center px-3 py-2 text-sm rounded-lg transition-colors group ${
-                  location.pathname === `/sheet/${sheet.id}`
-                    ? 'bg-blue-50 text-blue-700'
-                    : 'text-gray-700 hover:bg-gray-100'
-                }`}
-              >
-                <FileText className="h-4 w-4 mr-3 flex-shrink-0" />
-                <span className="truncate flex-1">{sheet.name}</span>
-                {sheet.isShared && (
-                  <span className="text-xs text-gray-400 ml-2">
-                    {sheet.sharedPermission === 'VIEWER' ? 'View' : 'Edit'}
-                  </span>
-                )}
-              </Link>
-            ))
-          )}
-        </div>
-      </nav>
+      </div>
     </aside>
   );
 }
