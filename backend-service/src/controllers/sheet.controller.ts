@@ -144,13 +144,13 @@ export const updateCell = asyncHandler(async (req: Request, res: Response) => {
 
 export const updateColumn = asyncHandler(async (req: Request, res: Response) => {
   const { id, columnId } = req.params;
-  const { width } = req.body;
+  const { width, name } = req.body;
 
   if (!req.user) {
     throw new AppError('Not authenticated', 401);
   }
 
-  const column = await sheetService.updateColumn(id, columnId, req.user.userId, { width });
+  const column = await sheetService.updateColumn(id, columnId, req.user.userId, { width, name });
 
   res.status(200).json({
     status: 'success',

@@ -1,9 +1,10 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Clock, Star, User, Plus, LogOut, FolderOpen } from 'lucide-react';
+import { Home, Clock, Star, User, Plus, LogOut, FolderOpen, Search } from 'lucide-react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { sheetApi } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import Logo from './Logo';
+import GlobalSearch from './GlobalSearch';
 import { useState } from 'react';
 
 interface SidebarProps {
@@ -16,6 +17,7 @@ export default function Sidebar({ onNavigate }: SidebarProps) {
   const queryClient = useQueryClient();
   const { user, logout } = useAuth();
   const [showBrowse, setShowBrowse] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
 
   const { data: sheets } = useQuery({
     queryKey: ['sheets'],
@@ -25,6 +27,7 @@ export default function Sidebar({ onNavigate }: SidebarProps) {
 
   const navItems = [
     { icon: Home, label: 'Home', path: '/' },
+    { icon: Search, label: 'Search', path: null, onClick: () => setShowSearch(true) },
     { icon: FolderOpen, label: 'Browse', path: null, onClick: () => setShowBrowse(!showBrowse) },
     { icon: Clock, label: 'Recent', path: '/recent' },
     { icon: Star, label: 'Favorites', path: '/favorites' },
@@ -161,6 +164,9 @@ export default function Sidebar({ onNavigate }: SidebarProps) {
           <span className="font-medium">Logout</span>
         </button>
       </div>
+
+      {/* Global Search Modal */}
+      <GlobalSearch isOpen={showSearch} onClose={() => setShowSearch(false)} />
     </aside>
   );
 }
