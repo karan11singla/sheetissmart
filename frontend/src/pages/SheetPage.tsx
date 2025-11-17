@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Share2, Download, Edit2, ArrowUp, ArrowDown, Filter, X, Bold, Italic, Underline } from 'lucide-react';
+import { ArrowLeft, Plus, Share2, Download, Edit2, ArrowUp, ArrowDown, Filter, X, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight } from 'lucide-react';
 import { sheetApi } from '../services/api';
 import ShareModal from '../components/ShareModal';
 import type { Column, Row, Cell } from '../types';
@@ -251,6 +251,12 @@ export default function SheetPage() {
     if (!cell) return;
     const current = cellFormats[cell.id]?.underline || false;
     applyFormat({ underline: !current });
+  };
+
+  const setAlignment = (align: 'left' | 'center' | 'right') => {
+    const cell = getCurrentCell();
+    if (!cell) return;
+    applyFormat({ align });
   };
 
   // Get current cell format
@@ -583,6 +589,46 @@ export default function SheetPage() {
                 <Underline className="h-4 w-4" />
               </button>
             </div>
+
+            {/* Text Alignment */}
+            <div className="flex items-center space-x-1 border-l border-gray-300 pl-4">
+              <button
+                onClick={() => setAlignment('left')}
+                disabled={!selectedCell}
+                className={`p-1.5 rounded border transition-all disabled:opacity-30 disabled:cursor-not-allowed ${
+                  getCurrentFormat().align === 'left'
+                    ? 'bg-blue-100 border-blue-300 text-blue-700'
+                    : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400'
+                }`}
+                title="Align Left"
+              >
+                <AlignLeft className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => setAlignment('center')}
+                disabled={!selectedCell}
+                className={`p-1.5 rounded border transition-all disabled:opacity-30 disabled:cursor-not-allowed ${
+                  getCurrentFormat().align === 'center'
+                    ? 'bg-blue-100 border-blue-300 text-blue-700'
+                    : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400'
+                }`}
+                title="Align Center"
+              >
+                <AlignCenter className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => setAlignment('right')}
+                disabled={!selectedCell}
+                className={`p-1.5 rounded border transition-all disabled:opacity-30 disabled:cursor-not-allowed ${
+                  getCurrentFormat().align === 'right'
+                    ? 'bg-blue-100 border-blue-300 text-blue-700'
+                    : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400'
+                }`}
+                title="Align Right"
+              >
+                <AlignRight className="h-4 w-4" />
+              </button>
+            </div>
           </div>
           {Object.keys(filters).length > 0 && (
             <div className="flex items-center space-x-2">
@@ -764,6 +810,8 @@ export default function SheetPage() {
                                   fontWeight: cell && cellFormats[cell.id]?.bold ? 'bold' : 'normal',
                                   fontStyle: cell && cellFormats[cell.id]?.italic ? 'italic' : 'normal',
                                   textDecoration: cell && cellFormats[cell.id]?.underline ? 'underline' : 'none',
+                                  textAlign: cell && cellFormats[cell.id]?.align ? cellFormats[cell.id]!.align : 'left',
+                                  width: '100%',
                                 }}
                               >
                                 {cell?.value ? (() => {
