@@ -41,11 +41,14 @@ export default function SheetPage() {
   });
 
   const addColumnMutation = useMutation({
-    mutationFn: () =>
-      sheetApi.createColumn(id!, {
-        name: `Column ${(sheet?.columns?.length || 0) + 1}`,
-        position: sheet?.columns?.length || 0,
-      }),
+    mutationFn: () => {
+      const columnIndex = sheet?.columns?.length || 0;
+      const columnName = getColumnLetter(columnIndex);
+      return sheetApi.createColumn(id!, {
+        name: columnName,
+        position: columnIndex,
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sheets', id] });
     },
@@ -508,21 +511,21 @@ export default function SheetPage() {
             <table className="min-w-full border-collapse">
               <thead>
                 <tr>
-                  <th className="sticky top-0 left-0 z-20 w-12 px-3 py-2.5 text-center text-xs font-semibold text-gray-600 bg-gray-50 border-b-2 border-r border-gray-300">
-                    #
+                  <th className="sticky top-0 left-0 z-20 w-12 px-3 py-2 text-center text-xs font-medium text-gray-700 bg-gray-100 border-b border-r border-gray-300">
+
                   </th>
                   {sheet.columns?.map((column: Column, index: number) => (
                     <th
                       key={column.id}
-                      style={{ minWidth: column.width || 180, maxWidth: column.width || 180 }}
-                      className={`sticky top-0 z-10 px-4 py-2.5 text-left text-xs font-semibold text-gray-700 bg-gray-50 border-b-2 border-gray-300 ${
+                      style={{ minWidth: column.width || 120, maxWidth: column.width || 120 }}
+                      className={`sticky top-0 z-10 px-3 py-2 text-left text-xs font-medium text-gray-700 bg-gray-100 border-b border-gray-300 ${
                         index !== 0 ? 'border-l border-gray-200' : ''
                       }`}
                     >
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-1">
+                        <div className="flex items-center space-x-1.5">
                           <span
-                            className="truncate cursor-pointer hover:text-gray-900"
+                            className="truncate cursor-pointer hover:text-gray-900 font-semibold"
                             onClick={() => handleSort(column.id)}
                           >
                             {column.name}
@@ -583,9 +586,6 @@ export default function SheetPage() {
                             )}
                           </div>
                         </div>
-                        <span className="text-[10px] text-gray-400 ml-2 uppercase tracking-wider">
-                          {column.type}
-                        </span>
                       </div>
                     </th>
                   ))}
@@ -596,10 +596,10 @@ export default function SheetPage() {
                   filteredAndSortedRows.map((row: Row, rowIndex: number) => (
                     <tr
                       key={row.id}
-                      className={rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}
+                      className="bg-white hover:bg-gray-50/50"
                     >
-                      <td className="sticky left-0 z-10 px-3 py-0 text-center text-xs font-medium text-gray-500 bg-gray-50 border-r border-b border-gray-200">
-                        <div className="h-10 flex items-center justify-center">
+                      <td className="sticky left-0 z-10 px-3 py-0 text-center text-xs font-medium text-gray-600 bg-gray-100 border-r border-b border-gray-200">
+                        <div className="h-9 flex items-center justify-center">
                           {rowIndex + 1}
                         </div>
                       </td>
@@ -612,15 +612,15 @@ export default function SheetPage() {
                         return (
                           <td
                             key={`${row.id}-${column.id}`}
-                            className={`px-4 py-0 text-sm text-gray-900 border-b border-gray-200 ${
+                            className={`px-2 py-0 text-sm text-gray-900 border-b border-gray-200 ${
                               colIndex !== 0 ? 'border-l border-gray-200' : ''
                             } ${
                               inFormulaMode
                                 ? 'cursor-crosshair hover:bg-green-100 hover:ring-2 hover:ring-inset hover:ring-green-400'
                                 : !isEditing
-                                ? 'cursor-pointer hover:bg-blue-50/50'
+                                ? 'cursor-pointer hover:bg-blue-50'
                                 : ''
-                            } ${isSelected && !isEditing ? 'ring-2 ring-inset ring-blue-500 bg-blue-50/30' : ''}`}
+                            } ${isSelected && !isEditing ? 'ring-2 ring-inset ring-blue-600 bg-blue-50/50' : ''}`}
                             onClick={() => {
                               if (cell) {
                                 setSelectedCell({ rowIndex, colIndex });
@@ -644,14 +644,14 @@ export default function SheetPage() {
                                   }
                                 }}
                                 autoFocus
-                                className={`w-full h-10 px-2 py-2 border-2 rounded focus:outline-none focus:ring-2 bg-white shadow-sm ${
+                                className={`w-full h-9 px-2 py-1.5 border-2 focus:outline-none bg-white ${
                                   isInFormulaMode()
-                                    ? 'border-green-500 ring-green-500'
-                                    : 'border-blue-500 ring-blue-500'
+                                    ? 'border-green-500 focus:ring-1 focus:ring-green-500'
+                                    : 'border-blue-600 focus:ring-1 focus:ring-blue-600'
                                 }`}
                               />
                             ) : (
-                              <div className="h-10 flex items-center py-2 truncate">
+                              <div className="h-9 flex items-center px-1 truncate">
                                 {cell?.value ? (() => {
                                   const parsedValue = JSON.parse(cell.value);
                                   // If it's a formula and we have a computed value, show that

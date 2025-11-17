@@ -34,13 +34,24 @@ export async function createSheet(data: CreateSheetInput, userId: string) {
     },
   });
 
-  // Create 10 default columns
+  // Helper function to convert index to column letter (0 -> A, 1 -> B, etc.)
+  const getColumnLetter = (index: number): string => {
+    let letter = '';
+    let idx = index;
+    while (idx >= 0) {
+      letter = String.fromCharCode(65 + (idx % 26)) + letter;
+      idx = Math.floor(idx / 26) - 1;
+    }
+    return letter;
+  };
+
+  // Create 10 default columns (A, B, C, ..., J)
   const columns = await Promise.all(
     Array.from({ length: 10 }, (_, i) =>
       prisma.column.create({
         data: {
           sheetId: sheet.id,
-          name: `Column ${i + 1}`,
+          name: getColumnLetter(i),
           type: 'TEXT',
           position: i,
           width: 150,
