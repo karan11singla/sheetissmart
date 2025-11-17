@@ -71,6 +71,11 @@ export const sheetApi = {
     return data.data.column;
   },
 
+  updateColumn: async (sheetId: string, columnId: string, input: { width?: number }) => {
+    const { data } = await api.put(`/api/v1/sheets/${sheetId}/columns/${columnId}`, input);
+    return data.data.column;
+  },
+
   deleteColumn: async (sheetId: string, columnId: string): Promise<void> => {
     await api.delete(`/api/v1/sheets/${sheetId}/columns/${columnId}`);
   },

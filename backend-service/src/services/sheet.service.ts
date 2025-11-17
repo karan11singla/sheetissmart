@@ -360,6 +360,32 @@ export async function createRow(sheetId: string, data: CreateRowInput, userId: s
   });
 }
 
+export async function updateColumn(
+  sheetId: string,
+  columnId: string,
+  userId: string,
+  data: { width?: number }
+) {
+  // Check if sheet exists and user has access
+  const sheet = await prisma.sheet.findUnique({
+    where: { id: sheetId },
+  });
+
+  if (!sheet) {
+    throw new AppError('Sheet not found', 404);
+  }
+
+  if (sheet.userId !== userId) {
+    throw new AppError('Access denied', 403);
+  }
+
+  // Update the column
+  return await prisma.column.update({
+    where: { id: columnId },
+    data,
+  });
+}
+
 export async function deleteColumn(sheetId: string, columnId: string, userId: string) {
   // Check if sheet exists and user has access
   const sheet = await prisma.sheet.findUnique({

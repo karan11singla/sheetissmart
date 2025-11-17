@@ -26,6 +26,7 @@ export default function SheetPage() {
   const [showFormulaAutocomplete, setShowFormulaAutocomplete] = useState(false);
   const [formulaSuggestions, setFormulaSuggestions] = useState<string[]>([]);
   const [rangeStartCell, setRangeStartCell] = useState<{ rowIndex: number; colIndex: number } | null>(null);
+  const [resizingColumn, setResizingColumn] = useState<{ id: string; startX: number; startWidth: number } | null>(null);
 
   // Cell formatting state (stored per cell ID)
   type CellFormat = {
@@ -99,6 +100,14 @@ export default function SheetPage() {
 
   const deleteRowMutation = useMutation({
     mutationFn: (rowId: string) => sheetApi.deleteRow(id!, rowId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sheets', id] });
+    },
+  });
+
+  const updateColumnMutation = useMutation({
+    mutationFn: ({ columnId, width }: { columnId: string; width: number }) =>
+      sheetApi.updateColumn(id!, columnId, { width }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sheets', id] });
     },
@@ -314,6 +323,45 @@ export default function SheetPage() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Handle column resizing
+  useEffect(() => {
+    if (!resizingColumn) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const delta = e.clientX - resizingColumn.startX;
+      const newWidth = Math.max(60, resizingColumn.startWidth + delta); // Min width 60px
+
+      // Update column width optimistically
+      queryClient.setQueryData(['sheets', id], (oldData: any) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          columns: oldData.columns?.map((col: any) =>
+            col.id === resizingColumn.id ? { ...col, width: newWidth } : col
+          ),
+        };
+      });
+    };
+
+    const handleMouseUp = () => {
+      if (resizingColumn) {
+        const column = sheet?.columns?.find(col => col.id === resizingColumn.id);
+        if (column) {
+          updateColumnMutation.mutate({ columnId: resizingColumn.id, width: column.width || 120 });
+        }
+      }
+      setResizingColumn(null);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [resizingColumn, id, queryClient, sheet?.columns, updateColumnMutation]);
 
   const handleFilterChange = (columnId: string, value: string) => {
     if (value === '') {
@@ -852,7 +900,7 @@ export default function SheetPage() {
                   {sheet.columns?.map((column: Column, index: number) => (
                     <th
                       key={column.id}
-                      style={{ minWidth: column.width || 120, maxWidth: column.width || 120 }}
+                      style={{ minWidth: column.width || 120, maxWidth: column.width || 120, position: 'relative' }}
                       className={`sticky top-0 z-10 px-3 py-2 text-left text-xs font-medium text-gray-700 bg-gray-100 border-b border-gray-300 ${
                         index !== 0 ? 'border-l border-gray-200' : ''
                       }`}
@@ -934,6 +982,19 @@ export default function SheetPage() {
                           </button>
                         </div>
                       </div>
+                      {/* Resize handle */}
+                      <div
+                        className="absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-blue-500 hover:w-1.5"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setResizingColumn({
+                            id: column.id,
+                            startX: e.clientX,
+                            startWidth: column.width || 120,
+                          });
+                        }}
+                      />
                     </th>
                   ))}
                 </tr>

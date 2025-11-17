@@ -6,6 +6,7 @@ import {
   updateSheet,
   deleteSheet,
   createColumn,
+  updateColumn,
   createRow,
   updateCell,
   deleteColumn,
@@ -28,6 +29,7 @@ router.delete('/:id', deleteSheet);
 
 // Column operations
 router.post('/:id/columns', createColumn);
+router.put('/:id/columns/:columnId', updateColumn);
 router.delete('/:id/columns/:columnId', deleteColumn);
 
 // Row operations
