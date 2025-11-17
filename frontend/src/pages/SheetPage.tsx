@@ -27,6 +27,8 @@ export default function SheetPage() {
   const [resizingColumn, setResizingColumn] = useState<{ id: string; startX: number; startWidth: number } | null>(null);
   const [resizingRow, setResizingRow] = useState<{ id: string; startY: number; startHeight: number } | null>(null);
   const [copiedCell, setCopiedCell] = useState<{ cellId: string; value: string; format: CellFormat } | null>(null);
+  const [editingColumnId, setEditingColumnId] = useState<string | null>(null);
+  const [editingColumnName, setEditingColumnName] = useState<string>('');
 
   // Cell formatting state (stored per cell ID)
   type CellFormat = {
@@ -113,8 +115,8 @@ export default function SheetPage() {
   });
 
   const updateColumnMutation = useMutation({
-    mutationFn: ({ columnId, width }: { columnId: string; width: number }) =>
-      sheetApi.updateColumn(id!, columnId, { width }),
+    mutationFn: ({ columnId, width, name }: { columnId: string; width?: number; name?: string }) =>
+      sheetApi.updateColumn(id!, columnId, { width, name }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sheets', id] });
     },
@@ -1070,12 +1072,50 @@ export default function SheetPage() {
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-1.5">
-                          <span
-                            className="truncate cursor-pointer hover:text-gray-900 font-semibold"
-                            onClick={() => handleSort(column.id)}
-                          >
-                            {column.name}
-                          </span>
+                          {editingColumnId === column.id ? (
+                            <input
+                              type="text"
+                              value={editingColumnName}
+                              onChange={(e) => setEditingColumnName(e.target.value)}
+                              onBlur={() => {
+                                if (editingColumnName.trim() && editingColumnName !== column.name) {
+                                  updateColumnMutation.mutate({
+                                    columnId: column.id,
+                                    name: editingColumnName.trim()
+                                  });
+                                }
+                                setEditingColumnId(null);
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  if (editingColumnName.trim() && editingColumnName !== column.name) {
+                                    updateColumnMutation.mutate({
+                                      columnId: column.id,
+                                      name: editingColumnName.trim()
+                                    });
+                                  }
+                                  setEditingColumnId(null);
+                                } else if (e.key === 'Escape') {
+                                  setEditingColumnId(null);
+                                }
+                              }}
+                              autoFocus
+                              className="truncate font-semibold bg-white border-b-2 border-blue-500 px-1 focus:outline-none min-w-[60px]"
+                            />
+                          ) : (
+                            <span
+                              className="truncate cursor-pointer hover:text-gray-900 font-semibold"
+                              onClick={() => handleSort(column.id)}
+                              onDoubleClick={(e) => {
+                                e.stopPropagation();
+                                setEditingColumnId(column.id);
+                                setEditingColumnName(column.name);
+                              }}
+                              title="Double-click to rename"
+                            >
+                              {column.name}
+                            </span>
+                          )}
                           {sortConfig?.columnId === column.id && (
                             <span className="text-blue-600">
                               {sortConfig.direction === 'asc' ? (

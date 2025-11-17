@@ -383,7 +383,7 @@ export async function updateColumn(
   sheetId: string,
   columnId: string,
   userId: string,
-  data: { width?: number }
+  data: { width?: number; name?: string }
 ) {
   // Check if sheet exists and user has access
   const sheet = await prisma.sheet.findUnique({

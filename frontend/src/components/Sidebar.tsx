@@ -1,9 +1,10 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Clock, Star, User, Plus, LogOut } from 'lucide-react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Home, Clock, Star, User, Plus, LogOut, FolderOpen } from 'lucide-react';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { sheetApi } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import Logo from './Logo';
+import { useState } from 'react';
 
 interface SidebarProps {
   onNavigate?: () => void;
@@ -14,9 +15,17 @@ export default function Sidebar({ onNavigate }: SidebarProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user, logout } = useAuth();
+  const [showBrowse, setShowBrowse] = useState(false);
+
+  const { data: sheets } = useQuery({
+    queryKey: ['sheets'],
+    queryFn: sheetApi.getAll,
+    enabled: showBrowse,
+  });
 
   const navItems = [
     { icon: Home, label: 'Home', path: '/' },
+    { icon: FolderOpen, label: 'Browse', path: null, onClick: () => setShowBrowse(!showBrowse) },
     { icon: Clock, label: 'Recent', path: '/recent' },
     { icon: Star, label: 'Favorites', path: '/favorites' },
   ];
@@ -66,12 +75,53 @@ export default function Sidebar({ onNavigate }: SidebarProps) {
       <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
-          const isActive = location.pathname === item.path;
+          const isActive = item.path && location.pathname === item.path;
+
+          if (item.path === null) {
+            // Browse button with dropdown
+            return (
+              <div key={item.label}>
+                <button
+                  onClick={item.onClick}
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
+                    showBrowse
+                      ? 'bg-slate-700 text-white shadow-lg'
+                      : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                  }`}
+                >
+                  <Icon className="h-5 w-5 flex-shrink-0" />
+                  <span className="font-medium">{item.label}</span>
+                </button>
+
+                {/* Sheet list dropdown */}
+                {showBrowse && (
+                  <div className="mt-2 ml-4 space-y-1 max-h-64 overflow-y-auto">
+                    {sheets && sheets.length > 0 ? (
+                      sheets.map((sheet: any) => (
+                        <button
+                          key={sheet.id}
+                          onClick={() => {
+                            navigate(`/sheet/${sheet.id}`);
+                            onNavigate?.();
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-slate-400 hover:text-white hover:bg-slate-800 rounded transition-all truncate"
+                        >
+                          {sheet.name}
+                        </button>
+                      ))
+                    ) : (
+                      <p className="px-4 py-2 text-xs text-slate-500">No sheets yet</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          }
 
           return (
             <Link
               key={item.path}
-              to={item.path}
+              to={item.path!}
               onClick={onNavigate}
               className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
                 isActive

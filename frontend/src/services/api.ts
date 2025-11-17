@@ -76,7 +76,7 @@ export const sheetApi = {
     return data.data.column;
   },
 
-  updateColumn: async (sheetId: string, columnId: string, input: { width?: number }) => {
+  updateColumn: async (sheetId: string, columnId: string, input: { width?: number; name?: string }) => {
     const { data } = await api.put(`/api/v1/sheets/${sheetId}/columns/${columnId}`, input);
     return data.data.column;
   },
