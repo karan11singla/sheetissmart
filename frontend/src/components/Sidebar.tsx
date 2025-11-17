@@ -49,7 +49,7 @@ export default function Sidebar({ onNavigate }: SidebarProps) {
   };
 
   return (
-    <aside className="w-64 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col shadow-2xl border-r border-slate-700">
+    <aside className="w-64 h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col shadow-2xl border-r border-slate-700">
       {/* Logo & Brand */}
       <div className="p-6 border-b border-slate-700">
         <Link to="/" className="flex items-center space-x-3 group">
