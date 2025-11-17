@@ -1,24 +1,65 @@
-import { Link, useLocation } from 'react-router-dom';
-import { Home, Bell, Search, Folder, Clock, Star, Users, Grid, Plus } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Home, Clock, Star, User, Plus, LogOut } from 'lucide-react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { sheetApi } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
+import Logo from './Logo';
 
 export default function Sidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { user, logout } = useAuth();
 
   const navItems = [
     { icon: Home, label: 'Home', path: '/' },
-    { icon: Bell, label: 'Notifications', path: '/notifications' },
-    { icon: Search, label: 'Search', path: '/search' },
-    { icon: Folder, label: 'Browse', path: '/browse' },
-    { icon: Clock, label: 'Recents', path: '/recents' },
+    { icon: Clock, label: 'Recent', path: '/recent' },
     { icon: Star, label: 'Favorites', path: '/favorites' },
-    { icon: Users, label: 'Resource Management', path: '/resources' },
-    { icon: Grid, label: 'WorkApps', path: '/workapps' },
   ];
 
+  const createSheetMutation = useMutation({
+    mutationFn: () => sheetApi.create({
+      name: `Untitled Sheet ${new Date().toLocaleDateString()}`,
+      description: '',
+    }),
+    onSuccess: (sheet) => {
+      queryClient.invalidateQueries({ queryKey: ['sheets'] });
+      navigate(`/sheet/${sheet.id}`);
+    },
+  });
+
+  const handleCreateSheet = () => {
+    createSheetMutation.mutate();
+  };
+
   return (
-    <aside className="w-16 bg-gradient-to-b from-indigo-800 via-indigo-700 to-indigo-900 flex flex-col h-full shadow-lg">
+    <aside className="w-64 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col shadow-2xl border-r border-slate-700">
+      {/* Logo & Brand */}
+      <div className="p-6 border-b border-slate-700">
+        <Link to="/" className="flex items-center space-x-3 group">
+          <Logo className="h-8 w-8 transition-transform group-hover:scale-110" />
+          <span className="text-xl font-bold text-white">
+            SheetIsSmart
+          </span>
+        </Link>
+      </div>
+
+      {/* Create Button */}
+      <div className="p-4">
+        <button
+          onClick={handleCreateSheet}
+          disabled={createSheetMutation.isPending}
+          className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <Plus className="h-5 w-5" />
+          <span className="font-medium">
+            {createSheetMutation.isPending ? 'Creating...' : 'Create Sheet'}
+          </span>
+        </button>
+      </div>
+
       {/* Navigation */}
-      <nav className="flex-1 py-4 flex flex-col items-center space-y-1 overflow-y-auto">
+      <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path;
@@ -27,40 +68,42 @@ export default function Sidebar() {
             <Link
               key={item.path}
               to={item.path}
-              className={`group relative flex flex-col items-center justify-center w-12 h-12 rounded-lg transition-all ${
+              className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
                 isActive
-                  ? 'bg-white bg-opacity-20 text-white'
-                  : 'text-white text-opacity-70 hover:bg-white hover:bg-opacity-10 hover:text-opacity-100'
+                  ? 'bg-slate-700 text-white shadow-lg'
+                  : 'text-slate-300 hover:bg-slate-800 hover:text-white'
               }`}
-              title={item.label}
             >
-              <Icon className="h-5 w-5" />
-              <span className="text-[9px] mt-0.5 font-medium">{item.label.split(' ')[0]}</span>
-
-              {/* Tooltip */}
-              <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 transition-opacity">
-                {item.label}
-              </div>
+              <Icon className="h-5 w-5 flex-shrink-0" />
+              <span className="font-medium">{item.label}</span>
             </Link>
           );
         })}
       </nav>
 
-      {/* Create Button */}
-      <div className="p-2 border-t border-white border-opacity-20">
+      {/* User Section */}
+      <div className="p-4 border-t border-slate-700 space-y-2">
         <Link
-          to="/"
-          onClick={(e) => {
-            e.preventDefault();
-            // This will be handled by the home page create button
-            window.location.href = '/?create=true';
-          }}
-          className="flex flex-col items-center justify-center w-12 h-12 bg-blue-500 hover:bg-blue-600 rounded-lg transition-colors text-white"
-          title="Create"
+          to="/account"
+          className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
+            location.pathname === '/account'
+              ? 'bg-slate-700 text-white'
+              : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+          }`}
         >
-          <Plus className="h-6 w-6" />
-          <span className="text-[9px] mt-0.5 font-medium">Create</span>
+          <User className="h-5 w-5 flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="font-medium truncate">{user?.name || 'Account'}</p>
+            <p className="text-xs text-slate-400 truncate">{user?.email}</p>
+          </div>
         </Link>
+        <button
+          onClick={logout}
+          className="w-full flex items-center space-x-3 px-4 py-2 text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-all"
+        >
+          <LogOut className="h-5 w-5" />
+          <span className="font-medium">Logout</span>
+        </button>
       </div>
     </aside>
   );

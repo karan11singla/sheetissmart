@@ -2,6 +2,7 @@ export interface Sheet {
   id: string;
   name: string;
   description?: string;
+  isFavorite?: boolean;
   createdAt: string;
   updatedAt: string;
   columns?: Column[];

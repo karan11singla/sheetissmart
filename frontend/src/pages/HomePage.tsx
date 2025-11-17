@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { Plus, FileText, Trash2, Clock, Share2 } from 'lucide-react';
+import { Plus, FileText, Trash2, Clock, Share2, Star } from 'lucide-react';
 import { sheetApi } from '../services/api';
 import type { Sheet, CreateSheetInput } from '../types';
 
@@ -30,6 +30,13 @@ export default function HomePage() {
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => sheetApi.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sheets'] });
+    },
+  });
+
+  const toggleFavoriteMutation = useMutation({
+    mutationFn: (id: string) => sheetApi.toggleFavorite(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sheets'] });
     },
@@ -111,17 +118,34 @@ export default function HomePage() {
                     <div className="p-2 bg-blue-50 rounded-lg">
                       <FileText className="h-5 w-5 text-blue-600" />
                     </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (window.confirm('Are you sure you want to delete this sheet?')) {
-                          deleteMutation.mutate(sheet.id);
-                        }
-                      }}
-                      className="opacity-0 group-hover:opacity-100 p-1.5 text-red-600 hover:bg-red-50 rounded transition-opacity"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                    <div className="flex items-center space-x-1">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleFavoriteMutation.mutate(sheet.id);
+                        }}
+                        className="p-1.5 hover:bg-yellow-50 rounded transition-colors"
+                      >
+                        <Star
+                          className={`h-4 w-4 ${
+                            sheet.isFavorite
+                              ? 'fill-yellow-400 text-yellow-400'
+                              : 'text-gray-400'
+                          }`}
+                        />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (window.confirm('Are you sure you want to delete this sheet?')) {
+                            deleteMutation.mutate(sheet.id);
+                          }
+                        }}
+                        className="opacity-0 group-hover:opacity-100 p-1.5 text-red-600 hover:bg-red-50 rounded transition-opacity"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
                   <h3 className="text-base font-semibold text-gray-900 mb-1 truncate">
                     {sheet.name}

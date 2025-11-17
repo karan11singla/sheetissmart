@@ -258,6 +258,25 @@ export async function updateSheet(id: string, data: UpdateSheetInput, userId: st
   });
 }
 
+export async function toggleFavorite(id: string, userId: string) {
+  // Check if sheet belongs to user
+  const sheet = await prisma.sheet.findUnique({ where: { id } });
+  if (!sheet) {
+    throw new AppError('Sheet not found', 404);
+  }
+  if (sheet.userId !== userId) {
+    throw new AppError('Access denied', 403);
+  }
+
+  // Toggle the favorite status
+  return await prisma.sheet.update({
+    where: { id },
+    data: {
+      isFavorite: !sheet.isFavorite,
+    },
+  });
+}
+
 export async function deleteSheet(id: string, userId: string) {
   // Check if sheet belongs to user
   const sheet = await prisma.sheet.findUnique({ where: { id } });
@@ -382,6 +401,32 @@ export async function updateColumn(
   // Update the column
   return await prisma.column.update({
     where: { id: columnId },
+    data,
+  });
+}
+
+export async function updateRow(
+  sheetId: string,
+  rowId: string,
+  userId: string,
+  data: { height?: number }
+) {
+  // Check if sheet exists and user has access
+  const sheet = await prisma.sheet.findUnique({
+    where: { id: sheetId },
+  });
+
+  if (!sheet) {
+    throw new AppError('Sheet not found', 404);
+  }
+
+  if (sheet.userId !== userId) {
+    throw new AppError('Access denied', 403);
+  }
+
+  // Update the row
+  return await prisma.row.update({
+    where: { id: rowId },
     data,
   });
 }

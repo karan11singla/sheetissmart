@@ -25,6 +25,7 @@ export default function SheetPage() {
   const [formulaSuggestions, setFormulaSuggestions] = useState<string[]>([]);
   const [rangeStartCell, setRangeStartCell] = useState<{ rowIndex: number; colIndex: number } | null>(null);
   const [resizingColumn, setResizingColumn] = useState<{ id: string; startX: number; startWidth: number } | null>(null);
+  const [resizingRow, setResizingRow] = useState<{ id: string; startY: number; startHeight: number } | null>(null);
   const [copiedCell, setCopiedCell] = useState<{ cellId: string; value: string; format: CellFormat } | null>(null);
 
   // Cell formatting state (stored per cell ID)
@@ -114,6 +115,14 @@ export default function SheetPage() {
   const updateColumnMutation = useMutation({
     mutationFn: ({ columnId, width }: { columnId: string; width: number }) =>
       sheetApi.updateColumn(id!, columnId, { width }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sheets', id] });
+    },
+  });
+
+  const updateRowMutation = useMutation({
+    mutationFn: ({ rowId, height }: { rowId: string; height: number }) =>
+      sheetApi.updateRow(id!, rowId, { height }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sheets', id] });
     },
@@ -368,6 +377,45 @@ export default function SheetPage() {
       document.removeEventListener('mouseup', handleMouseUp);
     };
   }, [resizingColumn, id, queryClient, sheet?.columns, updateColumnMutation]);
+
+  // Handle row resizing
+  useEffect(() => {
+    if (!resizingRow) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const delta = e.clientY - resizingRow.startY;
+      const newHeight = Math.max(25, resizingRow.startHeight + delta); // Min height 25px
+
+      // Update row height optimistically
+      queryClient.setQueryData(['sheets', id], (oldData: any) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          rows: oldData.rows?.map((row: any) =>
+            row.id === resizingRow.id ? { ...row, height: newHeight } : row
+          ),
+        };
+      });
+    };
+
+    const handleMouseUp = () => {
+      if (resizingRow) {
+        const row = sheet?.rows?.find(r => r.id === resizingRow.id);
+        if (row) {
+          updateRowMutation.mutate({ rowId: resizingRow.id, height: row.height || 35 });
+        }
+      }
+      setResizingRow(null);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [resizingRow, id, queryClient, sheet?.rows, updateRowMutation]);
 
   const handleFilterChange = (columnId: string, value: string) => {
     if (value === '') {
@@ -1121,8 +1169,8 @@ export default function SheetPage() {
                       key={row.id}
                       className="bg-white hover:bg-gray-50/50"
                     >
-                      <td className="sticky left-0 z-10 px-3 py-0 text-center text-xs font-medium text-gray-600 bg-gray-100 border-r border-b border-gray-200 group">
-                        <div className="h-9 flex items-center justify-center space-x-1">
+                      <td className="sticky left-0 z-10 px-3 py-0 text-center text-xs font-medium text-gray-600 bg-gray-100 border-r border-b border-gray-200 group relative" style={{ height: row.height || 35 }}>
+                        <div className="flex items-center justify-center space-x-1" style={{ height: row.height || 35 }}>
                           <span>{rowIndex + 1}</span>
                           <button
                             onClick={(e) => {
@@ -1137,6 +1185,19 @@ export default function SheetPage() {
                             <Trash2 className="h-3 w-3" />
                           </button>
                         </div>
+                        {/* Resize handle */}
+                        <div
+                          className="absolute bottom-0 left-0 w-full h-1 cursor-row-resize hover:bg-blue-500 hover:h-1.5"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setResizingRow({
+                              id: row.id,
+                              startY: e.clientY,
+                              startHeight: row.height || 35,
+                            });
+                          }}
+                        />
                       </td>
                       {sheet.columns?.map((column: Column, colIndex: number) => {
                         const cell = getCellValue(row, column);
@@ -1157,6 +1218,7 @@ export default function SheetPage() {
                                 ? 'cursor-pointer hover:bg-blue-50'
                                 : ''
                             } ${isSelected && !isEditing ? 'ring-2 ring-inset ring-blue-600 bg-blue-50/50' : ''} ${isCopied ? 'ring-2 ring-inset ring-dashed ring-green-600' : ''}`}
+                            style={{ height: row.height || 35 }}
                             onMouseDown={(e) => {
                               // Prevent blur on input when clicking cells in formula mode
                               if (inFormulaMode) {

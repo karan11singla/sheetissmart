@@ -170,6 +170,22 @@ export const deleteColumn = asyncHandler(async (req: Request, res: Response) => 
   res.status(204).send();
 });
 
+export const updateRow = asyncHandler(async (req: Request, res: Response) => {
+  const { id, rowId } = req.params;
+  const { height } = req.body;
+
+  if (!req.user) {
+    throw new AppError('Not authenticated', 401);
+  }
+
+  const row = await sheetService.updateRow(id, rowId, req.user.userId, { height });
+
+  res.status(200).json({
+    status: 'success',
+    data: { row },
+  });
+});
+
 export const deleteRow = asyncHandler(async (req: Request, res: Response) => {
   const { id, rowId } = req.params;
 
@@ -200,4 +216,19 @@ export const exportSheet = asyncHandler(async (req: Request, res: Response) => {
   res.setHeader('Content-Type', 'text/csv');
   res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
   res.status(200).send(csv);
+});
+
+export const toggleFavorite = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  if (!req.user) {
+    throw new AppError('Not authenticated', 401);
+  }
+
+  const sheet = await sheetService.toggleFavorite(id, req.user.userId);
+
+  res.status(200).json({
+    status: 'success',
+    data: { sheet },
+  });
 });

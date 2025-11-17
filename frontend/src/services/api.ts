@@ -66,6 +66,11 @@ export const sheetApi = {
     await api.delete(`/api/v1/sheets/${id}`);
   },
 
+  toggleFavorite: async (id: string): Promise<Sheet> => {
+    const { data } = await api.put(`/api/v1/sheets/${id}/favorite`);
+    return data.data.sheet;
+  },
+
   createColumn: async (sheetId: string, input: CreateColumnInput) => {
     const { data } = await api.post(`/api/v1/sheets/${sheetId}/columns`, input);
     return data.data.column;
@@ -82,6 +87,11 @@ export const sheetApi = {
 
   createRow: async (sheetId: string, input: CreateRowInput) => {
     const { data } = await api.post(`/api/v1/sheets/${sheetId}/rows`, input);
+    return data.data.row;
+  },
+
+  updateRow: async (sheetId: string, rowId: string, input: { height?: number }) => {
+    const { data } = await api.put(`/api/v1/sheets/${sheetId}/rows/${rowId}`, input);
     return data.data.row;
   },
 

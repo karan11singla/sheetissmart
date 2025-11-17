@@ -8,10 +8,12 @@ import {
   createColumn,
   updateColumn,
   createRow,
+  updateRow,
   updateCell,
   deleteColumn,
   deleteRow,
   exportSheet,
+  toggleFavorite,
 } from '../controllers/sheet.controller';
 import { authenticate } from '../middleware/auth';
 
@@ -27,6 +29,9 @@ router.get('/:id', getSheet);
 router.put('/:id', updateSheet);
 router.delete('/:id', deleteSheet);
 
+// Favorite operations
+router.put('/:id/favorite', toggleFavorite);
+
 // Column operations
 router.post('/:id/columns', createColumn);
 router.put('/:id/columns/:columnId', updateColumn);
@@ -34,6 +39,7 @@ router.delete('/:id/columns/:columnId', deleteColumn);
 
 // Row operations
 router.post('/:id/rows', createRow);
+router.put('/:id/rows/:rowId', updateRow);
 router.delete('/:id/rows/:rowId', deleteRow);
 
 // Cell operations
