@@ -167,6 +167,83 @@ export class FormulaEngine {
         return values.length > 0 ? Math.max(...values) : 0;
       }
 
+      // Handle PRODUCT function (multiply all values)
+      const productMatch = formula.match(/^PRODUCT\((.+)\)$/i);
+      if (productMatch) {
+        const values = await this.getValuesFromArgs(sheetId, productMatch[1]);
+        return values.length > 0 ? values.reduce((product, val) => product * val, 1) : 0;
+      }
+
+      // Handle CONCAT function (concatenate text)
+      const concatMatch = formula.match(/^CONCAT\((.+)\)$/i);
+      if (concatMatch) {
+        const args = concatMatch[1].split(',').map(s => s.trim());
+        const parts: string[] = [];
+        for (const arg of args) {
+          // Check if it's a cell reference
+          const cellMatch = arg.match(/^([A-Z]+\d+)$/);
+          if (cellMatch) {
+            const parsed = this.parseCellRef(cellMatch[1]);
+            if (parsed) {
+              const value = await this.getCellValue(sheetId, parsed.columnIndex, parsed.rowIndex);
+              parts.push(value !== null ? value.toString() : '');
+            }
+          } else {
+            // It's a string literal - remove quotes if present
+            parts.push(arg.replace(/^["']|["']$/g, ''));
+          }
+        }
+        return parts.join('');
+      }
+
+      // Handle IF function - IF(condition, true_value, false_value)
+      // Simple format: IF(A1>10, "Yes", "No") or IF(A1>B1, A1, B1)
+      const ifMatch = formula.match(/^IF\((.+),(.+),(.+)\)$/i);
+      if (ifMatch) {
+        let condition = ifMatch[1].trim();
+        const trueVal = ifMatch[2].trim();
+        const falseVal = ifMatch[3].trim();
+
+        // Replace cell references in condition with values
+        const cellRefs = condition.match(/[A-Z]+\d+/g);
+        if (cellRefs) {
+          for (const ref of cellRefs) {
+            const parsed = this.parseCellRef(ref);
+            if (parsed) {
+              const value = await this.getCellValue(sheetId, parsed.columnIndex, parsed.rowIndex);
+              condition = condition.replace(ref, value !== null ? value.toString() : '0');
+            }
+          }
+        }
+
+        // Evaluate condition (simple comparison operators)
+        let conditionResult = false;
+        try {
+          // This is a simple eval for the condition - only allows comparisons
+          if (/^[\d\s+\-*/(). <>!=]+$/.test(condition)) {
+            conditionResult = new Function('return ' + condition)();
+          }
+        } catch {
+          conditionResult = false;
+        }
+
+        // Get the true or false value
+        const resultVal = conditionResult ? trueVal : falseVal;
+
+        // Check if it's a cell reference
+        const cellMatch = resultVal.match(/^([A-Z]+\d+)$/);
+        if (cellMatch) {
+          const parsed = this.parseCellRef(cellMatch[1]);
+          if (parsed) {
+            const value = await this.getCellValue(sheetId, parsed.columnIndex, parsed.rowIndex);
+            return value !== null ? value : 0;
+          }
+        }
+
+        // Otherwise return the literal value (remove quotes if present)
+        return resultVal.replace(/^["']|["']$/g, '');
+      }
+
       // Handle basic arithmetic with cell references
       // Replace cell references with values
       let expression = formula;

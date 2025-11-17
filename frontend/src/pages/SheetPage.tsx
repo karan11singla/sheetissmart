@@ -47,7 +47,9 @@ export default function SheetPage() {
     { name: 'COUNT', description: 'Count of values' },
     { name: 'MIN', description: 'Minimum value' },
     { name: 'MAX', description: 'Maximum value' },
-    { name: 'IF', description: 'Conditional logic' },
+    { name: 'PRODUCT', description: 'Multiply all values' },
+    { name: 'CONCAT', description: 'Concatenate text' },
+    { name: 'IF', description: 'Conditional: IF(condition,true,false)' },
   ];
 
   const { data: sheet, isLoading } = useQuery({
