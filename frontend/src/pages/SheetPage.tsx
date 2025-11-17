@@ -737,66 +737,58 @@ export default function SheetPage() {
   }
 
   return (
-    <div className="h-full flex flex-col bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
-        <div className="flex items-center justify-between">
+    <div className="h-full flex flex-col bg-white">
+      {/* Smartsheet-style Menu Bar */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="flex items-center justify-between px-4 h-12">
           <div className="flex items-center space-x-4">
-            <button
-              onClick={() => navigate('/')}
-              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
-            >
-              <ArrowLeft className="h-5 w-5" />
+            <button className="text-sm text-gray-700 hover:text-gray-900 px-2 py-1 hover:bg-gray-100 rounded transition-colors">
+              File
             </button>
-            <div>
-              {isEditingName ? (
-                <input
-                  type="text"
-                  value={sheetName}
-                  onChange={(e) => setSheetName(e.target.value)}
-                  onBlur={handleSaveName}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleSaveName();
-                    if (e.key === 'Escape') setIsEditingName(false);
-                  }}
-                  autoFocus
-                  className="text-2xl font-semibold text-gray-900 border-b-2 border-blue-500 px-2 py-1 focus:outline-none"
-                />
-              ) : (
-                <div className="flex items-center space-x-2 group">
-                  <h1 className="text-2xl font-semibold text-gray-900">{sheet.name}</h1>
-                  {(sheet as any).isOwner !== false && (
-                    <button
-                      onClick={() => {
-                        setSheetName(sheet.name);
-                        setIsEditingName(true);
-                      }}
-                      className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-100 rounded transition-opacity"
-                    >
-                      <Edit2 className="h-4 w-4 text-gray-500" />
-                    </button>
-                  )}
-                </div>
-              )}
-              {sheet.description && (
-                <p className="text-sm text-gray-500 mt-0.5">{sheet.description}</p>
-              )}
-            </div>
+            <button className="text-sm text-gray-700 hover:text-gray-900 px-2 py-1 hover:bg-gray-100 rounded transition-colors">
+              Automation
+            </button>
+            <button className="text-sm text-gray-700 hover:text-gray-900 px-2 py-1 hover:bg-gray-100 rounded transition-colors">
+              Forms
+            </button>
+            <button className="text-sm text-gray-700 hover:text-gray-900 px-2 py-1 hover:bg-gray-100 rounded transition-colors">
+              Connections
+            </button>
+            <button className="text-sm text-gray-700 hover:text-gray-900 px-2 py-1 hover:bg-gray-100 rounded transition-colors">
+              Dynamic View
+            </button>
           </div>
           <div className="flex items-center space-x-2">
-            <button
-              onClick={handleDownloadCSV}
-              className="inline-flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors shadow-sm text-sm font-medium"
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Export CSV
-            </button>
+            {isEditingName ? (
+              <input
+                type="text"
+                value={sheetName}
+                onChange={(e) => setSheetName(e.target.value)}
+                onBlur={handleSaveName}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSaveName();
+                  if (e.key === 'Escape') setIsEditingName(false);
+                }}
+                autoFocus
+                className="text-sm font-medium text-gray-900 border-b border-blue-500 px-2 py-1 focus:outline-none"
+              />
+            ) : (
+              <button
+                onClick={() => {
+                  setSheetName(sheet.name);
+                  setIsEditingName(true);
+                }}
+                className="text-sm font-medium text-gray-900 hover:text-blue-600 flex items-center space-x-1"
+              >
+                <span>{sheet.name}</span>
+                <Star className="h-4 w-4 text-gray-400" />
+              </button>
+            )}
             {(sheet as any).isOwner !== false && (
               <button
                 onClick={() => setIsShareModalOpen(true)}
-                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm text-sm font-medium"
+                className="inline-flex items-center px-4 py-1.5 bg-teal-600 text-white rounded hover:bg-teal-700 transition-colors text-sm font-medium"
               >
-                <Share2 className="h-4 w-4 mr-2" />
                 Share
               </button>
             )}
@@ -805,7 +797,7 @@ export default function SheetPage() {
       </div>
 
       {/* Formatting Toolbar */}
-      <div className="bg-white border-b border-gray-200 px-6 py-2">
+      <div className="bg-gray-50 border-b border-gray-200 px-4 py-2">
         <div className="flex items-center justify-between">
           {isInFormulaMode() && (
             <div className="absolute top-2 left-1/2 transform -translate-x-1/2 bg-green-100 text-green-800 px-4 py-1.5 rounded-full text-xs font-medium shadow-sm border border-green-200 z-30">

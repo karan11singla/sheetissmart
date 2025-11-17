@@ -1,15 +1,8 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Home, Bell, Search, Folder, Clock, Star, Users, Grid, Plus } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
-import { sheetApi } from '../services/api';
 
 export default function Sidebar() {
   const location = useLocation();
-
-  const { data: sheets = [] } = useQuery({
-    queryKey: ['sheets'],
-    queryFn: sheetApi.getAll,
-  });
 
   const navItems = [
     { icon: Home, label: 'Home', path: '/' },
