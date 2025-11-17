@@ -25,6 +25,7 @@ export default function SheetPage() {
   const cellInputRef = useRef<HTMLInputElement>(null);
   const [showFormulaAutocomplete, setShowFormulaAutocomplete] = useState(false);
   const [formulaSuggestions, setFormulaSuggestions] = useState<string[]>([]);
+  const [rangeStartCell, setRangeStartCell] = useState<{ rowIndex: number; colIndex: number } | null>(null);
 
   // Cell formatting state (stored per cell ID)
   type CellFormat = {
@@ -56,8 +57,24 @@ export default function SheetPage() {
   const updateCellMutation = useMutation({
     mutationFn: ({ cellId, value }: { cellId: string; value: any }) =>
       sheetApi.updateCell(id!, cellId, { value }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sheets', id] });
+    onSuccess: (_, variables) => {
+      // Use optimistic update - update cache directly without refetch
+      queryClient.setQueryData(['sheets', id], (oldData: any) => {
+        if (!oldData) return oldData;
+
+        return {
+          ...oldData,
+          rows: oldData.rows?.map((row: any) => ({
+            ...row,
+            cells: row.cells?.map((cell: any) =>
+              cell.id === variables.cellId
+                ? { ...cell, value: JSON.stringify(variables.value) }
+                : cell
+            ),
+          })),
+        };
+      });
+
       setEditingCell(null);
       setCellValue('');
     },
@@ -143,17 +160,38 @@ export default function SheetPage() {
     return editingCell !== null && cellValue.trim().startsWith('=');
   };
 
-  const handleCellClick = (cell: Cell, rowIndex?: number, colIndex?: number) => {
+  const handleCellClick = (cell: Cell, rowIndex?: number, colIndex?: number, shiftKey?: boolean) => {
     // If we're in formula mode and clicking a different cell, insert its reference
     if (isInFormulaMode() && editingCell !== cell.id && rowIndex !== undefined && colIndex !== undefined) {
-      const cellRef = getCellReference(rowIndex, colIndex);
-      setCellValue(cellValue + cellRef);
+      let cellRef: string;
+
+      // Handle shift-click for range selection
+      if (shiftKey && rangeStartCell) {
+        const startRef = getCellReference(rangeStartCell.rowIndex, rangeStartCell.colIndex);
+        const endRef = getCellReference(rowIndex, colIndex);
+        cellRef = `${startRef}:${endRef}`;
+        setRangeStartCell(null); // Reset range start after completing range
+      } else {
+        cellRef = getCellReference(rowIndex, colIndex);
+        setRangeStartCell({ rowIndex, colIndex }); // Store as potential range start
+      }
+
+      // Check if this is the first cell reference (right after opening parenthesis)
+      const isFirstReference = cellValue.endsWith('(');
+
+      // Add comma separator if not the first reference
+      const separator = isFirstReference ? '' : ',';
+      setCellValue(cellValue + separator + cellRef);
+
       // Keep focus on the input
       setTimeout(() => {
         cellInputRef.current?.focus();
       }, 0);
       return;
     }
+
+    // Reset range start when not in formula mode
+    setRangeStartCell(null);
 
     setEditingCell(cell.id);
     setCellValue(cell.value ? JSON.parse(cell.value) : '');
@@ -930,10 +968,10 @@ export default function SheetPage() {
                                 e.preventDefault();
                               }
                             }}
-                            onClick={() => {
+                            onClick={(e) => {
                               if (cell) {
                                 setSelectedCell({ rowIndex, colIndex });
-                                handleCellClick(cell, rowIndex, colIndex);
+                                handleCellClick(cell, rowIndex, colIndex, e.shiftKey);
                               }
                             }}
                           >

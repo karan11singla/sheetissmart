@@ -92,6 +92,37 @@ export class FormulaEngine {
     return values;
   }
 
+  // Get values from comma-separated references or ranges (e.g., "A1,B2,C1:C5")
+  private static async getValuesFromArgs(
+    sheetId: string,
+    args: string
+  ): Promise<number[]> {
+    const values: number[] = [];
+
+    // Split by commas (but not commas inside parentheses)
+    const parts = args.split(',').map(s => s.trim());
+
+    for (const part of parts) {
+      // Check if it's a range (A1:A10)
+      if (part.includes(':')) {
+        const [start, end] = part.split(':').map(s => s.trim());
+        const rangeValues = await this.getRangeValues(sheetId, start, end);
+        values.push(...rangeValues);
+      } else {
+        // Single cell reference
+        const parsed = this.parseCellRef(part);
+        if (parsed) {
+          const value = await this.getCellValue(sheetId, parsed.columnIndex, parsed.rowIndex);
+          if (value !== null) {
+            values.push(value);
+          }
+        }
+      }
+    }
+
+    return values;
+  }
+
   // Evaluate a formula
   public static async evaluate(sheetId: string, formula: string): Promise<number | string | null> {
     // Remove leading =
@@ -101,38 +132,38 @@ export class FormulaEngine {
     }
 
     try {
-      // Handle SUM function
-      const sumMatch = formula.match(/^SUM\(([A-Z]+\d+):([A-Z]+\d+)\)$/i);
+      // Handle SUM function - supports ranges (A1:A10) and comma-separated (A1,B2,C3)
+      const sumMatch = formula.match(/^SUM\((.+)\)$/i);
       if (sumMatch) {
-        const values = await this.getRangeValues(sheetId, sumMatch[1], sumMatch[2]);
+        const values = await this.getValuesFromArgs(sheetId, sumMatch[1]);
         return values.reduce((sum, val) => sum + val, 0);
       }
 
-      // Handle AVERAGE function
-      const avgMatch = formula.match(/^AVERAGE\(([A-Z]+\d+):([A-Z]+\d+)\)$/i);
+      // Handle AVERAGE/AVG function
+      const avgMatch = formula.match(/^(AVERAGE|AVG)\((.+)\)$/i);
       if (avgMatch) {
-        const values = await this.getRangeValues(sheetId, avgMatch[1], avgMatch[2]);
+        const values = await this.getValuesFromArgs(sheetId, avgMatch[2]);
         return values.length > 0 ? values.reduce((sum, val) => sum + val, 0) / values.length : 0;
       }
 
       // Handle COUNT function
-      const countMatch = formula.match(/^COUNT\(([A-Z]+\d+):([A-Z]+\d+)\)$/i);
+      const countMatch = formula.match(/^COUNT\((.+)\)$/i);
       if (countMatch) {
-        const values = await this.getRangeValues(sheetId, countMatch[1], countMatch[2]);
+        const values = await this.getValuesFromArgs(sheetId, countMatch[1]);
         return values.length;
       }
 
       // Handle MIN function
-      const minMatch = formula.match(/^MIN\(([A-Z]+\d+):([A-Z]+\d+)\)$/i);
+      const minMatch = formula.match(/^MIN\((.+)\)$/i);
       if (minMatch) {
-        const values = await this.getRangeValues(sheetId, minMatch[1], minMatch[2]);
+        const values = await this.getValuesFromArgs(sheetId, minMatch[1]);
         return values.length > 0 ? Math.min(...values) : 0;
       }
 
       // Handle MAX function
-      const maxMatch = formula.match(/^MAX\(([A-Z]+\d+):([A-Z]+\d+)\)$/i);
+      const maxMatch = formula.match(/^MAX\((.+)\)$/i);
       if (maxMatch) {
-        const values = await this.getRangeValues(sheetId, maxMatch[1], maxMatch[2]);
+        const values = await this.getValuesFromArgs(sheetId, maxMatch[1]);
         return values.length > 0 ? Math.max(...values) : 0;
       }
 
