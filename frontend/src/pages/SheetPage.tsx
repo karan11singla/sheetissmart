@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Share2, Download, Edit2, ArrowUp, ArrowDown, Filter, X } from 'lucide-react';
+import { ArrowLeft, Plus, Share2, Download, Edit2, ArrowUp, ArrowDown, Filter, X, Bold, Italic, Underline } from 'lucide-react';
 import { sheetApi } from '../services/api';
 import ShareModal from '../components/ShareModal';
 import type { Column, Row, Cell } from '../types';
@@ -23,6 +23,17 @@ export default function SheetPage() {
   const [selectedCell, setSelectedCell] = useState<{ rowIndex: number; colIndex: number } | null>(null);
   const tableRef = useRef<HTMLDivElement>(null);
   const cellInputRef = useRef<HTMLInputElement>(null);
+
+  // Cell formatting state (stored per cell ID)
+  type CellFormat = {
+    bold?: boolean;
+    italic?: boolean;
+    underline?: boolean;
+    align?: 'left' | 'center' | 'right';
+    fontSize?: number;
+    color?: string;
+  };
+  const [cellFormats, setCellFormats] = useState<Record<string, CellFormat>>({});
 
   const { data: sheet, isLoading } = useQuery({
     queryKey: ['sheets', id],
@@ -196,6 +207,57 @@ export default function SheetPage() {
 
   const clearAllFilters = () => {
     setFilters({});
+  };
+
+  // Get current cell for formatting
+  const getCurrentCell = (): Cell | null => {
+    if (!selectedCell || !sheet?.rows || !sheet?.columns) return null;
+    const row = filteredAndSortedRows[selectedCell.rowIndex];
+    const column = sheet.columns[selectedCell.colIndex];
+    return row?.cells?.find((c) => c.columnId === column.id) || null;
+  };
+
+  // Apply formatting to current cell
+  const applyFormat = (format: Partial<CellFormat>) => {
+    const cell = getCurrentCell();
+    if (!cell) return;
+
+    setCellFormats((prev) => ({
+      ...prev,
+      [cell.id]: {
+        ...prev[cell.id],
+        ...format,
+      },
+    }));
+  };
+
+  // Toggle formatting
+  const toggleBold = () => {
+    const cell = getCurrentCell();
+    if (!cell) return;
+    const current = cellFormats[cell.id]?.bold || false;
+    applyFormat({ bold: !current });
+  };
+
+  const toggleItalic = () => {
+    const cell = getCurrentCell();
+    if (!cell) return;
+    const current = cellFormats[cell.id]?.italic || false;
+    applyFormat({ italic: !current });
+  };
+
+  const toggleUnderline = () => {
+    const cell = getCurrentCell();
+    if (!cell) return;
+    const current = cellFormats[cell.id]?.underline || false;
+    applyFormat({ underline: !current });
+  };
+
+  // Get current cell format
+  const getCurrentFormat = (): CellFormat => {
+    const cell = getCurrentCell();
+    if (!cell) return {};
+    return cellFormats[cell.id] || {};
   };
 
   // Filter and sort rows based on filters and sortConfig
@@ -451,31 +513,76 @@ export default function SheetPage() {
         </div>
       </div>
 
-      {/* Toolbar */}
-      <div className="bg-white border-b border-gray-200 px-6 py-3">
+      {/* Formatting Toolbar */}
+      <div className="bg-white border-b border-gray-200 px-6 py-2">
         <div className="flex items-center justify-between">
           {isInFormulaMode() && (
             <div className="absolute top-2 left-1/2 transform -translate-x-1/2 bg-green-100 text-green-800 px-4 py-1.5 rounded-full text-xs font-medium shadow-sm border border-green-200 z-30">
               <span className="font-semibold">Formula Mode:</span> Click cells to add references
             </div>
           )}
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => addColumnMutation.mutate()}
-              disabled={addColumnMutation.isPending}
-              className="inline-flex items-center px-3 py-1.5 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Plus className="h-4 w-4 mr-1.5" />
-              Column
-            </button>
-            <button
-              onClick={() => addRowMutation.mutate()}
-              disabled={addRowMutation.isPending}
-              className="inline-flex items-center px-3 py-1.5 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Plus className="h-4 w-4 mr-1.5" />
-              Row
-            </button>
+          <div className="flex items-center space-x-4">
+            {/* Add Row/Column */}
+            <div className="flex items-center space-x-1 border-r border-gray-300 pr-4">
+              <button
+                onClick={() => addColumnMutation.mutate()}
+                disabled={addColumnMutation.isPending}
+                className="inline-flex items-center px-2 py-1.5 bg-white border border-gray-300 rounded text-xs font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Add Column"
+              >
+                <Plus className="h-3.5 w-3.5 mr-1" />
+                Col
+              </button>
+              <button
+                onClick={() => addRowMutation.mutate()}
+                disabled={addRowMutation.isPending}
+                className="inline-flex items-center px-2 py-1.5 bg-white border border-gray-300 rounded text-xs font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Add Row"
+              >
+                <Plus className="h-3.5 w-3.5 mr-1" />
+                Row
+              </button>
+            </div>
+
+            {/* Text Formatting */}
+            <div className="flex items-center space-x-1">
+              <button
+                onClick={toggleBold}
+                disabled={!selectedCell}
+                className={`p-1.5 rounded border transition-all disabled:opacity-30 disabled:cursor-not-allowed ${
+                  getCurrentFormat().bold
+                    ? 'bg-blue-100 border-blue-300 text-blue-700'
+                    : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400'
+                }`}
+                title="Bold (Ctrl+B)"
+              >
+                <Bold className="h-4 w-4" />
+              </button>
+              <button
+                onClick={toggleItalic}
+                disabled={!selectedCell}
+                className={`p-1.5 rounded border transition-all disabled:opacity-30 disabled:cursor-not-allowed ${
+                  getCurrentFormat().italic
+                    ? 'bg-blue-100 border-blue-300 text-blue-700'
+                    : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400'
+                }`}
+                title="Italic (Ctrl+I)"
+              >
+                <Italic className="h-4 w-4" />
+              </button>
+              <button
+                onClick={toggleUnderline}
+                disabled={!selectedCell}
+                className={`p-1.5 rounded border transition-all disabled:opacity-30 disabled:cursor-not-allowed ${
+                  getCurrentFormat().underline
+                    ? 'bg-blue-100 border-blue-300 text-blue-700'
+                    : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400'
+                }`}
+                title="Underline (Ctrl+U)"
+              >
+                <Underline className="h-4 w-4" />
+              </button>
+            </div>
           </div>
           {Object.keys(filters).length > 0 && (
             <div className="flex items-center space-x-2">
@@ -651,7 +758,14 @@ export default function SheetPage() {
                                 }`}
                               />
                             ) : (
-                              <div className="h-9 flex items-center px-1 truncate">
+                              <div
+                                className="h-9 flex items-center px-1 truncate"
+                                style={{
+                                  fontWeight: cell && cellFormats[cell.id]?.bold ? 'bold' : 'normal',
+                                  fontStyle: cell && cellFormats[cell.id]?.italic ? 'italic' : 'normal',
+                                  textDecoration: cell && cellFormats[cell.id]?.underline ? 'underline' : 'none',
+                                }}
+                              >
                                 {cell?.value ? (() => {
                                   const parsedValue = JSON.parse(cell.value);
                                   // If it's a formula and we have a computed value, show that
