@@ -27,6 +27,7 @@ export interface Column {
 export interface Row {
   id: string;
   sheetId: string;
+  name?: string;
   position: number;
   height?: number;
   cells?: Cell[];

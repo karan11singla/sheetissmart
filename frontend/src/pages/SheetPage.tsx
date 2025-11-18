@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
-import { Plus, ArrowUp, ArrowDown, Filter, X, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Trash2, Star } from 'lucide-react';
+import { Plus, ArrowUp, ArrowDown, Filter, X, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Trash2, Star, Edit3 } from 'lucide-react';
 import { sheetApi } from '../services/api';
 import ShareModal from '../components/ShareModal';
 import type { Column, Row, Cell } from '../types';
@@ -29,6 +29,8 @@ export default function SheetPage() {
   const [copiedCell, setCopiedCell] = useState<{ cellId: string; value: string; format: CellFormat } | null>(null);
   const [editingColumnId, setEditingColumnId] = useState<string | null>(null);
   const [editingColumnName, setEditingColumnName] = useState<string>('');
+  const [editingRowId, setEditingRowId] = useState<string | null>(null);
+  const [editingRowName, setEditingRowName] = useState<string>('');
 
   // Cell formatting state (stored per cell ID)
   type CellFormat = {
@@ -123,10 +125,11 @@ export default function SheetPage() {
   });
 
   const updateRowMutation = useMutation({
-    mutationFn: ({ rowId, height }: { rowId: string; height: number }) =>
-      sheetApi.updateRow(id!, rowId, { height }),
+    mutationFn: ({ rowId, height, name }: { rowId: string; height?: number; name?: string }) =>
+      sheetApi.updateRow(id!, rowId, { height, name }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sheets', id] });
+      setEditingRowId(null);
     },
   });
 
@@ -247,8 +250,8 @@ export default function SheetPage() {
   };
 
   const handleCellKeyDown = (e: React.KeyboardEvent, rowIndex: number, colIndex: number) => {
-    const totalRows = sheet.rows.length;
-    const totalCols = sheet.columns.length;
+    const totalRows = sheet?.rows?.length || 0;
+    const totalCols = sheet?.columns?.length || 0;
 
     // Arrow key navigation
     if (e.key === 'ArrowUp' && rowIndex > 0) {
@@ -702,7 +705,7 @@ export default function SheetPage() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!selectedCell || !sheet?.columns || !filteredAndSortedRows.length) return;
-      if (editingCell) return; // Don't navigate while editing
+      if (editingCell || editingColumnId || editingRowId) return; // Don't navigate while editing
 
       const { rowIndex, colIndex } = selectedCell;
       const numRows = filteredAndSortedRows.length;
@@ -826,7 +829,7 @@ export default function SheetPage() {
       tableRef.current.addEventListener('keydown', handleKeyDown as any);
       return () => tableRef.current?.removeEventListener('keydown', handleKeyDown as any);
     }
-  }, [selectedCell, sheet, filteredAndSortedRows, editingCell]);
+  }, [selectedCell, sheet, filteredAndSortedRows, editingCell, editingColumnId, editingRowId]);
 
   const handleSort = (columnId: string) => {
     setSortConfig((current) => {
@@ -862,28 +865,11 @@ export default function SheetPage() {
   }
 
   return (
-    <div className="h-full flex flex-col bg-white">
-      {/* Smartsheet-style Menu Bar */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="flex items-center justify-between px-2 sm:px-4 h-12">
-          <div className="flex items-center space-x-1 sm:space-x-4">
-            <button className="text-xs sm:text-sm text-gray-700 hover:text-gray-900 px-1 sm:px-2 py-1 hover:bg-gray-100 rounded transition-colors">
-              File
-            </button>
-            <button className="hidden md:block text-sm text-gray-700 hover:text-gray-900 px-2 py-1 hover:bg-gray-100 rounded transition-colors">
-              Automation
-            </button>
-            <button className="hidden md:block text-sm text-gray-700 hover:text-gray-900 px-2 py-1 hover:bg-gray-100 rounded transition-colors">
-              Forms
-            </button>
-            <button className="hidden lg:block text-sm text-gray-700 hover:text-gray-900 px-2 py-1 hover:bg-gray-100 rounded transition-colors">
-              Connections
-            </button>
-            <button className="hidden lg:block text-sm text-gray-700 hover:text-gray-900 px-2 py-1 hover:bg-gray-100 rounded transition-colors">
-              Dynamic View
-            </button>
-          </div>
-          <div className="flex items-center space-x-2">
+    <div className="h-full flex flex-col bg-gradient-to-br from-slate-50 via-white to-slate-50">
+      {/* Modern Header Bar */}
+      <div className="bg-white border-b border-slate-200 shadow-sm">
+        <div className="flex items-center justify-between px-4 sm:px-6 h-16">
+          <div className="flex items-center space-x-6">
             {isEditingName ? (
               <input
                 type="text"
@@ -895,7 +881,7 @@ export default function SheetPage() {
                   if (e.key === 'Escape') setIsEditingName(false);
                 }}
                 autoFocus
-                className="text-sm font-medium text-gray-900 border-b border-blue-500 px-2 py-1 focus:outline-none"
+                className="text-xl font-bold text-slate-900 border-b-2 border-blue-500 px-2 py-1 focus:outline-none bg-transparent"
               />
             ) : (
               <button
@@ -903,16 +889,18 @@ export default function SheetPage() {
                   setSheetName(sheet.name);
                   setIsEditingName(true);
                 }}
-                className="text-sm font-medium text-gray-900 hover:text-blue-600 flex items-center space-x-1"
+                className="text-xl font-bold text-slate-900 hover:text-blue-600 flex items-center space-x-2 transition-colors group"
               >
                 <span>{sheet.name}</span>
-                <Star className="h-4 w-4 text-gray-400" />
+                <Star className="h-5 w-5 text-slate-400 group-hover:text-blue-500 transition-colors" />
               </button>
             )}
+          </div>
+          <div className="flex items-center space-x-3">
             {(sheet as any).isOwner !== false && (
               <button
                 onClick={() => setIsShareModalOpen(true)}
-                className="inline-flex items-center px-4 py-1.5 bg-teal-600 text-white rounded hover:bg-teal-700 transition-colors text-sm font-medium"
+                className="inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg font-medium text-sm"
               >
                 Share
               </button>
@@ -921,33 +909,33 @@ export default function SheetPage() {
         </div>
       </div>
 
-      {/* Formatting Toolbar */}
-      <div className="bg-gray-50 border-b border-gray-200 px-2 sm:px-4 py-2 overflow-x-auto">
+      {/* Modern Formatting Toolbar */}
+      <div className="bg-white border-b border-slate-200 px-4 sm:px-6 py-3 overflow-x-auto shadow-sm">
         <div className="flex items-center justify-between min-w-max sm:min-w-0">
           {isInFormulaMode() && (
-            <div className="absolute top-2 left-1/2 transform -translate-x-1/2 bg-green-100 text-green-800 px-4 py-1.5 rounded-full text-xs font-medium shadow-sm border border-green-200 z-30">
-              <span className="font-semibold">Formula Mode:</span> Click cells to add references
+            <div className="absolute top-2 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-emerald-500 to-green-600 text-white px-5 py-2 rounded-full text-sm font-medium shadow-lg border-2 border-emerald-400 z-30 animate-pulse">
+              <span className="font-bold">Formula Mode:</span> Click cells to add references
             </div>
           )}
           <div className="flex items-center space-x-4">
             {/* Add Row/Column */}
-            <div className="flex items-center space-x-1 border-r border-gray-300 pr-4">
+            <div className="flex items-center space-x-2 border-r border-slate-200 pr-4">
               <button
                 onClick={() => addColumnMutation.mutate()}
                 disabled={addColumnMutation.isPending}
-                className="inline-flex items-center px-2 py-1.5 bg-white border border-gray-300 rounded text-xs font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center px-3 py-2 bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg text-sm font-medium text-blue-700 hover:from-blue-100 hover:to-blue-200 hover:border-blue-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow"
                 title="Add Column"
               >
-                <Plus className="h-3.5 w-3.5 mr-1" />
-                Col
+                <Plus className="h-4 w-4 mr-1.5" />
+                Column
               </button>
               <button
                 onClick={() => addRowMutation.mutate()}
                 disabled={addRowMutation.isPending}
-                className="inline-flex items-center px-2 py-1.5 bg-white border border-gray-300 rounded text-xs font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center px-3 py-2 bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg text-sm font-medium text-blue-700 hover:from-blue-100 hover:to-blue-200 hover:border-blue-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow"
                 title="Add Row"
               >
-                <Plus className="h-3.5 w-3.5 mr-1" />
+                <Plus className="h-4 w-4 mr-1.5" />
                 Row
               </button>
             </div>
@@ -1119,9 +1107,9 @@ export default function SheetPage() {
         </div>
       </div>
 
-      {/* Sheet Grid */}
-      <div className="flex-1 overflow-auto bg-gray-50 p-6">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      {/* Modern Sheet Grid */}
+      <div className="flex-1 overflow-auto p-6">
+        <div className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
           <div
             ref={tableRef}
             className="overflow-auto outline-none"
@@ -1136,19 +1124,19 @@ export default function SheetPage() {
             <table className="min-w-full border-collapse">
               <thead>
                 <tr>
-                  <th className="sticky top-0 left-0 z-20 w-12 px-3 py-2 text-center text-xs font-medium text-gray-700 bg-gray-100 border-b border-r border-gray-300">
-
+                  <th className="sticky top-0 left-0 z-20 w-14 px-3 py-3 text-center text-xs font-bold text-slate-700 bg-gradient-to-br from-slate-100 to-slate-50 border-b-2 border-r-2 border-slate-300">
+                    #
                   </th>
                   {sheet.columns?.map((column: Column, index: number) => (
                     <th
                       key={column.id}
-                      style={{ minWidth: column.width || 120, maxWidth: column.width || 120, position: 'relative' }}
-                      className={`sticky top-0 z-10 px-3 py-2 text-left text-xs font-medium text-gray-700 bg-gray-100 border-b border-gray-300 ${
-                        index !== 0 ? 'border-l border-gray-200' : ''
+                      style={{ minWidth: column.width || 150, maxWidth: column.width || 150, position: 'relative' }}
+                      className={`sticky top-0 z-10 px-4 py-3 text-left text-sm font-bold text-slate-700 bg-gradient-to-br from-slate-100 to-slate-50 border-b-2 border-slate-300 ${
+                        index !== 0 ? 'border-l border-slate-200' : ''
                       }`}
                     >
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-1.5">
+                        <div className="flex items-center space-x-2">
                           {editingColumnId === column.id ? (
                             <input
                               type="text"
@@ -1177,21 +1165,34 @@ export default function SheetPage() {
                                 }
                               }}
                               autoFocus
-                              className="truncate font-semibold bg-white border-b-2 border-blue-500 px-1 focus:outline-none min-w-[60px]"
+                              className="truncate font-bold bg-white border-b-2 border-blue-500 px-2 py-1 focus:outline-none min-w-[60px] rounded"
                             />
                           ) : (
-                            <span
-                              className="truncate cursor-pointer hover:text-gray-900 font-semibold"
-                              onClick={() => handleSort(column.id)}
-                              onDoubleClick={(e) => {
-                                e.stopPropagation();
-                                setEditingColumnId(column.id);
-                                setEditingColumnName(column.name);
-                              }}
-                              title="Double-click to rename"
-                            >
-                              {column.name}
-                            </span>
+                            <div className="flex items-center space-x-1.5 group">
+                              <span
+                                className="truncate cursor-pointer hover:text-blue-600 font-bold transition-colors"
+                                onClick={() => handleSort(column.id)}
+                                onDoubleClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingColumnId(column.id);
+                                  setEditingColumnName(column.name);
+                                }}
+                                title="Click to sort • Double-click to rename"
+                              >
+                                {column.name}
+                              </span>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingColumnId(column.id);
+                                  setEditingColumnName(column.name);
+                                }}
+                                className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-blue-100 transition-all"
+                                title="Rename column"
+                              >
+                                <Edit3 className="h-3 w-3 text-blue-600" />
+                              </button>
+                            </div>
                           )}
                           {sortConfig?.columnId === column.id && (
                             <span className="text-blue-600">
@@ -1280,8 +1281,8 @@ export default function SheetPage() {
                   {/* Add Column Button */}
                   <th className="sticky top-0 z-10 px-3 py-2 bg-gray-50 border-b border-gray-300">
                     <button
-                      onClick={handleAddColumn}
-                      disabled={createColumnMutation.isPending}
+                      onClick={() => addColumnMutation.mutate()}
+                      disabled={addColumnMutation.isPending}
                       className="flex items-center space-x-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors disabled:opacity-50"
                       title="Add column"
                     >
@@ -1296,23 +1297,81 @@ export default function SheetPage() {
                   filteredAndSortedRows.map((row: Row, rowIndex: number) => (
                     <tr
                       key={row.id}
-                      className="bg-white hover:bg-gray-50/50"
+                      className="bg-white hover:bg-blue-50/30 transition-colors"
                     >
-                      <td className="sticky left-0 z-10 px-3 py-0 text-center text-xs font-medium text-gray-600 bg-gray-100 border-r border-b border-gray-200 group relative" style={{ height: row.height || 35 }}>
-                        <div className="flex items-center justify-center space-x-1" style={{ height: row.height || 35 }}>
-                          <span>{rowIndex + 1}</span>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (window.confirm(`Delete row ${rowIndex + 1}? This will permanently delete all data in this row.`)) {
-                                deleteRowMutation.mutate(row.id);
-                              }
-                            }}
-                            className="p-0.5 rounded hover:bg-red-100 transition-colors text-gray-400 hover:text-red-600 opacity-0 group-hover:opacity-100"
-                            title="Delete row"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </button>
+                      <td className="sticky left-0 z-10 px-3 py-0 text-center text-sm font-semibold text-slate-600 bg-gradient-to-br from-slate-50 to-white border-r-2 border-b border-slate-200 group relative" style={{ height: row.height || 40 }}>
+                        <div className="flex items-center justify-center space-x-1.5" style={{ height: row.height || 40 }}>
+                          {editingRowId === row.id ? (
+                            <input
+                              type="text"
+                              value={editingRowName}
+                              onChange={(e) => setEditingRowName(e.target.value)}
+                              onBlur={() => {
+                                if (editingRowName.trim() && editingRowName !== row.name) {
+                                  updateRowMutation.mutate({
+                                    rowId: row.id,
+                                    height: row.height || 40,
+                                    name: editingRowName.trim()
+                                  });
+                                }
+                                setEditingRowId(null);
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  if (editingRowName.trim() && editingRowName !== row.name) {
+                                    updateRowMutation.mutate({
+                                      rowId: row.id,
+                                      height: row.height || 40,
+                                      name: editingRowName.trim()
+                                    });
+                                  }
+                                  setEditingRowId(null);
+                                } else if (e.key === 'Escape') {
+                                  setEditingRowId(null);
+                                }
+                              }}
+                              autoFocus
+                              placeholder={`${rowIndex + 1}`}
+                              className="w-20 text-center font-semibold bg-white border-b-2 border-blue-500 px-2 py-1 focus:outline-none rounded"
+                            />
+                          ) : (
+                            <>
+                              <span
+                                className="cursor-pointer hover:text-blue-600 transition-colors"
+                                onDoubleClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingRowId(row.id);
+                                  setEditingRowName(row.name || '');
+                                }}
+                                title="Double-click to rename row"
+                              >
+                                {row.name || `${rowIndex + 1}`}
+                              </span>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingRowId(row.id);
+                                  setEditingRowName(row.name || '');
+                                }}
+                                className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-blue-100 transition-all"
+                                title="Rename row"
+                              >
+                                <Edit3 className="h-3 w-3 text-blue-600" />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (window.confirm(`Delete row ${row.name || rowIndex + 1}? This will permanently delete all data in this row.`)) {
+                                    deleteRowMutation.mutate(row.id);
+                                  }
+                                }}
+                                className="p-1 rounded-md hover:bg-red-100 transition-colors text-slate-400 hover:text-red-600 opacity-0 group-hover:opacity-100"
+                                title="Delete row"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </>
+                          )}
                         </div>
                         {/* Resize handle */}
                         <div
@@ -1339,16 +1398,16 @@ export default function SheetPage() {
                           <td
                             key={`${row.id}-${column.id}`}
                             tabIndex={isSelected && !isEditing ? 0 : -1}
-                            className={`px-2 py-0 text-sm text-gray-900 border-b border-gray-200 ${
-                              colIndex !== 0 ? 'border-l border-gray-200' : ''
+                            className={`px-3 py-0 text-sm text-slate-800 border-b border-slate-200 ${
+                              colIndex !== 0 ? 'border-l border-slate-200' : ''
                             } ${
                               inFormulaMode
-                                ? 'cursor-crosshair hover:bg-green-100 hover:ring-2 hover:ring-inset hover:ring-green-400'
+                                ? 'cursor-crosshair hover:bg-emerald-100 hover:ring-2 hover:ring-inset hover:ring-emerald-400'
                                 : !isEditing
-                                ? 'cursor-pointer hover:bg-blue-50'
+                                ? 'cursor-pointer hover:bg-blue-50/50'
                                 : ''
-                            } ${isSelected && !isEditing ? 'ring-2 ring-inset ring-blue-600 bg-blue-50/50' : ''} ${isCopied ? 'ring-2 ring-inset ring-dashed ring-green-600' : ''}`}
-                            style={{ height: row.height || 35 }}
+                            } ${isSelected && !isEditing ? 'ring-2 ring-inset ring-blue-500 bg-blue-50/60 shadow-inner' : ''} ${isCopied ? 'ring-2 ring-inset ring-dashed ring-emerald-500' : ''}`}
+                            style={{ height: row.height || 40 }}
                             onMouseDown={(e) => {
                               // Prevent blur on input when clicking cells in formula mode
                               if (inFormulaMode) {
@@ -1487,8 +1546,8 @@ export default function SheetPage() {
                 <tr>
                   <td colSpan={(sheet.columns?.length || 0) + 2} className="px-3 py-2 bg-gray-50 border-t border-gray-300">
                     <button
-                      onClick={handleAddRow}
-                      disabled={createRowMutation.isPending}
+                      onClick={() => addRowMutation.mutate()}
+                      disabled={addRowMutation.isPending}
                       className="flex items-center space-x-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors disabled:opacity-50"
                       title="Add row"
                     >

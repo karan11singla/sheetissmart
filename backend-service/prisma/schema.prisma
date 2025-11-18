@@ -69,6 +69,7 @@ model Column {
 model Row {
   id        String   @id @default(cuid())
   sheetId   String
+  name      String?  // Optional custom name for the row
   position  Int
   height    Int?     @default(35)
   createdAt DateTime @default(now())

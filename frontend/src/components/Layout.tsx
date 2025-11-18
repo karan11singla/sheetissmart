@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import Sidebar from './Sidebar';
+import GlobalSearch from './GlobalSearch';
 
 export default function Layout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
 
   return (
     <div className="min-h-screen bg-white flex">
@@ -31,13 +33,19 @@ export default function Layout() {
         transform transition-transform duration-300 ease-in-out
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
-        <Sidebar onNavigate={() => setIsSidebarOpen(false)} />
+        <Sidebar
+          onNavigate={() => setIsSidebarOpen(false)}
+          onOpenSearch={() => setShowSearch(true)}
+        />
       </div>
 
       {/* Main Content */}
       <main className="flex-1 overflow-auto bg-gray-50 w-full lg:w-auto">
         <Outlet />
       </main>
+
+      {/* Global Search Modal - Rendered at layout level */}
+      <GlobalSearch isOpen={showSearch} onClose={() => setShowSearch(false)} />
     </div>
   );
 }

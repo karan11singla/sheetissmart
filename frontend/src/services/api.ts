@@ -90,7 +90,7 @@ export const sheetApi = {
     return data.data.row;
   },
 
-  updateRow: async (sheetId: string, rowId: string, input: { height?: number }) => {
+  updateRow: async (sheetId: string, rowId: string, input: { height?: number; name?: string }) => {
     const { data } = await api.put(`/api/v1/sheets/${sheetId}/rows/${rowId}`, input);
     return data.data.row;
   },

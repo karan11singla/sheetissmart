@@ -131,32 +131,32 @@ export default function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
+    <div className="fixed inset-0 z-[60] overflow-y-auto">
       {/* Overlay */}
       <div
-        className="fixed inset-0 bg-black/50 transition-opacity"
+        className="fixed inset-0 bg-black/70 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       />
 
       {/* Modal */}
       <div className="flex min-h-screen items-start justify-center p-4 pt-20">
-        <div className="relative w-full max-w-2xl rounded-lg bg-white shadow-2xl">
+        <div className="relative w-full max-w-2xl rounded-xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 shadow-2xl border border-slate-700">
           {/* Search Header */}
-          <div className="border-b border-gray-200 p-4">
+          <div className="border-b border-slate-700 p-4">
             <div className="flex items-center space-x-3">
-              <Search className="h-5 w-5 text-gray-400" />
+              <Search className="h-5 w-5 text-slate-400" />
               <input
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Search sheets, columns, or data..."
-                className="flex-1 text-lg focus:outline-none"
+                className="flex-1 text-lg bg-transparent text-white placeholder-slate-400 focus:outline-none"
                 autoFocus
               />
               <button
                 onClick={onClose}
-                className="p-1 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100"
+                className="p-1 text-slate-400 hover:text-slate-200 rounded-full hover:bg-slate-700 transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -167,7 +167,7 @@ export default function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
               <select
                 value={searchType}
                 onChange={(e) => setSearchType(e.target.value as SearchType)}
-                className="text-xs px-3 py-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="text-xs px-3 py-1.5 bg-slate-800 border border-slate-600 text-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="all">Type: All</option>
                 <option value="sheets">Type: Sheets</option>
@@ -178,7 +178,7 @@ export default function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
               {query && (
                 <button
                   onClick={() => setQuery('')}
-                  className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                  className="text-xs text-blue-400 hover:text-blue-300 font-medium transition-colors"
                 >
                   Clear
                 </button>
@@ -189,56 +189,56 @@ export default function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
           {/* Results */}
           <div className="max-h-96 overflow-y-auto">
             {query.length < 2 ? (
-              <div className="p-8 text-center text-gray-500">
-                <Search className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+              <div className="p-8 text-center text-slate-400">
+                <Search className="h-12 w-12 mx-auto mb-3 text-slate-600" />
                 <p className="text-sm">Type at least 2 characters to search</p>
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="text-xs text-slate-500 mt-1">
                   Search for sheets, columns, or data
                 </p>
               </div>
             ) : results.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">
+              <div className="p-8 text-center text-slate-400">
                 <div className="text-6xl mb-3">🏜️</div>
                 <p className="text-sm font-medium">No results found for "{query}"</p>
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="text-xs text-slate-500 mt-1">
                   Try searching for another term or adjusting your filters
                 </p>
               </div>
             ) : (
-              <div className="divide-y divide-gray-200">
+              <div className="divide-y divide-slate-700">
                 {results.map((result, index) => (
                   <button
                     key={`${result.type}-${result.sheetId}-${index}`}
                     onClick={() => handleResultClick(result)}
-                    className="w-full flex items-start space-x-3 p-4 hover:bg-gray-50 transition-colors text-left"
+                    className="w-full flex items-start space-x-3 p-4 hover:bg-slate-800 transition-colors text-left"
                   >
                     <div className="flex-shrink-0 mt-1">
                       {result.type === 'sheet' && (
-                        <div className="p-2 bg-blue-100 rounded-lg">
-                          <FileText className="h-4 w-4 text-blue-600" />
+                        <div className="p-2 bg-blue-900/50 rounded-lg border border-blue-700">
+                          <FileText className="h-4 w-4 text-blue-400" />
                         </div>
                       )}
                       {result.type === 'column' && (
-                        <div className="p-2 bg-purple-100 rounded-lg">
-                          <Columns className="h-4 w-4 text-purple-600" />
+                        <div className="p-2 bg-purple-900/50 rounded-lg border border-purple-700">
+                          <Columns className="h-4 w-4 text-purple-400" />
                         </div>
                       )}
                       {result.type === 'row' && (
-                        <div className="p-2 bg-green-100 rounded-lg">
-                          <Table className="h-4 w-4 text-green-600" />
+                        <div className="p-2 bg-green-900/50 rounded-lg border border-green-700">
+                          <Table className="h-4 w-4 text-green-400" />
                         </div>
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">
+                      <p className="text-sm font-medium text-white truncate">
                         {result.title}
                       </p>
-                      <p className="text-xs text-gray-500 truncate">
+                      <p className="text-xs text-slate-400 truncate">
                         {result.subtitle}
                       </p>
                     </div>
                     <div className="flex-shrink-0">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 capitalize">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-700 text-slate-300 capitalize">
                         {result.type}
                       </span>
                     </div>
@@ -249,7 +249,7 @@ export default function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
           </div>
 
           {/* Footer */}
-          <div className="border-t border-gray-200 px-4 py-2 bg-gray-50 text-xs text-gray-500 flex items-center justify-between">
+          <div className="border-t border-slate-700 px-4 py-2 bg-slate-900/50 text-xs text-slate-400 flex items-center justify-between rounded-b-xl">
             <span>Press Esc to close</span>
             <span>{results.length > 0 ? `${results.length} results` : ''}</span>
           </div>
