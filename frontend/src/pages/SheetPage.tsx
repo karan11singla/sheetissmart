@@ -246,6 +246,68 @@ export default function SheetPage() {
     updateCellMutation.mutate({ cellId, value: finalValue });
   };
 
+  const handleCellKeyDown = (e: React.KeyboardEvent, rowIndex: number, colIndex: number) => {
+    const totalRows = sheet.rows.length;
+    const totalCols = sheet.columns.length;
+
+    // Arrow key navigation
+    if (e.key === 'ArrowUp' && rowIndex > 0) {
+      e.preventDefault();
+      setSelectedCell({ rowIndex: rowIndex - 1, colIndex });
+      setEditingCell(null);
+    } else if (e.key === 'ArrowDown' && rowIndex < totalRows - 1) {
+      e.preventDefault();
+      setSelectedCell({ rowIndex: rowIndex + 1, colIndex });
+      setEditingCell(null);
+    } else if (e.key === 'ArrowLeft' && colIndex > 0) {
+      e.preventDefault();
+      setSelectedCell({ rowIndex, colIndex: colIndex - 1 });
+      setEditingCell(null);
+    } else if (e.key === 'ArrowRight' && colIndex < totalCols - 1) {
+      e.preventDefault();
+      setSelectedCell({ rowIndex, colIndex: colIndex + 1 });
+      setEditingCell(null);
+    }
+    // Tab navigation (horizontal)
+    else if (e.key === 'Tab') {
+      e.preventDefault();
+      if (e.shiftKey) {
+        // Shift+Tab: move left
+        if (colIndex > 0) {
+          setSelectedCell({ rowIndex, colIndex: colIndex - 1 });
+        } else if (rowIndex > 0) {
+          // Wrap to previous row's last column
+          setSelectedCell({ rowIndex: rowIndex - 1, colIndex: totalCols - 1 });
+        }
+      } else {
+        // Tab: move right
+        if (colIndex < totalCols - 1) {
+          setSelectedCell({ rowIndex, colIndex: colIndex + 1 });
+        } else if (rowIndex < totalRows - 1) {
+          // Wrap to next row's first column
+          setSelectedCell({ rowIndex: rowIndex + 1, colIndex: 0 });
+        }
+      }
+      setEditingCell(null);
+    }
+    // Enter navigation (vertical)
+    else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (e.shiftKey) {
+        // Shift+Enter: move up
+        if (rowIndex > 0) {
+          setSelectedCell({ rowIndex: rowIndex - 1, colIndex });
+        }
+      } else {
+        // Enter: move down
+        if (rowIndex < totalRows - 1) {
+          setSelectedCell({ rowIndex: rowIndex + 1, colIndex });
+        }
+      }
+      setEditingCell(null);
+    }
+  };
+
   const handleCellValueChange = (value: string) => {
     setCellValue(value);
 
@@ -418,6 +480,21 @@ export default function SheetPage() {
       document.removeEventListener('mouseup', handleMouseUp);
     };
   }, [resizingRow, id, queryClient, sheet?.rows, updateRowMutation]);
+
+  // Focus selected cell for keyboard navigation
+  useEffect(() => {
+    if (selectedCell && !editingCell) {
+      const tableElement = document.querySelector('table');
+      if (tableElement) {
+        const cellElement = tableElement.querySelector(
+          `tbody tr:nth-child(${selectedCell.rowIndex + 1}) td:nth-child(${selectedCell.colIndex + 2})`
+        ) as HTMLElement;
+        if (cellElement) {
+          cellElement.focus();
+        }
+      }
+    }
+  }, [selectedCell, editingCell]);
 
   const handleFilterChange = (columnId: string, value: string) => {
     if (value === '') {
@@ -1200,6 +1277,18 @@ export default function SheetPage() {
                       />
                     </th>
                   ))}
+                  {/* Add Column Button */}
+                  <th className="sticky top-0 z-10 px-3 py-2 bg-gray-50 border-b border-gray-300">
+                    <button
+                      onClick={handleAddColumn}
+                      disabled={createColumnMutation.isPending}
+                      className="flex items-center space-x-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors disabled:opacity-50"
+                      title="Add column"
+                    >
+                      <Plus className="h-3 w-3" />
+                      <span>Add</span>
+                    </button>
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -1249,6 +1338,7 @@ export default function SheetPage() {
                         return (
                           <td
                             key={`${row.id}-${column.id}`}
+                            tabIndex={isSelected && !isEditing ? 0 : -1}
                             className={`px-2 py-0 text-sm text-gray-900 border-b border-gray-200 ${
                               colIndex !== 0 ? 'border-l border-gray-200' : ''
                             } ${
@@ -1274,6 +1364,11 @@ export default function SheetPage() {
                             onDoubleClick={() => {
                               if (cell) {
                                 handleCellDoubleClick(cell);
+                              }
+                            }}
+                            onKeyDown={(e) => {
+                              if (!isEditing) {
+                                handleCellKeyDown(e, rowIndex, colIndex);
                               }
                             }}
                           >
@@ -1388,6 +1483,20 @@ export default function SheetPage() {
                     </td>
                   </tr>
                 )}
+                {/* Add Row Button */}
+                <tr>
+                  <td colSpan={(sheet.columns?.length || 0) + 2} className="px-3 py-2 bg-gray-50 border-t border-gray-300">
+                    <button
+                      onClick={handleAddRow}
+                      disabled={createRowMutation.isPending}
+                      className="flex items-center space-x-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors disabled:opacity-50"
+                      title="Add row"
+                    >
+                      <Plus className="h-3 w-3" />
+                      <span>Add Row</span>
+                    </button>
+                  </td>
+                </tr>
               </tbody>
             </table>
           </div>
