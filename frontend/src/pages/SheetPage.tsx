@@ -67,6 +67,9 @@ export default function SheetPage() {
     enabled: !!id,
   });
 
+  // Check if user has edit permission
+  const isViewOnly = sheet && (sheet as any).permission === 'VIEWER';
+
   const updateCellMutation = useMutation({
     mutationFn: ({ cellId, value }: { cellId: string; value: any }) =>
       sheetApi.updateCell(id!, cellId, { value }),
@@ -232,6 +235,9 @@ export default function SheetPage() {
   };
 
   const handleCellDoubleClick = (cell: Cell) => {
+    // Prevent editing in view-only mode
+    if (isViewOnly) return;
+
     // Double click starts editing
     setEditingCell(cell.id);
     setCellValue(cell.value ? JSON.parse(cell.value) : '');
@@ -814,7 +820,7 @@ export default function SheetPage() {
           }
 
           // Start editing on alphanumeric keys and clear existing content
-          if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+          if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey && !isViewOnly) {
             const row = filteredAndSortedRows[rowIndex];
             const column = sheet.columns[colIndex];
             const cell = row.cells?.find((c) => c.columnId === column.id);
@@ -917,39 +923,47 @@ export default function SheetPage() {
       {/* Modern Formatting Toolbar */}
       <div className="bg-white border-b border-slate-200 px-4 sm:px-6 py-3 overflow-x-auto shadow-sm">
         <div className="flex items-center justify-between min-w-max sm:min-w-0">
-          {isInFormulaMode() && (
+          {isViewOnly && (
+            <div className="absolute top-2 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-amber-500 to-orange-600 text-white px-5 py-2 rounded-full text-sm font-medium shadow-lg border-2 border-amber-400 z-30">
+              <span className="font-bold">View Only:</span> You don't have permission to edit this sheet
+            </div>
+          )}
+          {isInFormulaMode() && !isViewOnly && (
             <div className="absolute top-2 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-emerald-500 to-green-600 text-white px-5 py-2 rounded-full text-sm font-medium shadow-lg border-2 border-emerald-400 z-30 animate-pulse">
               <span className="font-bold">Formula Mode:</span> Click cells to add references
             </div>
           )}
           <div className="flex items-center space-x-4">
             {/* Add Row/Column */}
-            <div className="flex items-center space-x-2 border-r border-slate-200 pr-4">
-              <button
-                onClick={() => addColumnMutation.mutate()}
-                disabled={addColumnMutation.isPending}
-                className="inline-flex items-center px-3 py-2 bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg text-sm font-medium text-blue-700 hover:from-blue-100 hover:to-blue-200 hover:border-blue-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow"
-                title="Add Column"
-              >
-                <Plus className="h-4 w-4 mr-1.5" />
-                Column
-              </button>
-              <button
-                onClick={() => addRowMutation.mutate()}
-                disabled={addRowMutation.isPending}
-                className="inline-flex items-center px-3 py-2 bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg text-sm font-medium text-blue-700 hover:from-blue-100 hover:to-blue-200 hover:border-blue-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow"
-                title="Add Row"
-              >
-                <Plus className="h-4 w-4 mr-1.5" />
-                Row
-              </button>
-            </div>
+            {!isViewOnly && (
+              <div className="flex items-center space-x-2 border-r border-slate-200 pr-4">
+                <button
+                  onClick={() => addColumnMutation.mutate()}
+                  disabled={addColumnMutation.isPending}
+                  className="inline-flex items-center px-3 py-2 bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg text-sm font-medium text-blue-700 hover:from-blue-100 hover:to-blue-200 hover:border-blue-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow"
+                  title="Add Column"
+                >
+                  <Plus className="h-4 w-4 mr-1.5" />
+                  Column
+                </button>
+                <button
+                  onClick={() => addRowMutation.mutate()}
+                  disabled={addRowMutation.isPending}
+                  className="inline-flex items-center px-3 py-2 bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg text-sm font-medium text-blue-700 hover:from-blue-100 hover:to-blue-200 hover:border-blue-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow"
+                  title="Add Row"
+                >
+                  <Plus className="h-4 w-4 mr-1.5" />
+                  Row
+                </button>
+              </div>
+            )}
 
             {/* Text Formatting */}
-            <div className="flex items-center space-x-1">
-              <button
-                onClick={toggleBold}
-                disabled={!selectedCell}
+            {!isViewOnly && (
+              <div className="flex items-center space-x-1">
+                <button
+                  onClick={toggleBold}
+                  disabled={!selectedCell}
                 className={`p-1.5 rounded border transition-all disabled:opacity-30 disabled:cursor-not-allowed ${
                   getCurrentFormat().bold
                     ? 'bg-blue-100 border-blue-300 text-blue-700'
@@ -984,8 +998,10 @@ export default function SheetPage() {
                 <Underline className="h-4 w-4" />
               </button>
             </div>
+            )}
 
             {/* Text Alignment */}
+            {!isViewOnly && (
             <div className="flex items-center space-x-1 border-l border-gray-300 pl-4">
               <button
                 onClick={() => setAlignment('left')}
@@ -1024,8 +1040,10 @@ export default function SheetPage() {
                 <AlignRight className="h-4 w-4" />
               </button>
             </div>
+            )}
 
             {/* Font Size and Color */}
+            {!isViewOnly && (
             <div className="flex items-center space-x-1 border-l border-gray-300 pl-4">
               <select
                 value={getCurrentFormat().fontSize || 14}
@@ -1061,8 +1079,10 @@ export default function SheetPage() {
                 />
               </div>
             </div>
+            )}
 
             {/* Number Format */}
+            {!isViewOnly && (
             <div className="flex items-center space-x-1 border-l border-gray-300 pl-4">
               <select
                 value={getCurrentFormat().numberFormat || 'general'}
@@ -1078,8 +1098,10 @@ export default function SheetPage() {
                 <option value="date">Date</option>
               </select>
             </div>
+            )}
 
             {/* Borders */}
+            {!isViewOnly && (
             <div className="flex items-center space-x-1 border-l border-gray-300 pl-4">
               <button
                 onClick={toggleBorder}
@@ -1094,6 +1116,7 @@ export default function SheetPage() {
                 Border
               </button>
             </div>
+            )}
           </div>
           {Object.keys(filters).length > 0 && (
             <div className="flex items-center space-x-2">
@@ -1186,17 +1209,19 @@ export default function SheetPage() {
                               >
                                 {column.name}
                               </span>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setEditingColumnId(column.id);
-                                  setEditingColumnName(column.name);
-                                }}
-                                className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-blue-100 transition-all"
-                                title="Rename column"
-                              >
-                                <Edit3 className="h-3 w-3 text-blue-600" />
-                              </button>
+                              {!isViewOnly && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEditingColumnId(column.id);
+                                    setEditingColumnName(column.name);
+                                  }}
+                                  className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-blue-100 transition-all"
+                                  title="Rename column"
+                                >
+                                  <Edit3 className="h-3 w-3 text-blue-600" />
+                                </button>
+                              )}
                             </div>
                           )}
                           {sortConfig?.columnId === column.id && (
@@ -1254,18 +1279,20 @@ export default function SheetPage() {
                               </div>
                             )}
                           </div>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (window.confirm(`Delete column "${column.name}"? This will permanently delete all data in this column.`)) {
-                                deleteColumnMutation.mutate(column.id);
-                              }
-                            }}
-                            className="p-0.5 rounded hover:bg-red-100 transition-colors text-gray-400 hover:text-red-600"
-                            title="Delete column"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </button>
+                          {!isViewOnly && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (window.confirm(`Delete column "${column.name}"? This will permanently delete all data in this column.`)) {
+                                  deleteColumnMutation.mutate(column.id);
+                                }
+                              }}
+                              className="p-0.5 rounded hover:bg-red-100 transition-colors text-gray-400 hover:text-red-600"
+                              title="Delete column"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </button>
+                          )}
                         </div>
                       </div>
                       {/* Resize handle */}
@@ -1352,29 +1379,33 @@ export default function SheetPage() {
                               >
                                 {row.name || `${rowIndex + 1}`}
                               </span>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setEditingRowId(row.id);
-                                  setEditingRowName(row.name || '');
-                                }}
-                                className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-blue-100 transition-all"
-                                title="Rename row"
-                              >
-                                <Edit3 className="h-3 w-3 text-blue-600" />
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  if (window.confirm(`Delete row ${row.name || rowIndex + 1}? This will permanently delete all data in this row.`)) {
-                                    deleteRowMutation.mutate(row.id);
-                                  }
-                                }}
-                                className="p-1 rounded-md hover:bg-red-100 transition-colors text-slate-400 hover:text-red-600 opacity-0 group-hover:opacity-100"
-                                title="Delete row"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </button>
+                              {!isViewOnly && (
+                                <>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setEditingRowId(row.id);
+                                      setEditingRowName(row.name || '');
+                                    }}
+                                    className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-blue-100 transition-all"
+                                    title="Rename row"
+                                  >
+                                    <Edit3 className="h-3 w-3 text-blue-600" />
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (window.confirm(`Delete row ${row.name || rowIndex + 1}? This will permanently delete all data in this row.`)) {
+                                        deleteRowMutation.mutate(row.id);
+                                      }
+                                    }}
+                                    className="p-1 rounded-md hover:bg-red-100 transition-colors text-slate-400 hover:text-red-600 opacity-0 group-hover:opacity-100"
+                                    title="Delete row"
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </button>
+                                </>
+                              )}
                             </>
                           )}
                         </div>
