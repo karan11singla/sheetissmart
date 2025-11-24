@@ -38,7 +38,7 @@ Thumbs.db
 *~
 
 # Prisma
-backend-service/prisma/migrations/
+# Note: We DO commit migrations for production deployments
 
 # Build artifacts
 *.tsbuildinfo
