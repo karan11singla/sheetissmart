@@ -87,10 +87,7 @@ jobs:
             git pull origin main
             cd infra
             docker-compose pull
-            docker-compose up -d
-            echo "Waiting for backend to start..."
-            sleep 10
             echo "Running database migrations..."
-            docker-compose exec -T backend npx prisma db push
-            echo "Restarting backend to load updated schema..."
-            docker-compose restart backend
+            docker-compose run --rm backend npx prisma migrate deploy
+            docker-compose up -d
+            echo "Deployment complete!"
