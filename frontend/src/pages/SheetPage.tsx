@@ -76,6 +76,11 @@ export default function SheetPage() {
       setEditingCell(null);
       setCellValue('');
     },
+    onError: (error: any) => {
+      console.error('Failed to update cell:', error);
+      alert(`Failed to update cell: ${error.response?.data?.message || error.message}`);
+      // Keep the cell in editing mode so user doesn't lose their work
+    },
   });
 
   const addColumnMutation = useMutation({
@@ -1393,6 +1398,7 @@ export default function SheetPage() {
                         const isSelected = selectedCell?.rowIndex === rowIndex && selectedCell?.colIndex === colIndex;
                         const inFormulaMode = isInFormulaMode() && !isEditing;
                         const isCopied = copiedCell?.cellId === cell?.id;
+                        const isSaving = updateCellMutation.isPending;
 
                         return (
                           <td
@@ -1406,7 +1412,7 @@ export default function SheetPage() {
                                 : !isEditing
                                 ? 'cursor-pointer hover:bg-blue-50/50'
                                 : ''
-                            } ${isSelected && !isEditing ? 'ring-2 ring-inset ring-blue-500 bg-blue-50/60 shadow-inner' : ''} ${isCopied ? 'ring-2 ring-inset ring-dashed ring-emerald-500' : ''}`}
+                            } ${isSelected && !isEditing ? 'ring-2 ring-inset ring-blue-500 bg-blue-50/60 shadow-inner' : ''} ${isCopied ? 'ring-2 ring-inset ring-dashed ring-emerald-500' : ''} ${isSaving && isEditing ? 'opacity-60' : ''}`}
                             style={{ height: row.height || 40 }}
                             onMouseDown={(e) => {
                               // Prevent blur on input when clicking cells in formula mode
