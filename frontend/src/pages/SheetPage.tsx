@@ -1477,7 +1477,36 @@ export default function SheetPage() {
                                   onChange={(e) => handleCellValueChange(e.target.value)}
                                   onBlur={() => cell && handleCellBlur(cell.id)}
                                   onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
+                                    // Handle arrow keys to navigate to next cell
+                                    const input = e.currentTarget;
+                                    const cursorAtStart = input.selectionStart === 0;
+                                    const cursorAtEnd = input.selectionStart === input.value.length;
+
+                                    if (e.key === 'ArrowRight' && cursorAtEnd) {
+                                      e.preventDefault();
+                                      cell && handleCellBlur(cell.id);
+                                      if (colIndex < (sheet?.columns?.length || 0) - 1) {
+                                        setSelectedCell({ rowIndex, colIndex: colIndex + 1 });
+                                      }
+                                    } else if (e.key === 'ArrowLeft' && cursorAtStart) {
+                                      e.preventDefault();
+                                      cell && handleCellBlur(cell.id);
+                                      if (colIndex > 0) {
+                                        setSelectedCell({ rowIndex, colIndex: colIndex - 1 });
+                                      }
+                                    } else if (e.key === 'ArrowUp') {
+                                      e.preventDefault();
+                                      cell && handleCellBlur(cell.id);
+                                      if (rowIndex > 0) {
+                                        setSelectedCell({ rowIndex: rowIndex - 1, colIndex });
+                                      }
+                                    } else if (e.key === 'ArrowDown') {
+                                      e.preventDefault();
+                                      cell && handleCellBlur(cell.id);
+                                      if (rowIndex < (filteredAndSortedRows?.length || 0) - 1) {
+                                        setSelectedCell({ rowIndex: rowIndex + 1, colIndex });
+                                      }
+                                    } else if (e.key === 'Enter') {
                                       if (showFormulaAutocomplete && formulaSuggestions.length > 0) {
                                         insertFormula(formulaSuggestions[0]);
                                         e.preventDefault();
