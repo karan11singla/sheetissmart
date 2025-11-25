@@ -15,12 +15,19 @@ export default function TableCell({
 }: TableCellProps) {
   const [value, setValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  const cellRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
       inputRef.current.focus();
     }
   }, [isEditing]);
+
+  useEffect(() => {
+    if (isSelected && !isEditing && cellRef.current) {
+      cellRef.current.focus();
+    }
+  }, [isSelected, isEditing]);
 
   const displayValue = cell?.value ? JSON.parse(cell.value) : '';
   const computedValue = (cell as any)?.computedValue;
@@ -68,6 +75,21 @@ export default function TableCell({
     }
   };
 
+  const handleCellKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    // Start editing on alphanumeric keys, clearing old content
+    if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey && !isViewOnly && cell) {
+      e.preventDefault();
+      onEdit(cell.id, displayValue);
+      setValue(e.key); // Start with the typed character
+    }
+    // Enter key starts editing with existing content
+    else if (e.key === 'Enter' && !isViewOnly && cell) {
+      e.preventDefault();
+      onEdit(cell.id, displayValue);
+      setValue(displayValue);
+    }
+  };
+
   if (isEditing) {
     return (
       <input
@@ -84,11 +106,14 @@ export default function TableCell({
 
   return (
     <div
-      className={`w-full h-full px-3 py-2 transition-colors ${
+      ref={cellRef}
+      tabIndex={isSelected ? 0 : -1}
+      className={`w-full h-full px-3 py-2 transition-colors focus:outline-none ${
         !isViewOnly ? 'cursor-pointer hover:bg-blue-50/50' : ''
       } ${isSelected ? 'ring-2 ring-inset ring-blue-500 bg-blue-50/60' : ''}`}
       onClick={() => onSelect({ rowIndex, colIndex })}
       onDoubleClick={handleDoubleClick}
+      onKeyDown={handleCellKeyDown}
     >
       <div className="truncate">
         {computedValue !== undefined ? computedValue : displayValue}
