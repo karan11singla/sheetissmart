@@ -21,8 +21,6 @@ export interface SheetTableProps {
   onColumnDelete: (columnId: string) => void;
   onRowUpdate: (rowId: string, name?: string) => void;
   onRowDelete: (rowId: string) => void;
-  onAddColumn: () => void;
-  onAddRow: () => void;
 }
 
 export interface TableCellProps {

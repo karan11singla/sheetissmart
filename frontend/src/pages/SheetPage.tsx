@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
-import { X, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Star } from 'lucide-react';
+import { Plus, X, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Star } from 'lucide-react';
 import { sheetApi } from '../services/api';
 import ShareModal from '../components/ShareModal';
 import SheetTable from '../components/SheetTable/SheetTable';
@@ -407,6 +407,30 @@ export default function SheetPage() {
             </div>
           )}
           <div className="flex items-center space-x-4">
+            {/* Add Row/Column */}
+            {!isViewOnly && (
+              <div className="flex items-center space-x-2 border-r border-slate-200 pr-4">
+                <button
+                  onClick={() => addColumnMutation.mutate()}
+                  disabled={addColumnMutation.isPending}
+                  className="inline-flex items-center px-3 py-2 bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg text-sm font-medium text-blue-700 hover:from-blue-100 hover:to-blue-200 hover:border-blue-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow"
+                  title="Add Column"
+                >
+                  <Plus className="h-4 w-4 mr-1.5" />
+                  Column
+                </button>
+                <button
+                  onClick={() => addRowMutation.mutate()}
+                  disabled={addRowMutation.isPending}
+                  className="inline-flex items-center px-3 py-2 bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg text-sm font-medium text-blue-700 hover:from-blue-100 hover:to-blue-200 hover:border-blue-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow"
+                  title="Add Row"
+                >
+                  <Plus className="h-4 w-4 mr-1.5" />
+                  Row
+                </button>
+              </div>
+            )}
+
             {/* Text Formatting */}
             {!isViewOnly && (
               <div className="flex items-center space-x-1">
@@ -605,8 +629,6 @@ export default function SheetPage() {
         onRowDelete={(rowId: string) => {
           deleteRowMutation.mutate(rowId);
         }}
-        onAddColumn={() => addColumnMutation.mutate()}
-        onAddRow={() => addRowMutation.mutate()}
       />
 
 
