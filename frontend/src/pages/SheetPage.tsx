@@ -821,6 +821,7 @@ export default function SheetPage() {
 
           // Start editing on alphanumeric keys and clear existing content
           if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey && !isViewOnly) {
+            e.preventDefault(); // Prevent the key from being typed twice
             const row = filteredAndSortedRows[rowIndex];
             const column = sheet.columns[colIndex];
             const cell = row.cells?.find((c) => c.columnId === column.id);
