@@ -4,6 +4,7 @@ import { useParams } from 'react-router-dom';
 import { Plus, X, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Star } from 'lucide-react';
 import { sheetApi } from '../services/api';
 import ShareModal from '../components/ShareModal';
+import CommentDialog from '../components/CommentDialog';
 import SheetTable from '../components/SheetTable/SheetTable';
 import type { Cell } from '../types';
 
@@ -11,6 +12,8 @@ export default function SheetPage() {
   const { id } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isCommentDialogOpen, setIsCommentDialogOpen] = useState(false);
+  const [selectedCellForComment, setSelectedCellForComment] = useState<string | null>(null);
   const [isEditingName, setIsEditingName] = useState(false);
   const [sheetName, setSheetName] = useState('');
   const [sortConfig] = useState<{ columnId: string; direction: 'asc' | 'desc' } | null>(null);
@@ -629,8 +632,11 @@ export default function SheetPage() {
         onRowDelete={(rowId: string) => {
           deleteRowMutation.mutate(rowId);
         }}
+        onCommentClick={(cellId: string) => {
+          setSelectedCellForComment(cellId);
+          setIsCommentDialogOpen(true);
+        }}
       />
-
 
       <ShareModal
         isOpen={isShareModalOpen}
@@ -644,6 +650,19 @@ export default function SheetPage() {
           await removeShareMutation.mutateAsync(shareId);
         }}
       />
+
+      {selectedCellForComment && (
+        <CommentDialog
+          isOpen={isCommentDialogOpen}
+          onClose={() => {
+            setIsCommentDialogOpen(false);
+            setSelectedCellForComment(null);
+          }}
+          sheetId={id!}
+          cellId={selectedCellForComment}
+          isViewOnly={isViewOnly}
+        />
+      )}
     </div>
   );
 }

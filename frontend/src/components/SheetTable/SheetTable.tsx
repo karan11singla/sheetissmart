@@ -14,6 +14,7 @@ export default function SheetTable({
   onColumnDelete,
   onRowUpdate,
   onRowDelete,
+  onCommentClick,
 }: SheetTableProps) {
   const [selectedCell, setSelectedCell] = useState<CellPosition | null>(null);
   const [editingCell, setEditingCell] = useState<string | null>(null);
@@ -142,6 +143,7 @@ export default function SheetTable({
                             onEdit={handleCellEdit}
                             onSave={handleCellSave}
                             onNavigate={handleNavigate}
+                            onCommentClick={onCommentClick}
                           />
                         </td>
                       );

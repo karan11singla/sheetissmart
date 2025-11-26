@@ -6,6 +6,8 @@ import type {
   CreateColumnInput,
   CreateRowInput,
   UpdateCellInput,
+  CellComment,
+  CreateCommentInput,
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
@@ -118,6 +120,21 @@ export const sheetApi = {
   removeShare: async (shareId: string) => {
     const { data } = await api.delete(`/api/v1/shares/${shareId}`);
     return data;
+  },
+
+  // Comment operations
+  getCellComments: async (sheetId: string, cellId: string): Promise<CellComment[]> => {
+    const { data } = await api.get(`/api/v1/sheets/${sheetId}/cells/${cellId}/comments`);
+    return data.data.comments;
+  },
+
+  createCellComment: async (
+    sheetId: string,
+    cellId: string,
+    input: CreateCommentInput
+  ): Promise<CellComment> => {
+    const { data } = await api.post(`/api/v1/sheets/${sheetId}/cells/${cellId}/comments`, input);
+    return data.data.comment;
   },
 };
 

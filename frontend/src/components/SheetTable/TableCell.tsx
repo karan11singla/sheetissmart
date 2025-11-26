@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { MessageSquare } from 'lucide-react';
 import type { TableCellProps } from './types';
 
 export default function TableCell({
@@ -12,6 +13,7 @@ export default function TableCell({
   onEdit,
   onSave,
   onNavigate,
+  onCommentClick,
 }: TableCellProps) {
   const [value, setValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -118,19 +120,35 @@ export default function TableCell({
     );
   }
 
+  const hasComments = cell?._count?.comments && cell._count.comments > 0;
+
   return (
     <div
       ref={cellRef}
       tabIndex={isSelected ? 0 : -1}
-      className={`w-full h-full px-3 py-2 transition-colors focus:outline-none ${
+      className={`w-full h-full px-3 py-2 transition-colors focus:outline-none relative ${
         !isViewOnly ? 'cursor-pointer hover:bg-blue-50/50' : ''
       } ${isSelected ? 'ring-2 ring-inset ring-blue-500 bg-blue-50/60' : ''}`}
       onClick={() => onSelect({ rowIndex, colIndex })}
       onDoubleClick={handleDoubleClick}
       onKeyDown={handleCellKeyDown}
     >
-      <div className="truncate">
-        {computedValue !== undefined ? computedValue : displayValue}
+      <div className="flex items-center justify-between gap-2">
+        <div className="truncate flex-1">
+          {computedValue !== undefined ? computedValue : displayValue}
+        </div>
+        {hasComments && cell && onCommentClick && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onCommentClick(cell.id);
+            }}
+            className="flex-shrink-0 text-indigo-600 hover:text-indigo-800 transition-colors"
+            title={`${cell._count?.comments} comment${cell._count?.comments !== 1 ? 's' : ''}`}
+          >
+            <MessageSquare className="h-4 w-4" />
+          </button>
+        )}
       </div>
     </div>
   );

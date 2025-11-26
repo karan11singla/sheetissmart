@@ -103,6 +103,11 @@ export async function getSheetById(id: string, userId: string) {
           cells: {
             include: {
               column: true,
+              _count: {
+                select: {
+                  comments: true,
+                },
+              },
             },
           },
         },

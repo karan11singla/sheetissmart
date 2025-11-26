@@ -44,6 +44,9 @@ export interface Cell {
   createdAt: string;
   updatedAt: string;
   column?: Column;
+  _count?: {
+    comments: number;
+  };
 }
 
 export enum ColumnType {
@@ -79,4 +82,22 @@ export interface CreateRowInput {
 
 export interface UpdateCellInput {
   value: any;
+}
+
+export interface CellComment {
+  id: string;
+  cellId: string;
+  userId: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+  };
+}
+
+export interface CreateCommentInput {
+  content: string;
 }
