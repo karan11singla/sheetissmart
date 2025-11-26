@@ -578,6 +578,42 @@ export async function exportSheetToCSV(sheetId: string, userId: string): Promise
   return csv;
 }
 
+// Helper function to get user's permission for a sheet
+async function getUserPermission(sheetId: string, userId: string): Promise<'OWNER' | 'EDITOR' | 'VIEWER'> {
+  const sheet = await prisma.sheet.findUnique({
+    where: { id: sheetId },
+    include: {
+      shares: true,
+    },
+  });
+
+  if (!sheet) {
+    throw new AppError('Sheet not found', 404);
+  }
+
+  // Get user's email to check shares
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    throw new AppError('User not found', 404);
+  }
+
+  // Check if user is owner or has access via share
+  const isOwner = sheet.userId === userId;
+  if (isOwner) {
+    return 'OWNER';
+  }
+
+  const sharedAccess = sheet.shares.find((share) => share.sharedWithEmail === user.email);
+  if (!sharedAccess) {
+    throw new AppError('Access denied', 403);
+  }
+
+  return sharedAccess.permission;
+}
+
 export async function getCellComments(cellId: string, sheetId: string, userId: string) {
   // First verify user has access to this sheet
   await getUserPermission(sheetId, userId);
