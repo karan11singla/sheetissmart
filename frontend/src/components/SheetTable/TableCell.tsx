@@ -76,8 +76,22 @@ export default function TableCell({
   };
 
   const handleCellKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    // Handle arrow key navigation when not editing
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      onNavigate('up');
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      onNavigate('down');
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      onNavigate('left');
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      onNavigate('right');
+    }
     // Start editing on alphanumeric keys, clearing old content
-    if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey && !isViewOnly && cell) {
+    else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey && !isViewOnly && cell) {
       e.preventDefault();
       onEdit(cell.id, displayValue);
       setValue(e.key); // Start with the typed character
