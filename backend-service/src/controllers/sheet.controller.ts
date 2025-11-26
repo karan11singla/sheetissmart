@@ -232,3 +232,38 @@ export const toggleFavorite = asyncHandler(async (req: Request, res: Response) =
     data: { sheet },
   });
 });
+
+export const getCellComments = asyncHandler(async (req: Request, res: Response) => {
+  const { id, cellId } = req.params;
+
+  if (!req.user) {
+    throw new AppError('Not authenticated', 401);
+  }
+
+  const comments = await sheetService.getCellComments(cellId, id, req.user.userId);
+
+  res.status(200).json({
+    status: 'success',
+    data: { comments },
+  });
+});
+
+export const createCellComment = asyncHandler(async (req: Request, res: Response) => {
+  const { id, cellId } = req.params;
+  const { content } = req.body;
+
+  if (!content || !content.trim()) {
+    throw new AppError('Comment content is required', 400);
+  }
+
+  if (!req.user) {
+    throw new AppError('Not authenticated', 401);
+  }
+
+  const comment = await sheetService.createCellComment(cellId, id, req.user.userId, content.trim());
+
+  res.status(201).json({
+    status: 'success',
+    data: { comment },
+  });
+});

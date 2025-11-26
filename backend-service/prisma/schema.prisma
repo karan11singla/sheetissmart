@@ -23,6 +23,7 @@ model User {
   sheets         Sheet[]
   sharesCreated  SheetShare[] @relation("ShareCreator")
   sharesReceived SheetShare[] @relation("ShareRecipient")
+  cellComments   CellComment[]
 
   @@map("users")
 }
@@ -93,13 +94,30 @@ model Cell {
   updatedAt DateTime @updatedAt
 
   // Relations
-  sheet     Sheet    @relation(fields: [sheetId], references: [id], onDelete: Cascade)
-  row       Row      @relation(fields: [rowId], references: [id], onDelete: Cascade)
-  column    Column   @relation(fields: [columnId], references: [id], onDelete: Cascade)
+  sheet     Sheet       @relation(fields: [sheetId], references: [id], onDelete: Cascade)
+  row       Row         @relation(fields: [rowId], references: [id], onDelete: Cascade)
+  column    Column      @relation(fields: [columnId], references: [id], onDelete: Cascade)
+  comments  CellComment[]
 
   @@unique([rowId, columnId])
   @@index([sheetId])
   @@map("cells")
+}
+
+model CellComment {
+  id        String   @id @default(cuid())
+  cellId    String
+  userId    String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  cell      Cell     @relation(fields: [cellId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([cellId])
+  @@map("cell_comments")
 }
 
 // Sheet Sharing Model

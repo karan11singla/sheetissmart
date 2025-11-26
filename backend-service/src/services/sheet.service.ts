@@ -572,3 +572,82 @@ export async function exportSheetToCSV(sheetId: string, userId: string): Promise
 
   return csv;
 }
+
+export async function getCellComments(cellId: string, sheetId: string, userId: string) {
+  // First verify user has access to this sheet
+  await getUserPermission(sheetId, userId);
+
+  // Verify cell belongs to this sheet
+  const cell = await prisma.cell.findUnique({
+    where: { id: cellId },
+    select: { sheetId: true },
+  });
+
+  if (!cell) {
+    throw new AppError('Cell not found', 404);
+  }
+
+  if (cell.sheetId !== sheetId) {
+    throw new AppError('Cell does not belong to this sheet', 403);
+  }
+
+  // Get comments with user info
+  const comments = await prisma.cellComment.findMany({
+    where: { cellId },
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
+    },
+    orderBy: { createdAt: 'asc' },
+  });
+
+  return comments;
+}
+
+export async function createCellComment(cellId: string, sheetId: string, userId: string, content: string) {
+  // Verify user has EDITOR permission
+  const permission = await getUserPermission(sheetId, userId);
+
+  if (permission === 'VIEWER') {
+    throw new AppError('Viewers cannot add comments. You need EDITOR permission.', 403);
+  }
+
+  // Verify cell belongs to this sheet
+  const cell = await prisma.cell.findUnique({
+    where: { id: cellId },
+    select: { sheetId: true },
+  });
+
+  if (!cell) {
+    throw new AppError('Cell not found', 404);
+  }
+
+  if (cell.sheetId !== sheetId) {
+    throw new AppError('Cell does not belong to this sheet', 403);
+  }
+
+  // Create comment
+  const comment = await prisma.cellComment.create({
+    data: {
+      cellId,
+      userId,
+      content,
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
+    },
+  });
+
+  return comment;
+}

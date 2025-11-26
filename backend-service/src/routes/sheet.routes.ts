@@ -14,6 +14,8 @@ import {
   deleteRow,
   exportSheet,
   toggleFavorite,
+  getCellComments,
+  createCellComment,
 } from '../controllers/sheet.controller';
 import { authenticate } from '../middleware/auth';
 
@@ -44,6 +46,10 @@ router.delete('/:id/rows/:rowId', deleteRow);
 
 // Cell operations
 router.put('/:id/cells/:cellId', updateCell);
+
+// Cell comment operations
+router.get('/:id/cells/:cellId/comments', getCellComments);
+router.post('/:id/cells/:cellId/comments', createCellComment);
 
 // Export operations
 router.get('/:id/export', exportSheet);
