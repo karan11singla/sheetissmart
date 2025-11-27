@@ -7,6 +7,11 @@ export interface Sheet {
   updatedAt: string;
   columns?: Column[];
   rows?: Row[];
+  owner?: {
+    id: string;
+    name: string;
+    email: string;
+  };
   _count?: {
     rows: number;
     columns: number;

@@ -5,7 +5,7 @@ import { authApi } from '../services/api';
 interface Share {
   id: string;
   sharedWithEmail: string;
-  permission: 'VIEWER' | 'EDITOR';
+  permission: 'VIEWER' | 'EDITOR' | 'OWNER';
   sharedWith?: {
     name: string;
     email: string;
