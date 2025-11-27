@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 import { Plus, X, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Star } from 'lucide-react';
@@ -8,10 +8,13 @@ import RightSidebar from '../components/RightSidebar';
 import CommentsPanel from '../components/CommentsPanel';
 import SheetTable from '../components/SheetTable/SheetTable';
 import type { Cell } from '../types';
+import { useUndoRedoStore } from '../store/undoRedoStore';
+import { UpdateCellCommand } from '../store/commands';
 
 export default function SheetPage() {
   const { id } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
+  const { executeCommand, undo, redo } = useUndoRedoStore();
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isCommentSidebarOpen, setIsCommentSidebarOpen] = useState(false);
   const [selectedRowForComment, setSelectedRowForComment] = useState<string | null>(null);
@@ -19,6 +22,28 @@ export default function SheetPage() {
   const [sheetName, setSheetName] = useState('');
   const [sortConfig] = useState<{ columnId: string; direction: 'asc' | 'desc' } | null>(null);
   const [filters, setFilters] = useState<Record<string, string>>({});
+
+  // Keyboard shortcuts for undo/redo
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+Z or Cmd+Z for undo
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+      }
+      // Ctrl+Y or Cmd+Shift+Z or Ctrl+Shift+Z for redo
+      if (
+        ((e.ctrlKey || e.metaKey) && e.key === 'y') ||
+        ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'z')
+      ) {
+        e.preventDefault();
+        redo();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [undo, redo]);
 
   // Cell formatting state (stored per cell ID)
   type CellFormat = {
@@ -46,19 +71,6 @@ export default function SheetPage() {
 
   // Check if user has edit permission
   const isViewOnly = sheet && (sheet as any).permission === 'VIEWER';
-
-  const updateCellMutation = useMutation({
-    mutationFn: ({ cellId, value }: { cellId: string; value: any }) =>
-      sheetApi.updateCell(id!, cellId, { value }),
-    onSuccess: () => {
-      // Refetch to get updated computed values for all formulas
-      queryClient.invalidateQueries({ queryKey: ['sheets', id] });
-    },
-    onError: (error: any) => {
-      console.error('Failed to update cell:', error);
-      alert(`Failed to update cell: ${error.response?.data?.message || error.message}`);
-    },
-  });
 
   const addColumnMutation = useMutation({
     mutationFn: () => {
@@ -633,7 +645,23 @@ export default function SheetPage() {
         rows={filteredAndSortedRows}
         isViewOnly={isViewOnly}
         onCellUpdate={(cellId: string, value: any) => {
-          updateCellMutation.mutate({ cellId, value });
+          // Find the current cell value for undo
+          const cell = sheet.rows
+            ?.flatMap((r) => r.cells || [])
+            .find((c) => c.id === cellId);
+
+          const oldValue = cell?.value ? JSON.parse(cell.value) : '';
+
+          // Create and execute command for undo/redo support
+          const command = new UpdateCellCommand(
+            id!,
+            cellId,
+            oldValue,
+            value,
+            queryClient
+          );
+
+          executeCommand(command);
         }}
         onColumnUpdate={(columnId: string, name: string) => {
           updateColumnMutation.mutate({ columnId, name });

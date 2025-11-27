@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Edit3, Trash2 } from 'lucide-react';
 import type { ColumnHeaderProps } from './types';
 
@@ -10,6 +10,11 @@ export default function ColumnHeader({
 }: ColumnHeaderProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(column.name);
+
+  // Sync local state with column prop changes
+  useEffect(() => {
+    setName(column.name);
+  }, [column.name]);
 
   const handleSave = () => {
     if (name.trim() && name !== column.name) {
