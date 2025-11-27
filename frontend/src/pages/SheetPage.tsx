@@ -4,7 +4,8 @@ import { useParams } from 'react-router-dom';
 import { Plus, X, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Star } from 'lucide-react';
 import { sheetApi } from '../services/api';
 import ShareModal from '../components/ShareModal';
-import CommentDialog from '../components/CommentDialog';
+import RightSidebar from '../components/RightSidebar';
+import CommentsPanel from '../components/CommentsPanel';
 import SheetTable from '../components/SheetTable/SheetTable';
 import type { Cell } from '../types';
 
@@ -12,7 +13,7 @@ export default function SheetPage() {
   const { id } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-  const [isCommentDialogOpen, setIsCommentDialogOpen] = useState(false);
+  const [isCommentSidebarOpen, setIsCommentSidebarOpen] = useState(false);
   const [selectedRowForComment, setSelectedRowForComment] = useState<string | null>(null);
   const [isEditingName, setIsEditingName] = useState(false);
   const [sheetName, setSheetName] = useState('');
@@ -389,14 +390,12 @@ export default function SheetPage() {
             )}
           </div>
           <div className="flex items-center space-x-3">
-            {(sheet as any).isOwner !== false && (
-              <button
-                onClick={() => setIsShareModalOpen(true)}
-                className="inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg font-medium text-sm"
-              >
-                Share
-              </button>
-            )}
+            <button
+              onClick={() => setIsShareModalOpen(true)}
+              className="inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg font-medium text-sm"
+            >
+              {isViewOnly ? 'Access' : 'Share'}
+            </button>
           </div>
         </div>
       </div>
@@ -634,7 +633,7 @@ export default function SheetPage() {
         }}
         onCommentClick={(rowId: string) => {
           setSelectedRowForComment(rowId);
-          setIsCommentDialogOpen(true);
+          setIsCommentSidebarOpen(true);
         }}
       />
 
@@ -649,20 +648,23 @@ export default function SheetPage() {
         onRemoveShare={async (shareId) => {
           await removeShareMutation.mutateAsync(shareId);
         }}
+        isViewOnly={isViewOnly}
       />
 
-      {selectedRowForComment && (
-        <CommentDialog
-          isOpen={isCommentDialogOpen}
-          onClose={() => {
-            setIsCommentDialogOpen(false);
-            setSelectedRowForComment(null);
-          }}
+      <RightSidebar
+        isOpen={isCommentSidebarOpen}
+        onClose={() => {
+          setIsCommentSidebarOpen(false);
+          setSelectedRowForComment(null);
+        }}
+        title="Comments"
+      >
+        <CommentsPanel
           sheetId={id!}
           rowId={selectedRowForComment}
           isViewOnly={isViewOnly}
         />
-      )}
+      </RightSidebar>
     </div>
   );
 }

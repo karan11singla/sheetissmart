@@ -19,6 +19,7 @@ interface ShareModalProps {
   shares: Share[];
   onShare: (email: string, permission: 'VIEWER' | 'EDITOR') => Promise<void>;
   onRemoveShare: (shareId: string) => Promise<void>;
+  isViewOnly?: boolean;
 }
 
 interface User {
@@ -33,6 +34,7 @@ export default function ShareModal({
   shares,
   onShare,
   onRemoveShare,
+  isViewOnly = false,
 }: ShareModalProps) {
   const [email, setEmail] = useState('');
   const [permission, setPermission] = useState<'VIEWER' | 'EDITOR'>('VIEWER');
@@ -129,7 +131,9 @@ export default function ShareModal({
         <div className="relative w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-900">Share Sheet</h2>
+            <h2 className="text-xl font-semibold text-gray-900">
+              {isViewOnly ? 'Sheet Access' : 'Share Sheet'}
+            </h2>
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -138,7 +142,8 @@ export default function ShareModal({
             </button>
           </div>
 
-          {/* Share Form */}
+          {/* Share Form - Only shown for non-viewers */}
+          {!isViewOnly && (
           <form onSubmit={handleSubmit} className="mb-6">
             <div className="space-y-4">
               <div>
@@ -237,6 +242,7 @@ export default function ShareModal({
               </button>
             </div>
           </form>
+          )}
 
           {/* Shared With List */}
           <div>
@@ -265,12 +271,14 @@ export default function ShareModal({
                         {share.permission === 'VIEWER' ? 'Can view' : 'Can edit'}
                       </p>
                     </div>
-                    <button
-                      onClick={() => handleRemove(share.id)}
-                      className="ml-3 text-red-600 hover:text-red-800 transition-colors"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                    {!isViewOnly && (
+                      <button
+                        onClick={() => handleRemove(share.id)}
+                        className="ml-3 text-red-600 hover:text-red-800 transition-colors"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
