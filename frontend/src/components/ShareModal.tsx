@@ -123,7 +123,7 @@ export default function ShareModal({
       <div className="flex min-h-screen items-center justify-center p-4">
         {/* Backdrop */}
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+          className="fixed inset-0 bg-slate-900/10 backdrop-blur-[2px] transition-opacity"
           onClick={onClose}
         />
 
@@ -268,10 +268,14 @@ export default function ShareModal({
                         <p className="text-xs text-gray-500 truncate">{share.sharedWithEmail}</p>
                       )}
                       <p className="text-xs text-gray-500 mt-1">
-                        {share.permission === 'VIEWER' ? 'Can view' : 'Can edit'}
+                        {share.permission === 'OWNER'
+                          ? 'Owner'
+                          : share.permission === 'VIEWER'
+                          ? 'Can view'
+                          : 'Can edit'}
                       </p>
                     </div>
-                    {!isViewOnly && (
+                    {!isViewOnly && share.permission !== 'OWNER' && (
                       <button
                         onClick={() => handleRemove(share.id)}
                         className="ml-3 text-red-600 hover:text-red-800 transition-colors"

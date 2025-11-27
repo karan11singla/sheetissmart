@@ -120,6 +120,23 @@ export default function SheetPage() {
     enabled: !!id && isShareModalOpen,
   });
 
+  // Include owner in the shares list
+  const sharesWithOwner = useMemo(() => {
+    if (!sheet || !shares) return [];
+
+    const ownerShare = sheet.owner ? {
+      id: 'owner',
+      sharedWithEmail: sheet.owner.email,
+      permission: 'OWNER' as const,
+      sharedWith: {
+        name: sheet.owner.name,
+        email: sheet.owner.email,
+      },
+    } : null;
+
+    return ownerShare ? [ownerShare, ...shares] : shares;
+  }, [sheet, shares]);
+
   const shareMutation = useMutation({
     mutationFn: ({ email, permission }: { email: string; permission: 'VIEWER' | 'EDITOR' }) =>
       sheetApi.shareSheet(id!, email, permission),
@@ -641,7 +658,7 @@ export default function SheetPage() {
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
         sheetId={id!}
-        shares={shares}
+        shares={sharesWithOwner}
         onShare={async (email, permission) => {
           await shareMutation.mutateAsync({ email, permission });
         }}
