@@ -11,7 +11,7 @@ interface ShareSheetInput {
 export async function shareSheet(input: ShareSheetInput) {
   const { sheetId, sharedWithEmail, permission, sharedById } = input;
 
-  // Check if sheet exists and user is the owner
+  // Check if sheet exists and user has edit access
   const sheet = await prisma.sheet.findUnique({
     where: { id: sheetId },
   });
@@ -20,8 +20,20 @@ export async function shareSheet(input: ShareSheetInput) {
     throw new AppError('Sheet not found', 404);
   }
 
-  if (sheet.userId !== sharedById) {
-    throw new AppError('Only the sheet owner can share it', 403);
+  // Check if user is owner or has editor permission
+  const isOwner = sheet.userId === sharedById;
+
+  // Check if user has editor access (sharedWithId should match the user)
+  const shareAccess = await prisma.sheetShare.findFirst({
+    where: {
+      sheetId,
+      sharedWithId: sharedById,
+      permission: 'EDITOR',
+    },
+  });
+
+  if (!isOwner && !shareAccess) {
+    throw new AppError('You need edit access to share this sheet', 403);
   }
 
   // Check if user is trying to share with themselves
@@ -80,8 +92,18 @@ export async function getSheetShares(sheetId: string, userId: string) {
     throw new AppError('Sheet not found', 404);
   }
 
-  if (sheet.userId !== userId) {
-    throw new AppError('Only the sheet owner can view shares', 403);
+  // Check if user is owner or has editor permission
+  const isOwner = sheet.userId === userId;
+  const shareAccess = await prisma.sheetShare.findFirst({
+    where: {
+      sheetId,
+      sharedWithId: userId,
+      permission: 'EDITOR',
+    },
+  });
+
+  if (!isOwner && !shareAccess) {
+    throw new AppError('You need edit access to view shares', 403);
   }
 
   return await prisma.sheetShare.findMany({
