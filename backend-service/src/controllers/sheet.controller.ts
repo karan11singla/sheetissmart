@@ -233,14 +233,14 @@ export const toggleFavorite = asyncHandler(async (req: Request, res: Response) =
   });
 });
 
-export const getCellComments = asyncHandler(async (req: Request, res: Response) => {
-  const { id, cellId } = req.params;
+export const getRowComments = asyncHandler(async (req: Request, res: Response) => {
+  const { id, rowId } = req.params;
 
   if (!req.user) {
     throw new AppError('Not authenticated', 401);
   }
 
-  const comments = await sheetService.getCellComments(cellId, id, req.user.userId);
+  const comments = await sheetService.getRowComments(rowId, id, req.user.userId);
 
   res.status(200).json({
     status: 'success',
@@ -248,8 +248,8 @@ export const getCellComments = asyncHandler(async (req: Request, res: Response) 
   });
 });
 
-export const createCellComment = asyncHandler(async (req: Request, res: Response) => {
-  const { id, cellId } = req.params;
+export const createRowComment = asyncHandler(async (req: Request, res: Response) => {
+  const { id, rowId } = req.params;
   const { content } = req.body;
 
   if (!content || !content.trim()) {
@@ -260,7 +260,7 @@ export const createCellComment = asyncHandler(async (req: Request, res: Response
     throw new AppError('Not authenticated', 401);
   }
 
-  const comment = await sheetService.createCellComment(cellId, id, req.user.userId, content.trim());
+  const comment = await sheetService.createRowComment(rowId, id, req.user.userId, content.trim());
 
   res.status(201).json({
     status: 'success',

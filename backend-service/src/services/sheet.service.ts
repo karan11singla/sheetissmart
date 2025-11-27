@@ -103,11 +103,11 @@ export async function getSheetById(id: string, userId: string) {
           cells: {
             include: {
               column: true,
-              _count: {
-                select: {
-                  comments: true,
-                },
-              },
+            },
+          },
+          _count: {
+            select: {
+              comments: true,
             },
           },
         },
@@ -614,27 +614,27 @@ async function getUserPermission(sheetId: string, userId: string): Promise<'OWNE
   return sharedAccess.permission;
 }
 
-export async function getCellComments(cellId: string, sheetId: string, userId: string) {
+export async function getRowComments(rowId: string, sheetId: string, userId: string) {
   // First verify user has access to this sheet
   await getUserPermission(sheetId, userId);
 
-  // Verify cell belongs to this sheet
-  const cell = await prisma.cell.findUnique({
-    where: { id: cellId },
+  // Verify row belongs to this sheet
+  const row = await prisma.row.findUnique({
+    where: { id: rowId },
     select: { sheetId: true },
   });
 
-  if (!cell) {
-    throw new AppError('Cell not found', 404);
+  if (!row) {
+    throw new AppError('Row not found', 404);
   }
 
-  if (cell.sheetId !== sheetId) {
-    throw new AppError('Cell does not belong to this sheet', 403);
+  if (row.sheetId !== sheetId) {
+    throw new AppError('Row does not belong to this sheet', 403);
   }
 
   // Get comments with user info
-  const comments = await prisma.cellComment.findMany({
-    where: { cellId },
+  const comments = await prisma.rowComment.findMany({
+    where: { rowId },
     include: {
       user: {
         select: {
@@ -650,7 +650,7 @@ export async function getCellComments(cellId: string, sheetId: string, userId: s
   return comments;
 }
 
-export async function createCellComment(cellId: string, sheetId: string, userId: string, content: string) {
+export async function createRowComment(rowId: string, sheetId: string, userId: string, content: string) {
   // Verify user has EDITOR permission
   const permission = await getUserPermission(sheetId, userId);
 
@@ -658,24 +658,24 @@ export async function createCellComment(cellId: string, sheetId: string, userId:
     throw new AppError('Viewers cannot add comments. You need EDITOR permission.', 403);
   }
 
-  // Verify cell belongs to this sheet
-  const cell = await prisma.cell.findUnique({
-    where: { id: cellId },
+  // Verify row belongs to this sheet
+  const row = await prisma.row.findUnique({
+    where: { id: rowId },
     select: { sheetId: true },
   });
 
-  if (!cell) {
-    throw new AppError('Cell not found', 404);
+  if (!row) {
+    throw new AppError('Row not found', 404);
   }
 
-  if (cell.sheetId !== sheetId) {
-    throw new AppError('Cell does not belong to this sheet', 403);
+  if (row.sheetId !== sheetId) {
+    throw new AppError('Row does not belong to this sheet', 403);
   }
 
   // Create comment
-  const comment = await prisma.cellComment.create({
+  const comment = await prisma.rowComment.create({
     data: {
-      cellId,
+      rowId,
       userId,
       content,
     },

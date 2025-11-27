@@ -6,7 +6,7 @@ import type {
   CreateColumnInput,
   CreateRowInput,
   UpdateCellInput,
-  CellComment,
+  RowComment,
   CreateCommentInput,
 } from '../types';
 
@@ -123,17 +123,17 @@ export const sheetApi = {
   },
 
   // Comment operations
-  getCellComments: async (sheetId: string, cellId: string): Promise<CellComment[]> => {
-    const { data } = await api.get(`/api/v1/sheets/${sheetId}/cells/${cellId}/comments`);
+  getRowComments: async (sheetId: string, rowId: string): Promise<RowComment[]> => {
+    const { data} = await api.get(`/api/v1/sheets/${sheetId}/rows/${rowId}/comments`);
     return data.data.comments;
   },
 
-  createCellComment: async (
+  createRowComment: async (
     sheetId: string,
-    cellId: string,
+    rowId: string,
     input: CreateCommentInput
-  ): Promise<CellComment> => {
-    const { data } = await api.post(`/api/v1/sheets/${sheetId}/cells/${cellId}/comments`, input);
+  ): Promise<RowComment> => {
+    const { data } = await api.post(`/api/v1/sheets/${sheetId}/rows/${rowId}/comments`, input);
     return data.data.comment;
   },
 };

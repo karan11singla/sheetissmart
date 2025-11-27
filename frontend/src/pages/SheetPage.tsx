@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
-import { Plus, X, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Star } from 'lucide-react';
+import { Plus, X, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Star, MessageSquare } from 'lucide-react';
 import { sheetApi } from '../services/api';
 import ShareModal from '../components/ShareModal';
 import CommentDialog from '../components/CommentDialog';
@@ -13,7 +13,7 @@ export default function SheetPage() {
   const queryClient = useQueryClient();
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isCommentDialogOpen, setIsCommentDialogOpen] = useState(false);
-  const [selectedCellForComment, setSelectedCellForComment] = useState<string | null>(null);
+  const [selectedRowForComment, setSelectedRowForComment] = useState<string | null>(null);
   const [isEditingName, setIsEditingName] = useState(false);
   const [sheetName, setSheetName] = useState('');
   const [sortConfig] = useState<{ columnId: string; direction: 'asc' | 'desc' } | null>(null);
@@ -632,8 +632,8 @@ export default function SheetPage() {
         onRowDelete={(rowId: string) => {
           deleteRowMutation.mutate(rowId);
         }}
-        onCommentClick={(cellId: string) => {
-          setSelectedCellForComment(cellId);
+        onCommentClick={(rowId: string) => {
+          setSelectedRowForComment(rowId);
           setIsCommentDialogOpen(true);
         }}
       />
@@ -651,15 +651,15 @@ export default function SheetPage() {
         }}
       />
 
-      {selectedCellForComment && (
+      {selectedRowForComment && (
         <CommentDialog
           isOpen={isCommentDialogOpen}
           onClose={() => {
             setIsCommentDialogOpen(false);
-            setSelectedCellForComment(null);
+            setSelectedRowForComment(null);
           }}
           sheetId={id!}
-          cellId={selectedCellForComment}
+          rowId={selectedRowForComment}
           isViewOnly={isViewOnly}
         />
       )}

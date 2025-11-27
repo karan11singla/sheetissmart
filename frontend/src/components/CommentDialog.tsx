@@ -2,13 +2,13 @@ import { useState, FormEvent, useEffect } from 'react';
 import { X, MessageSquare, Send } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { sheetApi } from '../services/api';
-import type { CellComment } from '../types';
+import type { RowComment } from '../types';
 
 interface CommentDialogProps {
   isOpen: boolean;
   onClose: () => void;
   sheetId: string;
-  cellId: string;
+  rowId: string;
   isViewOnly?: boolean;
 }
 
@@ -16,7 +16,7 @@ export default function CommentDialog({
   isOpen,
   onClose,
   sheetId,
-  cellId,
+  rowId,
   isViewOnly = false,
 }: CommentDialogProps) {
   const [content, setContent] = useState('');
@@ -24,16 +24,16 @@ export default function CommentDialog({
 
   // Fetch comments
   const { data: comments = [], isLoading } = useQuery({
-    queryKey: ['comments', sheetId, cellId],
-    queryFn: () => sheetApi.getCellComments(sheetId, cellId),
+    queryKey: ['comments', sheetId, rowId],
+    queryFn: () => sheetApi.getRowComments(sheetId, rowId),
     enabled: isOpen,
   });
 
   // Create comment mutation
   const createCommentMutation = useMutation({
-    mutationFn: (content: string) => sheetApi.createCellComment(sheetId, cellId, { content }),
+    mutationFn: (content: string) => sheetApi.createRowComment(sheetId, rowId, { content }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['comments', sheetId, cellId] });
+      queryClient.invalidateQueries({ queryKey: ['comments', sheetId, rowId] });
       queryClient.invalidateQueries({ queryKey: ['sheet', sheetId] });
       setContent('');
     },
@@ -105,7 +105,7 @@ export default function CommentDialog({
               {!isViewOnly && <p className="text-xs mt-1">Be the first to add a comment</p>}
             </div>
           ) : (
-            comments.map((comment: CellComment) => (
+            comments.map((comment: RowComment) => (
               <div key={comment.id} className="flex space-x-3">
                 <div className="flex-shrink-0">
                   <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center">

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Edit3, Trash2 } from 'lucide-react';
+import { Edit3, Trash2, MessageSquare } from 'lucide-react';
 import type { RowHeaderProps } from './types';
 
 export default function RowHeader({
@@ -8,6 +8,7 @@ export default function RowHeader({
   isViewOnly,
   onRename,
   onDelete,
+  onCommentClick,
 }: RowHeaderProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(row.name || '');
@@ -43,6 +44,8 @@ export default function RowHeader({
     );
   }
 
+  const hasComments = !!(row?._count?.comments && row._count.comments > 0);
+
   return (
     <div className="flex items-center justify-center space-x-1.5 group h-full">
       <span
@@ -52,6 +55,23 @@ export default function RowHeader({
       >
         {row.name || `${rowIndex + 1}`}
       </span>
+
+      {/* Comment icon */}
+      {onCommentClick && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onCommentClick(row.id);
+          }}
+          className={`p-0.5 rounded hover:bg-indigo-100 transition-all ${
+            hasComments ? 'opacity-100 text-indigo-600' : 'opacity-0 group-hover:opacity-100 text-slate-400 hover:text-indigo-600'
+          }`}
+          title={hasComments ? `${row._count?.comments} comment${row._count?.comments !== 1 ? 's' : ''}` : 'Add comment'}
+        >
+          <MessageSquare className="h-3.5 w-3.5" />
+        </button>
+      )}
+
       {!isViewOnly && (
         <>
           <button

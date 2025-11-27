@@ -117,6 +117,7 @@ export default function SheetTable({
                         isViewOnly={isViewOnly}
                         onRename={handleRowRename}
                         onDelete={onRowDelete}
+                        onCommentClick={onCommentClick}
                       />
                     </td>
 
@@ -143,7 +144,6 @@ export default function SheetTable({
                             onEdit={handleCellEdit}
                             onSave={handleCellSave}
                             onNavigate={handleNavigate}
-                            onCommentClick={onCommentClick}
                           />
                         </td>
                       );

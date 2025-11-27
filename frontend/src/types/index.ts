@@ -33,6 +33,9 @@ export interface Row {
   cells?: Cell[];
   createdAt: string;
   updatedAt: string;
+  _count?: {
+    comments: number;
+  };
 }
 
 export interface Cell {
@@ -44,9 +47,6 @@ export interface Cell {
   createdAt: string;
   updatedAt: string;
   column?: Column;
-  _count?: {
-    comments: number;
-  };
 }
 
 export enum ColumnType {
@@ -84,9 +84,9 @@ export interface UpdateCellInput {
   value: any;
 }
 
-export interface CellComment {
+export interface RowComment {
   id: string;
-  cellId: string;
+  rowId: string;
   userId: string;
   content: string;
   createdAt: string;
