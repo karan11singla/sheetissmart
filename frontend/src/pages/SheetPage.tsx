@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
-import { Plus, X, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Star, MessageSquare } from 'lucide-react';
+import { Plus, X, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Star } from 'lucide-react';
 import { sheetApi } from '../services/api';
 import ShareModal from '../components/ShareModal';
 import CommentDialog from '../components/CommentDialog';

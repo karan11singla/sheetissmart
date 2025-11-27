@@ -12,7 +12,6 @@ export default function TableCell({
   onEdit,
   onSave,
   onNavigate,
-  onCommentClick,
 }: TableCellProps) {
   const [value, setValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
