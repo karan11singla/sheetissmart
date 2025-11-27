@@ -542,12 +542,12 @@ export async function updateCell(cellId: string, value: any, userId: string) {
     throw new AppError('User not found', 404);
   }
 
-  // Check if user is owner or has EDITOR permission
+  // Check if user is owner or has edit permission (EDIT or EDIT_CAN_SHARE)
   const isOwner = cell.sheet.userId === userId;
   const sharedAccess = cell.sheet.shares.find((share) => share.sharedWithEmail === user.email);
 
-  if (!isOwner && (!sharedAccess || sharedAccess.permission !== 'EDITOR')) {
-    throw new AppError('Access denied. Editor permission required.', 403);
+  if (!isOwner && (!sharedAccess || sharedAccess.permission === 'VIEWER')) {
+    throw new AppError('Access denied. Edit permission required.', 403);
   }
 
   // Store the value (formula or plain value)
@@ -609,7 +609,7 @@ export async function exportSheetToCSV(sheetId: string, userId: string): Promise
 }
 
 // Helper function to get user's permission for a sheet
-async function getUserPermission(sheetId: string, userId: string): Promise<'OWNER' | 'EDITOR' | 'VIEWER'> {
+async function getUserPermission(sheetId: string, userId: string): Promise<'OWNER' | 'EDIT' | 'EDIT_CAN_SHARE' | 'VIEWER'> {
   const sheet = await prisma.sheet.findUnique({
     where: { id: sheetId },
     include: {
@@ -681,11 +681,11 @@ export async function getRowComments(rowId: string, sheetId: string, userId: str
 }
 
 export async function createRowComment(rowId: string, sheetId: string, userId: string, content: string) {
-  // Verify user has EDITOR permission
+  // Verify user has edit permission (EDIT or EDIT_CAN_SHARE)
   const permission = await getUserPermission(sheetId, userId);
 
   if (permission === 'VIEWER') {
-    throw new AppError('Viewers cannot add comments. You need EDITOR permission.', 403);
+    throw new AppError('Viewers cannot add comments. You need edit permission.', 403);
   }
 
   // Verify row belongs to this sheet

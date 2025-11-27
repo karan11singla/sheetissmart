@@ -152,5 +152,6 @@ enum ColumnType {
 
 enum SharePermission {
   VIEWER
-  EDITOR
+  EDIT
+  EDIT_CAN_SHARE
 }

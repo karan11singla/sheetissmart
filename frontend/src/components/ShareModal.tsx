@@ -5,7 +5,7 @@ import { authApi } from '../services/api';
 interface Share {
   id: string;
   sharedWithEmail: string;
-  permission: 'VIEWER' | 'EDITOR' | 'OWNER';
+  permission: 'VIEWER' | 'EDIT' | 'EDIT_CAN_SHARE' | 'OWNER';
   sharedWith?: {
     name: string;
     email: string;
@@ -17,7 +17,7 @@ interface ShareModalProps {
   onClose: () => void;
   sheetId: string;
   shares: Share[];
-  onShare: (email: string, permission: 'VIEWER' | 'EDITOR') => Promise<void>;
+  onShare: (email: string, permission: 'VIEWER' | 'EDIT' | 'EDIT_CAN_SHARE') => Promise<void>;
   onRemoveShare: (shareId: string) => Promise<void>;
   isViewOnly?: boolean;
 }
@@ -37,7 +37,7 @@ export default function ShareModal({
   isViewOnly = false,
 }: ShareModalProps) {
   const [email, setEmail] = useState('');
-  const [permission, setPermission] = useState<'VIEWER' | 'EDITOR'>('VIEWER');
+  const [permission, setPermission] = useState<'VIEWER' | 'EDIT' | 'EDIT_CAN_SHARE'>('VIEWER');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [users, setUsers] = useState<User[]>([]);
@@ -218,11 +218,12 @@ export default function ShareModal({
                 <select
                   id="permission"
                   value={permission}
-                  onChange={(e) => setPermission(e.target.value as 'VIEWER' | 'EDITOR')}
+                  onChange={(e) => setPermission(e.target.value as 'VIEWER' | 'EDIT' | 'EDIT_CAN_SHARE')}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="VIEWER">Can view</option>
-                  <option value="EDITOR">Can edit</option>
+                  <option value="EDIT">Can edit</option>
+                  <option value="EDIT_CAN_SHARE">Can edit and share</option>
                 </select>
               </div>
 
@@ -272,7 +273,9 @@ export default function ShareModal({
                           ? 'Owner'
                           : share.permission === 'VIEWER'
                           ? 'Can view'
-                          : 'Can edit'}
+                          : share.permission === 'EDIT'
+                          ? 'Can edit'
+                          : 'Can edit and share'}
                       </p>
                     </div>
                     {!isViewOnly && share.permission !== 'OWNER' && (
