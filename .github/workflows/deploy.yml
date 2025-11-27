@@ -90,8 +90,8 @@ jobs:
             echo "Starting postgres..."
             docker-compose up -d postgres
             sleep 5
-            echo "Running database migrations..."
-            docker-compose run --rm backend npx prisma migrate deploy
+            echo "Applying database schema changes..."
+            docker-compose run --rm backend npx prisma db push --accept-data-loss --skip-generate
             echo "Starting all services..."
             docker-compose up -d
             echo "Deployment complete!"
