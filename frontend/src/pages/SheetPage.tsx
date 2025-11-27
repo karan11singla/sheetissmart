@@ -126,6 +126,27 @@ export default function SheetPage() {
     },
   });
 
+  const insertRowMutation = useMutation({
+    mutationFn: (position: number) =>
+      sheetApi.createRow(id!, { position }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sheets', id] });
+    },
+  });
+
+  const insertColumnMutation = useMutation({
+    mutationFn: (position: number) => {
+      const columnName = `Col ${position + 1}`;
+      return sheetApi.createColumn(id!, {
+        name: columnName,
+        position,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sheets', id] });
+    },
+  });
+
   const { data: shares = [] } = useQuery({
     queryKey: ['sheet-shares', id],
     queryFn: () => sheetApi.getSheetShares(id!),
@@ -679,6 +700,18 @@ export default function SheetPage() {
         onCommentClick={(rowId: string) => {
           setSelectedRowForComment(rowId);
           setIsCommentSidebarOpen(true);
+        }}
+        onInsertRowAbove={(position: number) => {
+          insertRowMutation.mutate(position);
+        }}
+        onInsertRowBelow={(position: number) => {
+          insertRowMutation.mutate(position);
+        }}
+        onInsertColumnLeft={(position: number) => {
+          insertColumnMutation.mutate(position);
+        }}
+        onInsertColumnRight={(position: number) => {
+          insertColumnMutation.mutate(position);
         }}
       />
 

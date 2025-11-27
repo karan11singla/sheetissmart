@@ -301,7 +301,7 @@ export async function createColumn(sheetId: string, data: CreateColumnInput, use
   // Check if sheet exists and get all rows
   const sheet = await prisma.sheet.findUnique({
     where: { id: sheetId },
-    include: { rows: true },
+    include: { rows: true, columns: true },
   });
 
   if (!sheet) {
@@ -312,7 +312,22 @@ export async function createColumn(sheetId: string, data: CreateColumnInput, use
     throw new AppError('Access denied', 403);
   }
 
-  // Create the column
+  // Shift positions of existing columns at or after the insertion position
+  await prisma.column.updateMany({
+    where: {
+      sheetId,
+      position: {
+        gte: data.position,
+      },
+    },
+    data: {
+      position: {
+        increment: 1,
+      },
+    },
+  });
+
+  // Create the column at the specified position
   const column = await prisma.column.create({
     data: {
       sheetId,
@@ -344,7 +359,7 @@ export async function createRow(sheetId: string, data: CreateRowInput, userId: s
   // Check if sheet exists
   const sheet = await prisma.sheet.findUnique({
     where: { id: sheetId },
-    include: { columns: true },
+    include: { columns: true, rows: true },
   });
 
   if (!sheet) {
@@ -355,7 +370,22 @@ export async function createRow(sheetId: string, data: CreateRowInput, userId: s
     throw new AppError('Access denied', 403);
   }
 
-  // Create row
+  // Shift positions of existing rows at or after the insertion position
+  await prisma.row.updateMany({
+    where: {
+      sheetId,
+      position: {
+        gte: data.position,
+      },
+    },
+    data: {
+      position: {
+        increment: 1,
+      },
+    },
+  });
+
+  // Create row at the specified position
   const row = await prisma.row.create({
     data: {
       sheetId,

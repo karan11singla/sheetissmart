@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Edit3, Trash2 } from 'lucide-react';
+import { Edit3, Trash2, ArrowLeft, ArrowRight } from 'lucide-react';
 import type { ColumnHeaderProps } from './types';
 
 export default function ColumnHeader({
@@ -7,6 +7,8 @@ export default function ColumnHeader({
   isViewOnly,
   onRename,
   onDelete,
+  onInsertLeft,
+  onInsertRight,
 }: ColumnHeaderProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(column.name);
@@ -67,13 +69,33 @@ export default function ColumnHeader({
         )}
       </div>
       {!isViewOnly && (
-        <button
-          onClick={handleDelete}
-          className="p-0.5 rounded hover:bg-red-100 transition-colors text-gray-400 hover:text-red-600"
-          title="Delete column"
-        >
-          <Trash2 className="h-3 w-3" />
-        </button>
+        <>
+          {onInsertLeft && (
+            <button
+              onClick={() => onInsertLeft(column.position)}
+              className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-green-100 transition-all"
+              title="Insert column to left"
+            >
+              <ArrowLeft className="h-3 w-3 text-green-600" />
+            </button>
+          )}
+          {onInsertRight && (
+            <button
+              onClick={() => onInsertRight(column.position + 1)}
+              className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-green-100 transition-all"
+              title="Insert column to right"
+            >
+              <ArrowRight className="h-3 w-3 text-green-600" />
+            </button>
+          )}
+          <button
+            onClick={handleDelete}
+            className="p-0.5 rounded hover:bg-red-100 transition-colors text-gray-400 hover:text-red-600"
+            title="Delete column"
+          >
+            <Trash2 className="h-3 w-3" />
+          </button>
+        </>
       )}
     </div>
   );

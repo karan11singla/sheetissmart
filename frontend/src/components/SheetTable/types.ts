@@ -22,6 +22,10 @@ export interface SheetTableProps {
   onRowUpdate: (rowId: string, name?: string) => void;
   onRowDelete: (rowId: string) => void;
   onCommentClick?: (rowId: string) => void;
+  onInsertRowAbove?: (position: number) => void;
+  onInsertRowBelow?: (position: number) => void;
+  onInsertColumnLeft?: (position: number) => void;
+  onInsertColumnRight?: (position: number) => void;
 }
 
 export interface TableCellProps {
@@ -42,6 +46,8 @@ export interface ColumnHeaderProps {
   isViewOnly: boolean;
   onRename: (columnId: string, name: string) => void;
   onDelete: (columnId: string) => void;
+  onInsertLeft?: (position: number) => void;
+  onInsertRight?: (position: number) => void;
 }
 
 export interface RowHeaderProps {
@@ -51,4 +57,6 @@ export interface RowHeaderProps {
   onRename: (rowId: string, name: string) => void;
   onDelete: (rowId: string) => void;
   onCommentClick?: (rowId: string) => void;
+  onInsertAbove?: (position: number) => void;
+  onInsertBelow?: (position: number) => void;
 }

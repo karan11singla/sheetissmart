@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Edit3, Trash2, MessageSquare } from 'lucide-react';
+import { Edit3, Trash2, MessageSquare, ArrowUp, ArrowDown } from 'lucide-react';
 import type { RowHeaderProps } from './types';
 
 export default function RowHeader({
@@ -9,6 +9,8 @@ export default function RowHeader({
   onRename,
   onDelete,
   onCommentClick,
+  onInsertAbove,
+  onInsertBelow,
 }: RowHeaderProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(row.name || '');
@@ -74,6 +76,24 @@ export default function RowHeader({
 
       {!isViewOnly && (
         <>
+          {onInsertAbove && (
+            <button
+              onClick={() => onInsertAbove(row.position)}
+              className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-green-100 transition-all"
+              title="Insert row above"
+            >
+              <ArrowUp className="h-3 w-3 text-green-600" />
+            </button>
+          )}
+          {onInsertBelow && (
+            <button
+              onClick={() => onInsertBelow(row.position + 1)}
+              className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-green-100 transition-all"
+              title="Insert row below"
+            >
+              <ArrowDown className="h-3 w-3 text-green-600" />
+            </button>
+          )}
           <button
             onClick={() => setIsEditing(true)}
             className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-blue-100 transition-all"

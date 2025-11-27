@@ -15,6 +15,10 @@ export default function SheetTable({
   onRowUpdate,
   onRowDelete,
   onCommentClick,
+  onInsertRowAbove,
+  onInsertRowBelow,
+  onInsertColumnLeft,
+  onInsertColumnRight,
 }: SheetTableProps) {
   const [selectedCell, setSelectedCell] = useState<CellPosition | null>(null);
   const [editingCell, setEditingCell] = useState<string | null>(null);
@@ -96,6 +100,8 @@ export default function SheetTable({
                         isViewOnly={isViewOnly}
                         onRename={handleColumnRename}
                         onDelete={onColumnDelete}
+                        onInsertLeft={onInsertColumnLeft}
+                        onInsertRight={onInsertColumnRight}
                       />
                     </th>
                   ))}
@@ -118,6 +124,8 @@ export default function SheetTable({
                         onRename={handleRowRename}
                         onDelete={onRowDelete}
                         onCommentClick={onCommentClick}
+                        onInsertAbove={onInsertRowAbove}
+                        onInsertBelow={onInsertRowBelow}
                       />
                     </td>
 
