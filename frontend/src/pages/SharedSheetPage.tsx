@@ -73,23 +73,23 @@ export default function SharedSheetPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-3 sm:p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">{sheet.name}</h1>
+        <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 mb-4 sm:mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">{sheet.name}</h1>
               {sheet.description && (
-                <p className="text-gray-600 mt-1">{sheet.description}</p>
+                <p className="text-gray-600 mt-1 text-sm sm:text-base">{sheet.description}</p>
               )}
-              <p className="text-sm text-gray-500 mt-2">
+              <p className="text-xs sm:text-sm text-gray-500 mt-2">
                 Shared by {sheet.owner?.name || sheet.owner?.email}
               </p>
             </div>
             <button
               onClick={() => navigate('/login')}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm sm:text-base whitespace-nowrap"
             >
               Sign in to create your own
             </button>
@@ -101,14 +101,14 @@ export default function SharedSheetPage() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
+                <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12 sm:w-16">
                   #
                 </th>
                 {columns.map((col: any) => (
                   <th
                     key={col.id}
-                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    style={{ width: col.width || 150 }}
+                    className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    style={{ minWidth: col.width || 150 }}
                   >
                     {col.name}
                   </th>
@@ -118,11 +118,11 @@ export default function SharedSheetPage() {
             <tbody className="bg-white divide-y divide-gray-200">
               {rows.map((row: any, index: number) => (
                 <tr key={row.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 text-sm text-gray-500">
+                  <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-500">
                     {index + 1}
                   </td>
                   {columns.map((col: any) => (
-                    <td key={col.id} className="px-4 py-3 text-sm text-gray-900">
+                    <td key={col.id} className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-900">
                       {getCellValue(row.id, col.id)}
                     </td>
                   ))}
@@ -131,7 +131,7 @@ export default function SharedSheetPage() {
             </tbody>
           </table>
           {rows.length === 0 && (
-            <div className="text-center py-12 text-gray-500">
+            <div className="text-center py-8 sm:py-12 text-gray-500 text-sm">
               This sheet has no data yet
             </div>
           )}

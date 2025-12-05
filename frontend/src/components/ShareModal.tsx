@@ -157,15 +157,16 @@ export default function ShareModal({
         />
 
         {/* Modal */}
-        <div className="relative w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+        <div className="relative w-full max-w-md rounded-lg bg-white p-4 sm:p-6 shadow-xl max-h-[90vh] overflow-y-auto">
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-900">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
               {isViewOnly ? 'Sheet Access' : 'Share Sheet'}
             </h2>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-gray-400 hover:text-gray-600 transition-colors p-1"
+              aria-label="Close"
             >
               <X className="h-5 w-5" />
             </button>
@@ -173,34 +174,32 @@ export default function ShareModal({
 
           {/* Share Link Section - Only shown for non-viewers */}
           {!isViewOnly && (
-            <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center space-x-2">
-                  <Link2 className="h-4 w-4 text-gray-600" />
-                  <h3 className="text-sm font-medium text-gray-900">Share via link</h3>
-                </div>
+            <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <div className="flex items-center mb-2">
+                <Link2 className="h-4 w-4 text-gray-600 mr-2" />
+                <h3 className="text-sm font-medium text-gray-900">Share via link</h3>
               </div>
               {shareLink ? (
-                <div className="flex items-center space-x-2">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                   <input
                     type="text"
                     value={shareLink}
                     readOnly
-                    className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md bg-white focus:outline-none"
+                    className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md bg-white focus:outline-none min-w-0"
                   />
                   <button
                     onClick={handleCopyLink}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2 whitespace-nowrap"
                   >
                     {isCopied ? (
                       <>
                         <Check className="h-4 w-4" />
-                        <span>Copied!</span>
+                        <span className="hidden sm:inline">Copied!</span>
                       </>
                     ) : (
                       <>
                         <Copy className="h-4 w-4" />
-                        <span>Copy</span>
+                        <span className="hidden sm:inline">Copy</span>
                       </>
                     )}
                   </button>
