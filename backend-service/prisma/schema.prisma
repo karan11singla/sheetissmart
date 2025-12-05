@@ -41,11 +41,12 @@ model Sheet {
   updatedAt   DateTime @updatedAt
 
   // Relations
-  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  columns     Column[]
-  rows        Row[]
-  cells       Cell[]
-  shares      SheetShare[]
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  columns           Column[]
+  rows              Row[]
+  cells             Cell[]
+  shares            SheetShare[]
+  conditionalFormats ConditionalFormat[]
 
   @@map("sheets")
 }
@@ -107,6 +108,28 @@ model Cell {
   @@map("cells")
 }
 
+model ConditionalFormat {
+  id            String              @id @default(cuid())
+  sheetId       String
+  name          String              // Rule name for easy identification
+  ruleType      FormatRuleType      // Type of condition
+  condition     String              // JSON string: condition details (e.g., {"operator": ">", "value": 100})
+  backgroundColor String?           // Hex color or CSS color
+  textColor     String?             // Hex color or CSS color
+  bold          Boolean             @default(false)
+  italic        Boolean             @default(false)
+  priority      Int                 @default(0) // Higher priority rules apply first
+  range         String              // Cell range (e.g., "A1:B10" or specific cells)
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  // Relations
+  sheet         Sheet               @relation(fields: [sheetId], references: [id], onDelete: Cascade)
+
+  @@index([sheetId])
+  @@map("conditional_formats")
+}
+
 model RowComment {
   id        String   @id @default(cuid())
   rowId     String
@@ -157,4 +180,15 @@ enum SharePermission {
   VIEWER
   EDIT
   EDIT_CAN_SHARE
+}
+
+enum FormatRuleType {
+  CELL_VALUE          // Based on cell value (>, <, =, !=, between, etc.)
+  TEXT_CONTAINS       // If text contains specific string
+  DATE_IS             // Date-based rules (today, yesterday, in the past, etc.)
+  DUPLICATE_VALUES    // Highlight duplicates
+  UNIQUE_VALUES       // Highlight unique values
+  TOP_BOTTOM          // Top/bottom N values or percentages
+  ABOVE_BELOW_AVERAGE // Above/below average
+  FORMULA_CUSTOM      // Custom formula-based rule
 }
