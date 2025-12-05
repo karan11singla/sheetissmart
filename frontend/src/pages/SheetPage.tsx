@@ -157,13 +157,13 @@ export default function SheetPage() {
   const sharesWithOwner = useMemo(() => {
     if (!sheet || !shares) return [];
 
-    const ownerShare = sheet.owner ? {
+    const ownerShare = sheet.user ? {
       id: 'owner',
-      sharedWithEmail: sheet.owner.email,
+      sharedWithEmail: sheet.user.email,
       permission: 'OWNER' as const,
       sharedWith: {
-        name: sheet.owner.name,
-        email: sheet.owner.email,
+        name: sheet.user.name,
+        email: sheet.user.email,
       },
     } : null;
 

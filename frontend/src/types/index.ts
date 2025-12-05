@@ -7,7 +7,7 @@ export interface Sheet {
   updatedAt: string;
   columns?: Column[];
   rows?: Row[];
-  owner?: {
+  user?: {
     id: string;
     name: string;
     email: string;
