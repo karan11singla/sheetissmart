@@ -319,21 +319,16 @@ export default function ShareModal({
           </form>
           )}
 
-          {/* Shared With List */}
-          <div>
-            <h3 className="text-sm font-medium text-gray-900 mb-3">
-              Shared with ({shares.length})
-            </h3>
-            {shares.length === 0 ? (
-              <p className="text-sm text-gray-500 text-center py-4">
-                Not shared with anyone yet
-              </p>
-            ) : (
-              <div className="space-y-2 max-h-60 overflow-y-auto">
-                {shares.map((share) => (
+          {/* Owner Section */}
+          {shares.find(s => s.permission === 'OWNER') && (
+            <div className="mb-4">
+              <h3 className="text-sm font-medium text-gray-900 mb-3">Owner</h3>
+              {shares
+                .filter((share) => share.permission === 'OWNER')
+                .map((share) => (
                   <div
                     key={share.id}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-md"
+                    className="flex items-center justify-between p-3 bg-blue-50 rounded-md border border-blue-200"
                   >
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900 truncate">
@@ -342,26 +337,56 @@ export default function ShareModal({
                       {share.sharedWith && (
                         <p className="text-xs text-gray-500 truncate">{share.sharedWithEmail}</p>
                       )}
-                      <p className="text-xs text-gray-500 mt-1">
-                        {share.permission === 'OWNER'
-                          ? 'Owner'
-                          : share.permission === 'VIEWER'
-                          ? 'Can view'
-                          : share.permission === 'EDIT'
-                          ? 'Can edit'
-                          : 'Can edit and share'}
-                      </p>
+                      <p className="text-xs text-blue-600 mt-1 font-medium">Owner</p>
                     </div>
-                    {!isViewOnly && share.permission !== 'OWNER' && (
-                      <button
-                        onClick={() => handleRemove(share.id)}
-                        className="ml-3 text-red-600 hover:text-red-800 transition-colors"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    )}
                   </div>
                 ))}
+            </div>
+          )}
+
+          {/* Shared With List */}
+          <div>
+            <h3 className="text-sm font-medium text-gray-900 mb-3">
+              Shared with ({shares.filter(s => s.permission !== 'OWNER').length})
+            </h3>
+            {shares.filter(s => s.permission !== 'OWNER').length === 0 ? (
+              <p className="text-sm text-gray-500 text-center py-4">
+                Not shared with anyone yet
+              </p>
+            ) : (
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {shares
+                  .filter((share) => share.permission !== 'OWNER')
+                  .map((share) => (
+                    <div
+                      key={share.id}
+                      className="flex items-center justify-between p-3 bg-gray-50 rounded-md"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">
+                          {share.sharedWith?.name || share.sharedWithEmail}
+                        </p>
+                        {share.sharedWith && (
+                          <p className="text-xs text-gray-500 truncate">{share.sharedWithEmail}</p>
+                        )}
+                        <p className="text-xs text-gray-500 mt-1">
+                          {share.permission === 'VIEWER'
+                            ? 'Can view'
+                            : share.permission === 'EDIT'
+                            ? 'Can edit'
+                            : 'Can edit and share'}
+                        </p>
+                      </div>
+                      {!isViewOnly && (
+                        <button
+                          onClick={() => handleRemove(share.id)}
+                          className="ml-3 text-red-600 hover:text-red-800 transition-colors"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
               </div>
             )}
           </div>
