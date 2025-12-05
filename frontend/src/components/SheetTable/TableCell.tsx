@@ -206,12 +206,8 @@ export default function TableCell({
 
   // Handle cell click - if in formula mode (but not this cell being edited), call onFormulaSelect
   const handleCellClick = (e: React.MouseEvent) => {
-    // Check if another cell is in formula mode
-    const isThisEditingCell = isEditing;
-    const isOtherCellInFormulaMode = !isThisEditingCell && onFormulaSelect;
-
-    if (isOtherCellInFormulaMode) {
-      // Another cell is being edited in formula mode, add this cell reference
+    // If we're in formula mode and this is NOT the editing cell, add cell reference
+    if (isFormulaMode && !isEditing && onFormulaSelect) {
       e.preventDefault();
       e.stopPropagation();
       onFormulaSelect({ rowIndex, colIndex });
