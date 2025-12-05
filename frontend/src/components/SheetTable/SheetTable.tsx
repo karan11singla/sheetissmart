@@ -22,6 +22,8 @@ export default function SheetTable({
 }: SheetTableProps) {
   const [selectedCell, setSelectedCell] = useState<CellPosition | null>(null);
   const [editingCell, setEditingCell] = useState<string | null>(null);
+  const [fillStart, setFillStart] = useState<CellPosition | null>(null);
+  const [fillEnd, setFillEnd] = useState<CellPosition | null>(null);
 
   const getCellValue = useCallback((row: typeof rows[0], columnId: string): Cell | undefined => {
     return row.cells?.find((c) => c.columnId === columnId);
@@ -64,6 +66,54 @@ export default function SheetTable({
 
     setSelectedCell({ rowIndex: newRowIndex, colIndex: newColIndex });
   }, [selectedCell, rows.length, columns.length]);
+
+  const handleFillDrag = useCallback((position: CellPosition, action: 'start' | 'drag' | 'end') => {
+    if (action === 'start') {
+      setFillStart(selectedCell);
+      setFillEnd(position);
+    } else if (action === 'drag') {
+      setFillEnd(position);
+    } else if (action === 'end' && fillStart && fillEnd) {
+      // Perform the fill operation
+      const sourceCell = selectedCell;
+      if (!sourceCell) return;
+
+      const sourceRow = rows[sourceCell.rowIndex];
+      const sourceColumn = columns[sourceCell.colIndex];
+      const sourceCellData = getCellValue(sourceRow, sourceColumn.id);
+
+      if (!sourceCellData) return;
+
+      // Get the value to copy
+      const sourceValue = sourceCellData.value ? JSON.parse(sourceCellData.value) : '';
+
+      // Determine the fill range
+      const startRow = Math.min(fillStart.rowIndex, fillEnd.rowIndex);
+      const endRow = Math.max(fillStart.rowIndex, fillEnd.rowIndex);
+      const startCol = Math.min(fillStart.colIndex, fillEnd.colIndex);
+      const endCol = Math.max(fillStart.colIndex, fillEnd.colIndex);
+
+      // Fill all cells in the range
+      for (let r = startRow; r <= endRow; r++) {
+        for (let c = startCol; c <= endCol; c++) {
+          // Skip the source cell
+          if (r === sourceCell.rowIndex && c === sourceCell.colIndex) continue;
+
+          const targetRow = rows[r];
+          const targetColumn = columns[c];
+          const targetCell = getCellValue(targetRow, targetColumn.id);
+
+          if (targetCell) {
+            onCellUpdate(targetCell.id, sourceValue);
+          }
+        }
+      }
+
+      // Reset fill state
+      setFillStart(null);
+      setFillEnd(null);
+    }
+  }, [selectedCell, fillStart, fillEnd, rows, columns, getCellValue, onCellUpdate]);
 
   const handleColumnRename = useCallback((columnId: string, name: string) => {
     onColumnUpdate(columnId, name);
@@ -135,10 +185,19 @@ export default function SheetTable({
                       const isSelected = selectedCell?.rowIndex === rowIndex && selectedCell?.colIndex === colIndex;
                       const isEditing = editingCell === cell?.id;
 
+                      // Check if this cell is in the fill range
+                      const isInFillRange = fillStart && fillEnd &&
+                        rowIndex >= Math.min(fillStart.rowIndex, fillEnd.rowIndex) &&
+                        rowIndex <= Math.max(fillStart.rowIndex, fillEnd.rowIndex) &&
+                        colIndex >= Math.min(fillStart.colIndex, fillEnd.colIndex) &&
+                        colIndex <= Math.max(fillStart.colIndex, fillEnd.colIndex);
+
                       return (
                         <td
                           key={`${row.id}-${column.id}`}
-                          className="border-b border-slate-200 border-l border-slate-200"
+                          className={`border-b border-slate-200 border-l border-slate-200 ${
+                            isInFillRange ? 'bg-blue-100 ring-1 ring-inset ring-blue-400' : ''
+                          }`}
                           style={{ height: row.height || 40 }}
                         >
                           <TableCell
@@ -152,6 +211,7 @@ export default function SheetTable({
                             onEdit={handleCellEdit}
                             onSave={handleCellSave}
                             onNavigate={handleNavigate}
+                            onFillDrag={handleFillDrag}
                           />
                         </td>
                       );

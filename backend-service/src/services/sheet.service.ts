@@ -95,6 +95,13 @@ export async function getSheetById(id: string, userId: string) {
   const sheet = await prisma.sheet.findUnique({
     where: { id },
     include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
       columns: {
         orderBy: { position: 'asc' },
       },

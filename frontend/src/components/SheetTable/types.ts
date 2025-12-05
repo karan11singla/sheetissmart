@@ -39,6 +39,7 @@ export interface TableCellProps {
   onEdit: (cellId: string, initialValue: string) => void;
   onSave: (cellId: string, value: string) => void;
   onNavigate: (direction: 'up' | 'down' | 'left' | 'right') => void;
+  onFillDrag?: (position: CellPosition, action: 'start' | 'drag' | 'end') => void;
 }
 
 export interface ColumnHeaderProps {

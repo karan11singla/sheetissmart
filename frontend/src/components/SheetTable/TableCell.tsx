@@ -12,10 +12,13 @@ export default function TableCell({
   onEdit,
   onSave,
   onNavigate,
+  onFillDrag,
 }: TableCellProps) {
   const [value, setValue] = useState('');
+  const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const cellRef = useRef<HTMLDivElement>(null);
+  const fillHandleRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -110,6 +113,48 @@ export default function TableCell({
     }
   };
 
+  const handleFillHandleMouseDown = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isViewOnly && onFillDrag) {
+      setIsDragging(true);
+      onFillDrag({ rowIndex, colIndex }, 'start');
+    }
+  };
+
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (onFillDrag) {
+        // Find the cell under the mouse
+        const element = document.elementFromPoint(e.clientX, e.clientY);
+        const cellElement = element?.closest('[data-cell-pos]');
+        if (cellElement) {
+          const pos = cellElement.getAttribute('data-cell-pos');
+          if (pos) {
+            const [row, col] = pos.split(',').map(Number);
+            onFillDrag({ rowIndex: row, colIndex: col }, 'drag');
+          }
+        }
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+      if (onFillDrag) {
+        onFillDrag({ rowIndex, colIndex }, 'end');
+      }
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, rowIndex, colIndex, onFillDrag]);
+
   if (isEditing) {
     return (
       <input
@@ -133,6 +178,7 @@ export default function TableCell({
     <div
       ref={cellRef}
       tabIndex={isSelected ? 0 : -1}
+      data-cell-pos={`${rowIndex},${colIndex}`}
       className={`w-full h-full px-3 py-2 transition-colors focus:outline-none relative ${
         !isViewOnly ? 'cursor-pointer hover:bg-blue-50/50' : ''
       } ${isSelected ? 'ring-2 ring-inset ring-blue-500 bg-blue-50/60' : ''} ${
@@ -145,6 +191,14 @@ export default function TableCell({
       <div className="truncate">
         {cellDisplayValue}
       </div>
+      {isSelected && !isEditing && !isViewOnly && (
+        <div
+          ref={fillHandleRef}
+          onMouseDown={handleFillHandleMouseDown}
+          className="absolute bottom-0 right-0 w-2 h-2 bg-blue-600 cursor-crosshair"
+          style={{ transform: 'translate(50%, 50%)' }}
+        />
+      )}
     </div>
   );
 }
