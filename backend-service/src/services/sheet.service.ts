@@ -556,24 +556,32 @@ export async function updateCell(cellId: string, value: any, userId: string) {
 
   // Check if it's a formula and evaluate it
   let computedValue = null;
+  let formula = null;
   if (stringValue && stringValue.trim().startsWith('=')) {
+    formula = stringValue;
     try {
-      computedValue = await FormulaEngine.evaluate(cell.sheetId, stringValue);
+      const result = await FormulaEngine.evaluate(cell.sheetId, stringValue);
+      computedValue = result !== null ? JSON.stringify(result) : null;
     } catch (error) {
       console.error('Formula evaluation error:', error);
-      // Store the formula anyway, but return null for computed value
+      // Store the formula anyway, but set computed value to error
+      computedValue = JSON.stringify('#ERROR!');
     }
   }
 
   const updatedCell = await prisma.cell.update({
     where: { id: cellId },
-    data: { value: stringValue !== null ? JSON.stringify(stringValue) : null },
+    data: {
+      value: stringValue !== null && !formula ? JSON.stringify(stringValue) : null,
+      formula: formula,
+      computedValue: computedValue,
+    },
   });
 
   // Return the cell with computed value if it's a formula
   return {
     ...updatedCell,
-    computedValue: computedValue !== null ? computedValue : undefined,
+    computedValue: computedValue !== null ? JSON.parse(computedValue) : undefined,
   };
 }
 

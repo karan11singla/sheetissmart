@@ -49,6 +49,8 @@ export interface Cell {
   rowId: string;
   columnId: string;
   value?: string;
+  formula?: string;
+  computedValue?: string | number;
   createdAt: string;
   updatedAt: string;
   column?: Column;

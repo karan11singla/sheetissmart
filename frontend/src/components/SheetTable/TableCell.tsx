@@ -29,13 +29,19 @@ export default function TableCell({
     }
   }, [isSelected, isEditing]);
 
-  const displayValue = cell?.value ? JSON.parse(cell.value) : '';
-  const computedValue = (cell as any)?.computedValue;
+  // If cell has a formula, show the formula when editing and computed value when viewing
+  const hasFormula = cell?.formula !== null && cell?.formula !== undefined;
+  const displayValue = hasFormula
+    ? cell?.formula
+    : (cell?.value ? JSON.parse(cell.value) : '');
+  const computedValue = cell?.computedValue;
 
   const handleDoubleClick = () => {
     if (!isViewOnly && cell) {
-      onEdit(cell.id, displayValue);
-      setValue(displayValue);
+      // When editing, show the formula or raw value
+      const editValue = hasFormula ? cell.formula : displayValue;
+      onEdit(cell.id, editValue);
+      setValue(editValue || '');
     }
   };
 
@@ -118,19 +124,26 @@ export default function TableCell({
     );
   }
 
+  // For display: show computed value if it's a formula, otherwise show the regular value
+  const cellDisplayValue = hasFormula
+    ? (computedValue !== undefined && computedValue !== null ? String(computedValue) : '')
+    : (displayValue || '');
+
   return (
     <div
       ref={cellRef}
       tabIndex={isSelected ? 0 : -1}
       className={`w-full h-full px-3 py-2 transition-colors focus:outline-none relative ${
         !isViewOnly ? 'cursor-pointer hover:bg-blue-50/50' : ''
-      } ${isSelected ? 'ring-2 ring-inset ring-blue-500 bg-blue-50/60' : ''}`}
+      } ${isSelected ? 'ring-2 ring-inset ring-blue-500 bg-blue-50/60' : ''} ${
+        hasFormula ? 'italic text-indigo-700 font-medium' : ''
+      }`}
       onClick={() => onSelect({ rowIndex, colIndex })}
       onDoubleClick={handleDoubleClick}
       onKeyDown={handleCellKeyDown}
     >
       <div className="truncate">
-        {computedValue !== undefined ? computedValue : (displayValue || '')}
+        {cellDisplayValue}
       </div>
     </div>
   );

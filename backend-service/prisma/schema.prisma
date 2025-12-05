@@ -87,13 +87,15 @@ model Row {
 }
 
 model Cell {
-  id        String   @id @default(cuid())
-  sheetId   String
-  rowId     String
-  columnId  String
-  value     String?  // Store as JSON string for complex types
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String   @id @default(cuid())
+  sheetId        String
+  rowId          String
+  columnId       String
+  value          String?  // Store as JSON string for complex types
+  formula        String?  // Formula starting with =
+  computedValue  String?  // Computed result of formula
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   // Relations
   sheet     Sheet       @relation(fields: [sheetId], references: [id], onDelete: Cascade)
