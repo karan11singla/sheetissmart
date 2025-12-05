@@ -8,11 +8,15 @@ export default function TableCell({
   isSelected,
   isEditing,
   isViewOnly,
+  isFormulaMode = false,
   onSelect,
   onEdit,
   onSave,
   onNavigate,
   onFillDrag,
+  onFormulaSelect,
+  editingCellValue,
+  onValueChange,
 }: TableCellProps) {
   const [value, setValue] = useState('');
   const [isDragging, setIsDragging] = useState(false);
@@ -43,7 +47,7 @@ export default function TableCell({
     if (!isViewOnly && cell) {
       // When editing, show the formula or raw value
       const editValue = hasFormula ? cell.formula : displayValue;
-      onEdit(cell.id, editValue);
+      onEdit(cell.id, editValue, { rowIndex, colIndex });
       setValue(editValue || '');
     }
   };
@@ -102,13 +106,13 @@ export default function TableCell({
     // Start editing on alphanumeric keys, clearing old content
     else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey && !isViewOnly && cell) {
       e.preventDefault();
-      onEdit(cell.id, displayValue);
+      onEdit(cell.id, displayValue, { rowIndex, colIndex });
       setValue(e.key); // Start with the typed character
     }
     // Enter key starts editing with existing content
     else if (e.key === 'Enter' && !isViewOnly && cell) {
       e.preventDefault();
-      onEdit(cell.id, displayValue);
+      onEdit(cell.id, displayValue, { rowIndex, colIndex });
       setValue(displayValue);
     }
   };
@@ -155,16 +159,42 @@ export default function TableCell({
     };
   }, [isDragging, rowIndex, colIndex, onFillDrag]);
 
+  // Sync local value with prop value when editing starts
+  useEffect(() => {
+    if (isEditing && editingCellValue !== undefined) {
+      setValue(editingCellValue);
+    }
+  }, [isEditing, editingCellValue]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setValue(newValue);
+    if (onValueChange) {
+      onValueChange(newValue);
+    }
+  };
+
+  const handleBlur = () => {
+    // Don't save on blur if we're in formula mode - clicking cells should not trigger blur save
+    if (!isFormulaMode) {
+      handleSave();
+    }
+  };
+
   if (isEditing) {
     return (
       <input
         ref={inputRef}
         type="text"
         value={value}
-        onChange={(e) => setValue(e.target.value)}
-        onBlur={handleSave}
+        onChange={handleInputChange}
+        onBlur={handleBlur}
         onKeyDown={handleKeyDown}
-        className="w-full h-full px-3 py-2 border-2 border-blue-500 focus:outline-none bg-white"
+        className={`w-full h-full px-3 py-2 border-2 focus:outline-none ${
+          isFormulaMode
+            ? 'border-green-500 bg-green-50/30'
+            : 'border-blue-500 bg-white'
+        }`}
       />
     );
   }
@@ -174,17 +204,37 @@ export default function TableCell({
     ? (computedValue !== undefined && computedValue !== null ? String(computedValue) : '')
     : (displayValue || '');
 
+  // Handle cell click - if in formula mode (but not this cell being edited), call onFormulaSelect
+  const handleCellClick = (e: React.MouseEvent) => {
+    // Check if another cell is in formula mode
+    const isThisEditingCell = isEditing;
+    const isOtherCellInFormulaMode = !isThisEditingCell && onFormulaSelect;
+
+    if (isOtherCellInFormulaMode) {
+      // Another cell is being edited in formula mode, add this cell reference
+      e.preventDefault();
+      e.stopPropagation();
+      onFormulaSelect({ rowIndex, colIndex });
+    } else {
+      // Normal cell selection
+      onSelect({ rowIndex, colIndex });
+    }
+  };
+
+  // Show green hover effect when in formula mode and not the editing cell
+  const showFormulaHoverEffect = isFormulaMode && !isEditing && onFormulaSelect;
+
   return (
     <div
       ref={cellRef}
       tabIndex={isSelected ? 0 : -1}
       data-cell-pos={`${rowIndex},${colIndex}`}
       className={`w-full h-full px-3 py-2 transition-colors focus:outline-none relative ${
-        !isViewOnly ? 'cursor-pointer hover:bg-blue-50/50' : ''
-      } ${isSelected ? 'ring-2 ring-inset ring-blue-500 bg-blue-50/60' : ''} ${
-        hasFormula ? 'italic text-indigo-700 font-medium' : ''
-      }`}
-      onClick={() => onSelect({ rowIndex, colIndex })}
+        !isViewOnly && !showFormulaHoverEffect ? 'cursor-pointer hover:bg-blue-50/50' : ''
+      } ${showFormulaHoverEffect ? 'cursor-crosshair hover:bg-green-100 hover:ring-1 hover:ring-inset hover:ring-green-400' : ''} ${
+        isSelected ? 'ring-2 ring-inset ring-blue-500 bg-blue-50/60' : ''
+      } ${hasFormula ? 'italic text-indigo-700 font-medium' : ''}`}
+      onClick={handleCellClick}
       onDoubleClick={handleDoubleClick}
       onKeyDown={handleCellKeyDown}
     >

@@ -22,6 +22,7 @@ export default function SheetTable({
 }: SheetTableProps) {
   const [selectedCell, setSelectedCell] = useState<CellPosition | null>(null);
   const [editingCell, setEditingCell] = useState<string | null>(null);
+  const [editingCellValue, setEditingCellValue] = useState<string>('');
   const [fillStart, setFillStart] = useState<CellPosition | null>(null);
   const [fillEnd, setFillEnd] = useState<CellPosition | null>(null);
 
@@ -29,18 +30,48 @@ export default function SheetTable({
     return row.cells?.find((c) => c.columnId === columnId);
   }, []);
 
+  // Helper function to convert column index to letter (0 -> A, 1 -> B, 25 -> Z, 26 -> AA)
+  const getColumnLetter = useCallback((colIndex: number): string => {
+    let letter = '';
+    let index = colIndex;
+    while (index >= 0) {
+      letter = String.fromCharCode(65 + (index % 26)) + letter;
+      index = Math.floor(index / 26) - 1;
+    }
+    return letter;
+  }, []);
+
+  // Detect if we're in formula mode (editing cell value starts with '=')
+  const isFormulaMode = editingCellValue.startsWith('=');
+
   const handleCellSelect = useCallback((position: CellPosition) => {
     setSelectedCell(position);
   }, []);
 
-  const handleCellEdit = useCallback((cellId: string) => {
+  const handleCellEdit = useCallback((cellId: string, initialValue: string, _position: CellPosition) => {
     setEditingCell(cellId);
+    setEditingCellValue(initialValue);
   }, []);
 
   const handleCellSave = useCallback((cellId: string, value: string) => {
     onCellUpdate(cellId, value);
     setEditingCell(null);
+    setEditingCellValue('');
   }, [onCellUpdate]);
+
+  const handleCellValueChange = useCallback((value: string) => {
+    setEditingCellValue(value);
+  }, []);
+
+  const handleFormulaCellSelect = useCallback((position: CellPosition) => {
+    // Generate cell reference (e.g., "A1", "B2")
+    const columnLetter = getColumnLetter(position.colIndex);
+    const rowNumber = position.rowIndex + 1; // Row numbers are 1-indexed for display
+    const cellReference = `${columnLetter}${rowNumber}`;
+
+    // Append the cell reference to the current formula
+    setEditingCellValue(prev => prev + cellReference);
+  }, [getColumnLetter]);
 
   const handleNavigate = useCallback((direction: 'up' | 'down' | 'left' | 'right') => {
     if (!selectedCell) return;
@@ -207,11 +238,15 @@ export default function SheetTable({
                             isSelected={isSelected}
                             isEditing={isEditing}
                             isViewOnly={isViewOnly}
+                            isFormulaMode={isFormulaMode}
                             onSelect={handleCellSelect}
                             onEdit={handleCellEdit}
                             onSave={handleCellSave}
                             onNavigate={handleNavigate}
                             onFillDrag={handleFillDrag}
+                            onFormulaSelect={isFormulaMode ? handleFormulaCellSelect : undefined}
+                            editingCellValue={isEditing ? editingCellValue : undefined}
+                            onValueChange={isEditing ? handleCellValueChange : undefined}
                           />
                         </td>
                       );

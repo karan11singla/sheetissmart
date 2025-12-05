@@ -35,11 +35,15 @@ export interface TableCellProps {
   isSelected: boolean;
   isEditing: boolean;
   isViewOnly: boolean;
+  isFormulaMode?: boolean;
   onSelect: (position: CellPosition) => void;
-  onEdit: (cellId: string, initialValue: string) => void;
+  onEdit: (cellId: string, initialValue: string, position: CellPosition) => void;
   onSave: (cellId: string, value: string) => void;
   onNavigate: (direction: 'up' | 'down' | 'left' | 'right') => void;
   onFillDrag?: (position: CellPosition, action: 'start' | 'drag' | 'end') => void;
+  onFormulaSelect?: (position: CellPosition) => void;
+  editingCellValue?: string;
+  onValueChange?: (value: string) => void;
 }
 
 export interface ColumnHeaderProps {
