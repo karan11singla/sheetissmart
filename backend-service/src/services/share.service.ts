@@ -92,18 +92,17 @@ export async function getSheetShares(sheetId: string, userId: string) {
     throw new AppError('Sheet not found', 404);
   }
 
-  // Check if user is owner or has EDIT_CAN_SHARE permission
+  // Check if user has any access to this sheet (owner or shared with them)
   const isOwner = sheet.userId === userId;
-  const shareAccess = await prisma.sheetShare.findFirst({
+  const hasAccess = await prisma.sheetShare.findFirst({
     where: {
       sheetId,
       sharedWithId: userId,
-      permission: 'EDIT_CAN_SHARE',
     },
   });
 
-  if (!isOwner && !shareAccess) {
-    throw new AppError('You need EDIT_CAN_SHARE permission to view shares', 403);
+  if (!isOwner && !hasAccess) {
+    throw new AppError('Access denied. You must have access to this sheet to view shares.', 403);
   }
 
   return await prisma.sheetShare.findMany({
