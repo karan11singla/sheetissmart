@@ -18,9 +18,12 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 const JWT_EXPIRES_IN = '7d';
 
 export async function register(data: RegisterInput) {
+  // Normalize email to lowercase
+  const normalizedEmail = data.email.toLowerCase().trim();
+
   // Check if user already exists
   const existingUser = await prisma.user.findUnique({
-    where: { email: data.email },
+    where: { email: normalizedEmail },
   });
 
   if (existingUser) {
@@ -33,7 +36,7 @@ export async function register(data: RegisterInput) {
   // Create user
   const user = await prisma.user.create({
     data: {
-      email: data.email,
+      email: normalizedEmail,
       password: hashedPassword,
       name: data.name,
     },
@@ -56,9 +59,12 @@ export async function register(data: RegisterInput) {
 }
 
 export async function login(data: LoginInput) {
+  // Normalize email to lowercase
+  const normalizedEmail = data.email.toLowerCase().trim();
+
   // Find user by email
   const user = await prisma.user.findUnique({
-    where: { email: data.email },
+    where: { email: normalizedEmail },
   });
 
   if (!user) {
@@ -132,11 +138,15 @@ export async function getAllUsers(search?: string) {
 }
 
 export async function updateProfile(userId: string, data: { name?: string; email?: string }) {
-  // If email is being updated, check if it's already taken
-  if (data.email) {
+  // Normalize email if it's being updated
+  const updateData = { ...data };
+  if (updateData.email) {
+    updateData.email = updateData.email.toLowerCase().trim();
+
+    // Check if it's already taken
     const existingUser = await prisma.user.findFirst({
       where: {
-        email: data.email,
+        email: updateData.email,
         NOT: { id: userId },
       },
     });
@@ -148,7 +158,7 @@ export async function updateProfile(userId: string, data: { name?: string; email
 
   const user = await prisma.user.update({
     where: { id: userId },
-    data,
+    data: updateData,
     select: {
       id: true,
       email: true,
