@@ -721,7 +721,9 @@ export default function SheetPage() {
         sheetId={id!}
         shares={sharesWithOwner}
         onShare={async (email, permission) => {
-          await shareMutation.mutateAsync({ email, permission });
+          // Map permission to API format (EDIT/EDIT_CAN_SHARE -> EDITOR)
+          const apiPermission: 'VIEWER' | 'EDITOR' = permission === 'VIEWER' ? 'VIEWER' : 'EDITOR';
+          await shareMutation.mutateAsync({ email, permission: apiPermission });
         }}
         onRemoveShare={async (shareId) => {
           await removeShareMutation.mutateAsync(shareId);
