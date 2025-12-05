@@ -773,7 +773,7 @@ export async function getSheetByToken(token: string) {
   const sheet = await prisma.sheet.findUnique({
     where: { shareToken: token },
     include: {
-      owner: {
+      user: {
         select: {
           id: true,
           name: true,

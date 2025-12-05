@@ -1,4 +1,5 @@
 import prisma from '../config/database';
+import { getStockPrice } from './stock.service';
 
 // Formula engine for spreadsheet calculations
 export class FormulaEngine {
@@ -132,6 +133,19 @@ export class FormulaEngine {
     }
 
     try {
+      // Handle stock ticker - formulas starting with $ (e.g., $AAPL, $GOOGL)
+      const stockMatch = formula.match(/^\$([A-Z]+)$/);
+      if (stockMatch) {
+        const symbol = stockMatch[1];
+        try {
+          const price = await getStockPrice(symbol);
+          return price;
+        } catch (error) {
+          console.error(`Stock ticker error for ${symbol}:`, error);
+          return '#ERROR!';
+        }
+      }
+
       // Handle SUM function - supports ranges (A1:A10) and comma-separated (A1,B2,C3)
       const sumMatch = formula.match(/^SUM\((.+)\)$/i);
       if (sumMatch) {
