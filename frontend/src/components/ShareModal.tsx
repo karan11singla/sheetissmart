@@ -122,6 +122,31 @@ export default function ShareModal({
     }
   };
 
+  const handleGenerateLink = async () => {
+    setIsGeneratingLink(true);
+    setError('');
+    try {
+      const { shareToken } = await sheetApi.generateShareLink(sheetId);
+      const link = `${window.location.origin}/shared/${shareToken}`;
+      setShareLink(link);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to generate share link');
+    } finally {
+      setIsGeneratingLink(false);
+    }
+  };
+
+  const handleCopyLink = async () => {
+    if (!shareLink) return;
+    try {
+      await navigator.clipboard.writeText(shareLink);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    } catch (err) {
+      setError('Failed to copy link to clipboard');
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex min-h-screen items-center justify-center p-4">
@@ -145,6 +170,52 @@ export default function ShareModal({
               <X className="h-5 w-5" />
             </button>
           </div>
+
+          {/* Share Link Section - Only shown for non-viewers */}
+          {!isViewOnly && (
+            <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center space-x-2">
+                  <Link2 className="h-4 w-4 text-gray-600" />
+                  <h3 className="text-sm font-medium text-gray-900">Share via link</h3>
+                </div>
+              </div>
+              {shareLink ? (
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="text"
+                    value={shareLink}
+                    readOnly
+                    className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md bg-white focus:outline-none"
+                  />
+                  <button
+                    onClick={handleCopyLink}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                  >
+                    {isCopied ? (
+                      <>
+                        <Check className="h-4 w-4" />
+                        <span>Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-4 w-4" />
+                        <span>Copy</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={handleGenerateLink}
+                  disabled={isGeneratingLink}
+                  className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors disabled:opacity-50"
+                >
+                  {isGeneratingLink ? 'Generating...' : 'Generate share link'}
+                </button>
+              )}
+            </div>
+          )}
 
           {/* Share Form - Only shown for non-viewers */}
           {!isViewOnly && (

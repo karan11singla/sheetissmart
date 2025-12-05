@@ -5,6 +5,7 @@ import AccountPage from './pages/AccountPage';
 import FavoritesPage from './pages/FavoritesPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
+import SharedSheetPage from './pages/SharedSheetPage';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './contexts/AuthContext';
@@ -17,6 +18,7 @@ function App() {
           {/* Public routes */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
+          <Route path="/shared/:token" element={<SharedSheetPage />} />
 
           {/* Protected routes */}
           <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
