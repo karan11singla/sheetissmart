@@ -128,13 +128,37 @@ export const createRow = asyncHandler(async (req: Request, res: Response) => {
 
 export const updateCell = asyncHandler(async (req: Request, res: Response) => {
   const { id, cellId } = req.params;
-  const { value } = req.body;
+  const {
+    value,
+    textColor,
+    backgroundColor,
+    fontSize,
+    bold,
+    italic,
+    underline,
+    textAlign,
+    hasBorder,
+    numberFormat,
+    decimalPlaces
+  } = req.body;
 
   if (!req.user) {
     throw new AppError('Not authenticated', 401);
   }
 
-  const cell = await sheetService.updateCell(cellId, value, req.user.userId);
+  const cell = await sheetService.updateCell(cellId, {
+    value,
+    textColor,
+    backgroundColor,
+    fontSize,
+    bold,
+    italic,
+    underline,
+    textAlign,
+    hasBorder,
+    numberFormat,
+    decimalPlaces,
+  }, req.user.userId);
 
   res.status(200).json({
     status: 'success',

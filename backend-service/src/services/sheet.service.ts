@@ -524,7 +524,23 @@ export async function deleteRow(sheetId: string, rowId: string, userId: string) 
   });
 }
 
-export async function updateCell(cellId: string, value: any, userId: string) {
+export async function updateCell(
+  cellId: string,
+  data: {
+    value?: any;
+    textColor?: string;
+    backgroundColor?: string;
+    fontSize?: number;
+    bold?: boolean;
+    italic?: boolean;
+    underline?: boolean;
+    textAlign?: string;
+    hasBorder?: boolean;
+    numberFormat?: string;
+    decimalPlaces?: number;
+  },
+  userId: string
+) {
   // Get cell with sheet info to check authorization
   const cell = await prisma.cell.findUnique({
     where: { id: cellId },
@@ -559,7 +575,7 @@ export async function updateCell(cellId: string, value: any, userId: string) {
   }
 
   // Store the value (formula or plain value)
-  const stringValue = value !== null ? value.toString() : null;
+  const stringValue = data.value !== null && data.value !== undefined ? data.value.toString() : null;
 
   // Check if it's a formula and evaluate it
   let computedValue = null;
@@ -582,6 +598,17 @@ export async function updateCell(cellId: string, value: any, userId: string) {
       value: stringValue !== null && !formula ? JSON.stringify(stringValue) : null,
       formula: formula,
       computedValue: computedValue,
+      // Cell formatting fields
+      textColor: data.textColor,
+      backgroundColor: data.backgroundColor,
+      fontSize: data.fontSize,
+      bold: data.bold,
+      italic: data.italic,
+      underline: data.underline,
+      textAlign: data.textAlign,
+      hasBorder: data.hasBorder,
+      numberFormat: data.numberFormat,
+      decimalPlaces: data.decimalPlaces,
     },
   });
 
