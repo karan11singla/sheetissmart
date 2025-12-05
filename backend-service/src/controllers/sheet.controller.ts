@@ -267,3 +267,31 @@ export const createRowComment = asyncHandler(async (req: Request, res: Response)
     data: { comment },
   });
 });
+
+// Generate share token for a sheet
+export const generateShareToken = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  if (!req.user) {
+    throw new AppError('Not authenticated', 401);
+  }
+
+  const result = await sheetService.generateShareToken(id, req.user.userId);
+
+  res.json({
+    status: 'success',
+    data: result,
+  });
+});
+
+// Get sheet by share token (public access, no authentication required)
+export const getSheetByToken = asyncHandler(async (req: Request, res: Response) => {
+  const { token } = req.params;
+
+  const sheet = await sheetService.getSheetByToken(token);
+
+  res.json({
+    status: 'success',
+    data: { sheet },
+  });
+});

@@ -1,6 +1,7 @@
 import prisma from '../config/database';
 import { AppError } from '../middleware/errorHandler';
 import { FormulaEngine } from './formula.service';
+import crypto from 'crypto';
 
 interface CreateSheetInput {
   name: string;
@@ -721,4 +722,80 @@ export async function createRowComment(rowId: string, sheetId: string, userId: s
   });
 
   return comment;
+}
+
+// Generate a unique share token for a sheet
+export async function generateShareToken(sheetId: string, userId: string) {
+  // Check if user is owner or has EDIT_CAN_SHARE permission
+  const sheet = await prisma.sheet.findUnique({
+    where: { id: sheetId },
+  });
+
+  if (!sheet) {
+    throw new AppError('Sheet not found', 404);
+  }
+
+  const isOwner = sheet.userId === userId;
+  const shareAccess = await prisma.sheetShare.findFirst({
+    where: {
+      sheetId,
+      sharedWithId: userId,
+      permission: 'EDIT_CAN_SHARE',
+    },
+  });
+
+  if (!isOwner && !shareAccess) {
+    throw new AppError('You need EDIT_CAN_SHARE permission to generate a share link', 403);
+  }
+
+  // Generate a unique token
+  const token = crypto.randomBytes(32).toString('hex');
+
+  // Update sheet with the new token
+  const updatedSheet = await prisma.sheet.update({
+    where: { id: sheetId },
+    data: { shareToken: token },
+  });
+
+  return { shareToken: token };
+}
+
+// Get sheet by share token (public access)
+export async function getSheetByToken(token: string) {
+  const sheet = await prisma.sheet.findUnique({
+    where: { shareToken: token },
+    include: {
+      owner: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
+      columns: {
+        orderBy: { position: 'asc' },
+      },
+      rows: {
+        orderBy: { position: 'asc' },
+      },
+      cells: true,
+      shares: {
+        include: {
+          sharedWith: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!sheet) {
+    throw new AppError('Sheet not found or link is invalid', 404);
+  }
+
+  return sheet;
 }

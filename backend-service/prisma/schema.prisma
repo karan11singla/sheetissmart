@@ -36,6 +36,7 @@ model Sheet {
   description String?
   userId      String
   isFavorite  Boolean  @default(false)
+  shareToken  String?  @unique
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

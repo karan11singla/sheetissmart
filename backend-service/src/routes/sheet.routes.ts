@@ -16,12 +16,17 @@ import {
   toggleFavorite,
   getRowComments,
   createRowComment,
+  generateShareToken,
+  getSheetByToken,
 } from '../controllers/sheet.controller';
 import { authenticate } from '../middleware/auth';
 
 const router = Router();
 
-// All sheet routes require authentication
+// Public routes (no authentication required)
+router.get('/shared/:token', getSheetByToken);
+
+// All other sheet routes require authentication
 router.use(authenticate);
 
 // Sheet CRUD
@@ -33,6 +38,9 @@ router.delete('/:id', deleteSheet);
 
 // Favorite operations
 router.put('/:id/favorite', toggleFavorite);
+
+// Share token operations
+router.post('/:id/share-link', generateShareToken);
 
 // Column operations
 router.post('/:id/columns', createColumn);

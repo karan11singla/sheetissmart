@@ -1,6 +1,6 @@
 import { useState, FormEvent, useEffect, useRef } from 'react';
-import { X, Mail, Trash2, UserPlus, ChevronDown } from 'lucide-react';
-import { authApi } from '../services/api';
+import { X, Mail, Trash2, UserPlus, ChevronDown, Link2, Copy, Check } from 'lucide-react';
+import { authApi, sheetApi } from '../services/api';
 
 interface Share {
   id: string;
@@ -31,6 +31,7 @@ interface User {
 export default function ShareModal({
   isOpen,
   onClose,
+  sheetId,
   shares,
   onShare,
   onRemoveShare,
@@ -44,6 +45,9 @@ export default function ShareModal({
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const [shareLink, setShareLink] = useState<string>('');
+  const [isGeneratingLink, setIsGeneratingLink] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Fetch all users when modal opens

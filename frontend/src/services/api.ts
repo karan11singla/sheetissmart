@@ -136,6 +136,17 @@ export const sheetApi = {
     const { data } = await api.post(`/api/v1/sheets/${sheetId}/rows/${rowId}/comments`, input);
     return data.data.comment;
   },
+
+  // Share token operations
+  generateShareLink: async (sheetId: string): Promise<{ shareToken: string }> => {
+    const { data } = await api.post(`/api/v1/sheets/${sheetId}/share-link`);
+    return data.data;
+  },
+
+  getSheetByToken: async (token: string) => {
+    const { data } = await api.get(`/api/v1/sheets/shared/${token}`);
+    return data.data.sheet;
+  },
 };
 
 // Auth API
