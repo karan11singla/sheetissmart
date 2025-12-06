@@ -767,10 +767,26 @@ export default function SheetPage() {
         onPaste={handlePaste}
         onCut={handleCut}
         onDelete={handleDeleteSelection}
-        onInsertRowAbove={() => selectedCell && handleInsertRow(selectedCell.rowIndex)}
-        onInsertRowBelow={() => selectedCell && handleInsertRow(selectedCell.rowIndex + 1)}
-        onInsertColumnLeft={() => selectedCell && handleInsertColumn(selectedCell.colIndex)}
-        onInsertColumnRight={() => selectedCell && handleInsertColumn(selectedCell.colIndex + 1)}
+        onInsertRowAbove={() => {
+          if (selectedCell && filteredAndSortedRows[selectedCell.rowIndex]) {
+            handleInsertRow(filteredAndSortedRows[selectedCell.rowIndex].position);
+          }
+        }}
+        onInsertRowBelow={() => {
+          if (selectedCell && filteredAndSortedRows[selectedCell.rowIndex]) {
+            handleInsertRow(filteredAndSortedRows[selectedCell.rowIndex].position + 1);
+          }
+        }}
+        onInsertColumnLeft={() => {
+          if (selectedCell && sheet?.columns?.[selectedCell.colIndex]) {
+            handleInsertColumn(sheet.columns[selectedCell.colIndex].position);
+          }
+        }}
+        onInsertColumnRight={() => {
+          if (selectedCell && sheet?.columns?.[selectedCell.colIndex]) {
+            handleInsertColumn(sheet.columns[selectedCell.colIndex].position + 1);
+          }
+        }}
         onShare={() => setIsShareModalOpen(true)}
         onBold={() => applyFormatting({ bold: !getCurrentFormat().bold })}
         onItalic={() => applyFormatting({ italic: !getCurrentFormat().italic })}

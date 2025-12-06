@@ -370,15 +370,28 @@ export async function createColumn(sheetId: string, data: CreateColumnInput, use
   // Check if sheet exists and get all rows
   const sheet = await prisma.sheet.findUnique({
     where: { id: sheetId },
-    include: { rows: true, columns: true },
+    include: { rows: true, columns: true, shares: true },
   });
 
   if (!sheet) {
     throw new AppError('Sheet not found', 404);
   }
 
-  if (sheet.userId !== userId) {
-    throw new AppError('Access denied', 403);
+  // Get user's email to check shares
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    throw new AppError('User not found', 404);
+  }
+
+  // Check if user is owner or has edit permission
+  const isOwner = sheet.userId === userId;
+  const sharedAccess = sheet.shares.find((share) => share.sharedWithEmail === user.email);
+
+  if (!isOwner && (!sharedAccess || sharedAccess.permission === 'VIEWER')) {
+    throw new AppError('Access denied. Edit permission required.', 403);
   }
 
   // Shift positions of existing columns at or after the insertion position
@@ -428,15 +441,28 @@ export async function createRow(sheetId: string, data: CreateRowInput, userId: s
   // Check if sheet exists
   const sheet = await prisma.sheet.findUnique({
     where: { id: sheetId },
-    include: { columns: true, rows: true },
+    include: { columns: true, rows: true, shares: true },
   });
 
   if (!sheet) {
     throw new AppError('Sheet not found', 404);
   }
 
-  if (sheet.userId !== userId) {
-    throw new AppError('Access denied', 403);
+  // Get user's email to check shares
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    throw new AppError('User not found', 404);
+  }
+
+  // Check if user is owner or has edit permission
+  const isOwner = sheet.userId === userId;
+  const sharedAccess = sheet.shares.find((share) => share.sharedWithEmail === user.email);
+
+  if (!isOwner && (!sharedAccess || sharedAccess.permission === 'VIEWER')) {
+    throw new AppError('Access denied. Edit permission required.', 403);
   }
 
   // Shift positions of existing rows at or after the insertion position
@@ -492,14 +518,28 @@ export async function updateColumn(
   // Check if sheet exists and user has access
   const sheet = await prisma.sheet.findUnique({
     where: { id: sheetId },
+    include: { shares: true },
   });
 
   if (!sheet) {
     throw new AppError('Sheet not found', 404);
   }
 
-  if (sheet.userId !== userId) {
-    throw new AppError('Access denied', 403);
+  // Get user's email to check shares
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    throw new AppError('User not found', 404);
+  }
+
+  // Check if user is owner or has edit permission
+  const isOwner = sheet.userId === userId;
+  const sharedAccess = sheet.shares.find((share) => share.sharedWithEmail === user.email);
+
+  if (!isOwner && (!sharedAccess || sharedAccess.permission === 'VIEWER')) {
+    throw new AppError('Access denied. Edit permission required.', 403);
   }
 
   // Update the column
@@ -518,14 +558,28 @@ export async function updateRow(
   // Check if sheet exists and user has access
   const sheet = await prisma.sheet.findUnique({
     where: { id: sheetId },
+    include: { shares: true },
   });
 
   if (!sheet) {
     throw new AppError('Sheet not found', 404);
   }
 
-  if (sheet.userId !== userId) {
-    throw new AppError('Access denied', 403);
+  // Get user's email to check shares
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    throw new AppError('User not found', 404);
+  }
+
+  // Check if user is owner or has edit permission
+  const isOwner = sheet.userId === userId;
+  const sharedAccess = sheet.shares.find((share) => share.sharedWithEmail === user.email);
+
+  if (!isOwner && (!sharedAccess || sharedAccess.permission === 'VIEWER')) {
+    throw new AppError('Access denied. Edit permission required.', 403);
   }
 
   // Update the row
@@ -539,14 +593,28 @@ export async function deleteColumn(sheetId: string, columnId: string, userId: st
   // Check if sheet exists and user has access
   const sheet = await prisma.sheet.findUnique({
     where: { id: sheetId },
+    include: { shares: true },
   });
 
   if (!sheet) {
     throw new AppError('Sheet not found', 404);
   }
 
-  if (sheet.userId !== userId) {
-    throw new AppError('Access denied', 403);
+  // Get user's email to check shares
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    throw new AppError('User not found', 404);
+  }
+
+  // Check if user is owner or has edit permission
+  const isOwner = sheet.userId === userId;
+  const sharedAccess = sheet.shares.find((share) => share.sharedWithEmail === user.email);
+
+  if (!isOwner && (!sharedAccess || sharedAccess.permission === 'VIEWER')) {
+    throw new AppError('Access denied. Edit permission required.', 403);
   }
 
   // Delete all cells in this column first (cascade should handle this, but being explicit)
@@ -564,14 +632,28 @@ export async function deleteRow(sheetId: string, rowId: string, userId: string) 
   // Check if sheet exists and user has access
   const sheet = await prisma.sheet.findUnique({
     where: { id: sheetId },
+    include: { shares: true },
   });
 
   if (!sheet) {
     throw new AppError('Sheet not found', 404);
   }
 
-  if (sheet.userId !== userId) {
-    throw new AppError('Access denied', 403);
+  // Get user's email to check shares
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    throw new AppError('User not found', 404);
+  }
+
+  // Check if user is owner or has edit permission
+  const isOwner = sheet.userId === userId;
+  const sharedAccess = sheet.shares.find((share) => share.sharedWithEmail === user.email);
+
+  if (!isOwner && (!sharedAccess || sharedAccess.permission === 'VIEWER')) {
+    throw new AppError('Access denied. Edit permission required.', 403);
   }
 
   // Delete all cells in this row first (cascade should handle this, but being explicit)
