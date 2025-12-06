@@ -159,10 +159,32 @@ export default function TableCell({
       }
     };
 
-    const handleMouseUp = () => {
+    const handleMouseUp = (e: MouseEvent) => {
       setIsDragging(false);
       if (onFillDrag) {
-        onFillDrag({ rowIndex, colIndex }, 'end');
+        // Find the cell under the mouse at mouseup time
+        const element = document.elementFromPoint(e.clientX, e.clientY);
+        let endPosition = { rowIndex, colIndex }; // fallback to start position
+
+        if (element) {
+          const td = element.closest('td');
+          if (td) {
+            const cellDiv = td.querySelector('[data-cell-pos]');
+            if (cellDiv) {
+              const pos = cellDiv.getAttribute('data-cell-pos');
+              if (pos) {
+                const [row, col] = pos.split(',').map(Number);
+                if (!isNaN(row) && !isNaN(col) && row >= 0 && col >= 0) {
+                  endPosition = { rowIndex: row, colIndex: col };
+                }
+              }
+            }
+          }
+        }
+
+        // Send final drag position before end
+        onFillDrag(endPosition, 'drag');
+        onFillDrag(endPosition, 'end');
       }
     };
 
