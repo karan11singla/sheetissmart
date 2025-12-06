@@ -22,6 +22,7 @@ export default function TableCell({
 }: TableCellProps) {
   const [value, setValue] = useState('');
   const [isDragging, setIsDragging] = useState(false);
+  const [isSelectionDragging, setIsSelectionDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const cellRef = useRef<HTMLDivElement>(null);
   const fillHandleRef = useRef<HTMLDivElement>(null);
@@ -161,6 +162,20 @@ export default function TableCell({
     };
   }, [isDragging, rowIndex, colIndex, onFillDrag]);
 
+  // Reset selection dragging on global mouseup
+  useEffect(() => {
+    if (!isSelectionDragging) return;
+
+    const handleMouseUp = () => {
+      setIsSelectionDragging(false);
+    };
+
+    document.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isSelectionDragging]);
+
   // Sync local value with prop value when editing starts
   useEffect(() => {
     if (isEditing && editingCellValue !== undefined) {
@@ -213,7 +228,7 @@ export default function TableCell({
       e.preventDefault();
       e.stopPropagation();
       onFormulaSelect({ rowIndex, colIndex });
-    } else if (!isDragging) {
+    } else if (!isSelectionDragging) {
       // Normal cell selection - pass shiftKey for range extension
       // Only select if we're not in a drag operation
       onSelect({ rowIndex, colIndex }, e.shiftKey);
@@ -224,6 +239,7 @@ export default function TableCell({
   const handleMouseDown = (e: React.MouseEvent) => {
     // Only start drag selection on left click and not when editing or in formula mode
     if (e.button === 0 && !isEditing && !isFormulaMode && onDragSelect) {
+      setIsSelectionDragging(true);
       onDragSelect({ rowIndex, colIndex }, 'start');
     }
   };
