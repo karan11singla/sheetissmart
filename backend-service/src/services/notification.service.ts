@@ -52,13 +52,22 @@ export async function createMentionNotifications(
   fromUserId: string
 ) {
   // Extract @mentions from comment content
-  // Matches @username or @"Full Name" patterns
-  const mentionPattern = /@(\w+)|@"([^"]+)"/g;
+  // Matches @Name (captures until space or end) or @"Full Name" patterns
+  // Also handles names with spaces by looking for known users
   const mentions: string[] = [];
-  let match;
 
-  while ((match = mentionPattern.exec(commentContent)) !== null) {
-    mentions.push(match[1] || match[2]);
+  // First, get all users to match against
+  const allUsers = await prisma.user.findMany({
+    select: { id: true, name: true },
+  });
+
+  // Check if any user's name appears after @ in the content
+  for (const user of allUsers) {
+    // Create a pattern that matches @Username (case-insensitive)
+    const userPattern = new RegExp(`@${user.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+    if (userPattern.test(commentContent)) {
+      mentions.push(user.name);
+    }
   }
 
   if (mentions.length === 0) {
