@@ -191,6 +191,8 @@ export default function SheetTable({
       }
       setFillEnd(constrainedPosition);
       fillEndRef.current = constrainedPosition;
+      // Clear selection range during fill drag to prevent mixed highlighting
+      onSelectionRangeChange?.(null);
     } else if (action === 'end' && fillStartRef.current && fillEndRef.current) {
       // Perform the fill operation using refs for latest values
       const sourceCell = fillStartRef.current;
