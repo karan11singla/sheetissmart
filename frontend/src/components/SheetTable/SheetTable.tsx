@@ -189,6 +189,7 @@ export default function SheetTable({
         // Horizontal fill - lock to source row
         constrainedPosition = { rowIndex: start.rowIndex, colIndex: position.colIndex };
       }
+      console.log('Fill drag - direction:', direction, 'start:', start, 'constrained end:', constrainedPosition);
       setFillEnd(constrainedPosition);
       fillEndRef.current = constrainedPosition;
       // Clear selection range during fill drag to prevent mixed highlighting

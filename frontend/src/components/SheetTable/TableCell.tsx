@@ -123,6 +123,7 @@ export default function TableCell({
 
   const handleFillHandleMouseDown = (e: React.MouseEvent) => {
     e.stopPropagation();
+    e.preventDefault(); // Prevent browser text selection
     if (!isViewOnly && onFillDrag) {
       setIsDragging(true);
       onFillDrag({ rowIndex, colIndex }, 'start');
@@ -286,7 +287,7 @@ export default function TableCell({
       ref={cellRef}
       tabIndex={isSelected ? 0 : -1}
       data-cell-pos={`${rowIndex},${colIndex}`}
-      className={`w-full h-full px-3 py-2 transition-colors focus:outline-none relative ${alignmentClass} ${
+      className={`w-full h-full px-3 py-2 transition-colors focus:outline-none relative select-none ${alignmentClass} ${
         !isViewOnly && !showFormulaHoverEffect ? 'cursor-pointer hover:bg-blue-50/50' : ''
       } ${showFormulaHoverEffect ? 'cursor-crosshair hover:bg-green-100 hover:ring-1 hover:ring-inset hover:ring-green-400' : ''} ${
         isSelected ? 'ring-2 ring-inset ring-blue-500 bg-blue-50/60' : ''
