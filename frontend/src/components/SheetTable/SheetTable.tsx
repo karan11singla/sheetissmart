@@ -158,10 +158,8 @@ export default function SheetTable({
   }, [isDragging, handleDragSelect]);
 
   const handleFillDrag = useCallback((position: CellPosition, action: 'start' | 'drag' | 'end') => {
-    console.log('handleFillDrag', action, position, 'selectedCell:', selectedCell, 'fillStartRef:', fillStartRef.current, 'fillEndRef:', fillEndRef.current);
     if (action === 'start') {
       // Fill starts from the selected cell
-      console.log('Starting fill from selectedCell:', selectedCell);
       setFillStart(selectedCell);
       setFillEnd(selectedCell); // Start with same position
       fillStartRef.current = selectedCell;
@@ -189,18 +187,17 @@ export default function SheetTable({
       // Perform the fill operation using refs for latest values
       const sourceCell = fillStartRef.current;
       const endCell = fillEndRef.current;
-      console.log('Fill end - sourceCell:', sourceCell, 'endCell:', endCell);
 
       const sourceRow = rows[sourceCell.rowIndex];
       const sourceColumn = columns[sourceCell.colIndex];
       const sourceCellData = getCellValue(sourceRow, sourceColumn.id);
-      console.log('sourceCellData:', sourceCellData);
 
       if (!sourceCellData) {
         setFillStart(null);
         setFillEnd(null);
         fillStartRef.current = null;
         fillEndRef.current = null;
+        onSelectionRangeChange?.(null);
         return;
       }
 
@@ -214,7 +211,6 @@ export default function SheetTable({
       const endCol = Math.max(sourceCell.colIndex, endCell.colIndex);
 
       // Fill all cells in the range
-      console.log('Fill range:', { startRow, endRow, startCol, endCol });
       for (let r = startRow; r <= endRow; r++) {
         for (let c = startCol; c <= endCol; c++) {
           // Skip the source cell
@@ -223,7 +219,6 @@ export default function SheetTable({
           const targetRow = rows[r];
           const targetColumn = columns[c];
           const targetCell = getCellValue(targetRow, targetColumn.id);
-          console.log('Filling cell at', r, c, 'targetCell:', targetCell?.id);
 
           if (targetCell) {
             onCellUpdate(targetCell.id, sourceValue);
@@ -231,11 +226,12 @@ export default function SheetTable({
         }
       }
 
-      // Reset fill state
+      // Reset fill state and clear any lingering selection
       setFillStart(null);
       setFillEnd(null);
       fillStartRef.current = null;
       fillEndRef.current = null;
+      onSelectionRangeChange?.(null);
     }
   }, [selectedCell, rows, columns, getCellValue, onCellUpdate, onSelectionRangeChange]);
 
