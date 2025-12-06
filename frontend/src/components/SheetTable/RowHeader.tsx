@@ -78,7 +78,10 @@ export default function RowHeader({
         <>
           {onInsertAbove && (
             <button
-              onClick={() => onInsertAbove(row.position)}
+              onClick={() => {
+                console.log('Insert above clicked, position:', row.position);
+                onInsertAbove(row.position);
+              }}
               className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-green-100 transition-all"
               title="Insert row above"
             >
@@ -87,7 +90,10 @@ export default function RowHeader({
           )}
           {onInsertBelow && (
             <button
-              onClick={() => onInsertBelow(row.position + 1)}
+              onClick={() => {
+                console.log('Insert below clicked, position:', row.position + 1);
+                onInsertBelow(row.position + 1);
+              }}
               className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-green-100 transition-all"
               title="Insert row below"
             >
