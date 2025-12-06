@@ -213,8 +213,9 @@ export default function TableCell({
       e.preventDefault();
       e.stopPropagation();
       onFormulaSelect({ rowIndex, colIndex });
-    } else {
+    } else if (!isDragging) {
       // Normal cell selection - pass shiftKey for range extension
+      // Only select if we're not in a drag operation
       onSelect({ rowIndex, colIndex }, e.shiftKey);
     }
   };
@@ -223,13 +224,15 @@ export default function TableCell({
   const handleMouseDown = (e: React.MouseEvent) => {
     // Only start drag selection on left click and not when editing or in formula mode
     if (e.button === 0 && !isEditing && !isFormulaMode && onDragSelect) {
-      e.preventDefault();
       onDragSelect({ rowIndex, colIndex }, 'start');
     }
   };
 
   // Handle mouse enter during drag
   const handleMouseEnter = () => {
+    // Only trigger drag if we're actually dragging
+    // The drag state is managed in SheetTable, so we always call this
+    // and let SheetTable decide if it should update the range
     if (onDragSelect) {
       onDragSelect({ rowIndex, colIndex }, 'drag');
     }
