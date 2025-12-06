@@ -181,11 +181,61 @@ export default function SheetPage() {
         e.preventDefault();
         redo();
       }
+      // Delete or Backspace to clear cell contents
+      const viewOnly = sheet && (sheet as any).permission === 'VIEWER';
+      if ((e.key === 'Delete' || e.key === 'Backspace') && !viewOnly) {
+        e.preventDefault();
+        // Handle multi-cell delete
+        if (selectionRange && sheet?.rows && sheet?.columns) {
+          const startRow = Math.min(selectionRange.start.rowIndex, selectionRange.end.rowIndex);
+          const endRow = Math.max(selectionRange.start.rowIndex, selectionRange.end.rowIndex);
+          const startCol = Math.min(selectionRange.start.colIndex, selectionRange.end.colIndex);
+          const endCol = Math.max(selectionRange.start.colIndex, selectionRange.end.colIndex);
+
+          for (let r = startRow; r <= endRow; r++) {
+            for (let c = startCol; c <= endCol; c++) {
+              const row = sheet.rows[r];
+              const column = sheet.columns[c];
+              if (row && column) {
+                const cell = row.cells?.find(cell => cell.columnId === column.id);
+                if (cell && cell.value) {
+                  const command = new UpdateCellCommand(
+                    id!,
+                    cell.id,
+                    '',
+                    JSON.parse(cell.value),
+                    queryClient
+                  );
+                  executeCommand(command);
+                }
+              }
+            }
+          }
+          setSelectionRange(null);
+        } else if (selectedCell && sheet?.rows && sheet?.columns) {
+          // Single cell delete
+          const row = sheet.rows[selectedCell.rowIndex];
+          const column = sheet.columns[selectedCell.colIndex];
+          if (row && column) {
+            const cell = row.cells?.find(c => c.columnId === column.id);
+            if (cell && cell.value) {
+              const command = new UpdateCellCommand(
+                id!,
+                cell.id,
+                '',
+                JSON.parse(cell.value),
+                queryClient
+              );
+              executeCommand(command);
+            }
+          }
+        }
+      }
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [selectedCell, clipboard, sheet, cellFormats, id, queryClient, handleCopy, handleCut, handlePaste, undo, redo]);
+  }, [selectedCell, clipboard, sheet, cellFormats, id, queryClient, handleCopy, handleCut, handlePaste, undo, redo, selectionRange, executeCommand]);
 
   // Load cell formatting from database when sheet loads
   useEffect(() => {
@@ -537,19 +587,52 @@ export default function SheetPage() {
     }));
   };
 
-  // Delete selection (cell content or row/column)
+  // Delete selection (cell content or multiple cells)
   const handleDeleteSelection = () => {
-    const cell = getCurrentCell();
-    if (!cell || isViewOnly) return;
+    if (isViewOnly || !sheet?.rows || !sheet?.columns) return;
 
-    const command = new UpdateCellCommand(
-      id!,
-      cell.id,
-      '',
-      cell.value ? JSON.parse(cell.value) : '',
-      queryClient
-    );
-    executeCommand(command);
+    // If we have a selection range, delete all cells in range
+    if (selectionRange) {
+      const startRow = Math.min(selectionRange.start.rowIndex, selectionRange.end.rowIndex);
+      const endRow = Math.max(selectionRange.start.rowIndex, selectionRange.end.rowIndex);
+      const startCol = Math.min(selectionRange.start.colIndex, selectionRange.end.colIndex);
+      const endCol = Math.max(selectionRange.start.colIndex, selectionRange.end.colIndex);
+
+      for (let r = startRow; r <= endRow; r++) {
+        for (let c = startCol; c <= endCol; c++) {
+          const row = sheet.rows[r];
+          const column = sheet.columns[c];
+          if (row && column) {
+            const cell = row.cells?.find(cell => cell.columnId === column.id);
+            if (cell && cell.value) {
+              const command = new UpdateCellCommand(
+                id!,
+                cell.id,
+                '',
+                JSON.parse(cell.value),
+                queryClient
+              );
+              executeCommand(command);
+            }
+          }
+        }
+      }
+      // Clear selection after delete
+      setSelectionRange(null);
+    } else {
+      // Delete single selected cell
+      const cell = getCurrentCell();
+      if (!cell) return;
+
+      const command = new UpdateCellCommand(
+        id!,
+        cell.id,
+        '',
+        cell.value ? JSON.parse(cell.value) : '',
+        queryClient
+      );
+      executeCommand(command);
+    }
   };
 
   // Filter and sort rows based on filters and sortConfig

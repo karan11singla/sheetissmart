@@ -189,7 +189,6 @@ export default function SheetTable({
         // Horizontal fill - lock to source row
         constrainedPosition = { rowIndex: start.rowIndex, colIndex: position.colIndex };
       }
-      console.log('Fill drag - direction:', direction, 'start:', start, 'constrained end:', constrainedPosition);
       setFillEnd(constrainedPosition);
       fillEndRef.current = constrainedPosition;
       // Clear selection range during fill drag to prevent mixed highlighting
@@ -213,8 +212,22 @@ export default function SheetTable({
         return;
       }
 
-      // Get the value to copy
-      const sourceValue = sourceCellData.value ? JSON.parse(sourceCellData.value) : '';
+      // Get the value or formula to copy
+      const hasFormula = sourceCellData.formula !== null && sourceCellData.formula !== undefined;
+      const sourceValue = hasFormula
+        ? sourceCellData.formula
+        : (sourceCellData.value ? JSON.parse(sourceCellData.value) : '');
+
+      // Helper to adjust cell references in formula (e.g., A1 -> A2 when moving down)
+      const adjustFormulaReferences = (formula: string, rowOffset: number, _colOffset: number): string => {
+        // Match cell references like A1, B2, AA100, etc.
+        return formula.replace(/([A-Z]+)(\d+)/g, (match, col, row) => {
+          const newRow = parseInt(row) + rowOffset;
+          // For now, we don't adjust column references (would need more complex logic)
+          // const newCol = colOffset !== 0 ? ... : col;
+          return newRow > 0 ? `${col}${newRow}` : match;
+        });
+      };
 
       // Determine the fill range
       const startRow = Math.min(sourceCell.rowIndex, endCell.rowIndex);
@@ -233,7 +246,11 @@ export default function SheetTable({
           const targetCell = getCellValue(targetRow, targetColumn.id);
 
           if (targetCell) {
-            onCellUpdate(targetCell.id, sourceValue);
+            // If it's a formula, adjust cell references based on offset
+            const fillValue = hasFormula
+              ? adjustFormulaReferences(sourceValue, r - sourceCell.rowIndex, c - sourceCell.colIndex)
+              : sourceValue;
+            onCellUpdate(targetCell.id, fillValue);
           }
         }
       }
