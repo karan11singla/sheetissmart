@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import TableCell from './TableCell';
 import ColumnHeader from './ColumnHeader';
 import RowHeader from './RowHeader';
@@ -29,6 +29,10 @@ export default function SheetTable({
   const [editingCellValue, setEditingCellValue] = useState<string>('');
   const [fillStart, setFillStart] = useState<CellPosition | null>(null);
   const [fillEnd, setFillEnd] = useState<CellPosition | null>(null);
+
+  // Refs to track latest fill state for use in callbacks
+  const fillStartRef = useRef<CellPosition | null>(null);
+  const fillEndRef = useRef<CellPosition | null>(null);
 
   // Mouse drag selection
   const [isDragging, setIsDragging] = useState(false);
@@ -155,29 +159,55 @@ export default function SheetTable({
 
   const handleFillDrag = useCallback((position: CellPosition, action: 'start' | 'drag' | 'end') => {
     if (action === 'start') {
+      // Fill starts from the selected cell
       setFillStart(selectedCell);
-      setFillEnd(position);
-    } else if (action === 'drag') {
-      setFillEnd(position);
-    } else if (action === 'end' && fillStart && fillEnd) {
-      // Perform the fill operation
-      const sourceCell = selectedCell;
-      if (!sourceCell) return;
+      setFillEnd(selectedCell); // Start with same position
+      fillStartRef.current = selectedCell;
+      fillEndRef.current = selectedCell;
+      // Clear any selection range when starting fill
+      onSelectionRangeChange?.(null);
+    } else if (action === 'drag' && fillStartRef.current) {
+      // Constrain fill to either vertical OR horizontal (not both)
+      // Lock to the axis with greater movement
+      const start = fillStartRef.current;
+      const rowDiff = Math.abs(position.rowIndex - start.rowIndex);
+      const colDiff = Math.abs(position.colIndex - start.colIndex);
+
+      let constrainedPosition: CellPosition;
+      if (rowDiff >= colDiff) {
+        // Vertical fill - lock to source column
+        constrainedPosition = { rowIndex: position.rowIndex, colIndex: start.colIndex };
+      } else {
+        // Horizontal fill - lock to source row
+        constrainedPosition = { rowIndex: start.rowIndex, colIndex: position.colIndex };
+      }
+      setFillEnd(constrainedPosition);
+      fillEndRef.current = constrainedPosition;
+    } else if (action === 'end' && fillStartRef.current && fillEndRef.current) {
+      // Perform the fill operation using refs for latest values
+      const sourceCell = fillStartRef.current;
+      const endCell = fillEndRef.current;
 
       const sourceRow = rows[sourceCell.rowIndex];
       const sourceColumn = columns[sourceCell.colIndex];
       const sourceCellData = getCellValue(sourceRow, sourceColumn.id);
 
-      if (!sourceCellData) return;
+      if (!sourceCellData) {
+        setFillStart(null);
+        setFillEnd(null);
+        fillStartRef.current = null;
+        fillEndRef.current = null;
+        return;
+      }
 
       // Get the value to copy
       const sourceValue = sourceCellData.value ? JSON.parse(sourceCellData.value) : '';
 
       // Determine the fill range
-      const startRow = Math.min(fillStart.rowIndex, fillEnd.rowIndex);
-      const endRow = Math.max(fillStart.rowIndex, fillEnd.rowIndex);
-      const startCol = Math.min(fillStart.colIndex, fillEnd.colIndex);
-      const endCol = Math.max(fillStart.colIndex, fillEnd.colIndex);
+      const startRow = Math.min(sourceCell.rowIndex, endCell.rowIndex);
+      const endRow = Math.max(sourceCell.rowIndex, endCell.rowIndex);
+      const startCol = Math.min(sourceCell.colIndex, endCell.colIndex);
+      const endCol = Math.max(sourceCell.colIndex, endCell.colIndex);
 
       // Fill all cells in the range
       for (let r = startRow; r <= endRow; r++) {
@@ -198,8 +228,10 @@ export default function SheetTable({
       // Reset fill state
       setFillStart(null);
       setFillEnd(null);
+      fillStartRef.current = null;
+      fillEndRef.current = null;
     }
-  }, [selectedCell, fillStart, fillEnd, rows, columns, getCellValue, onCellUpdate]);
+  }, [selectedCell, rows, columns, getCellValue, onCellUpdate, onSelectionRangeChange]);
 
   const handleColumnRename = useCallback((columnId: string, name: string) => {
     onColumnUpdate(columnId, name);
