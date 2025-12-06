@@ -33,6 +33,8 @@ export default function SheetTable({
   // Refs to track latest fill state for use in callbacks
   const fillStartRef = useRef<CellPosition | null>(null);
   const fillEndRef = useRef<CellPosition | null>(null);
+  // Lock fill direction once determined (vertical or horizontal)
+  const fillDirectionRef = useRef<'vertical' | 'horizontal' | null>(null);
 
   // Mouse drag selection
   const [isDragging, setIsDragging] = useState(false);
@@ -164,17 +166,23 @@ export default function SheetTable({
       setFillEnd(selectedCell); // Start with same position
       fillStartRef.current = selectedCell;
       fillEndRef.current = selectedCell;
+      fillDirectionRef.current = null; // Reset direction lock
       // Clear any selection range when starting fill
       onSelectionRangeChange?.(null);
     } else if (action === 'drag' && fillStartRef.current) {
-      // Constrain fill to either vertical OR horizontal (not both)
-      // Lock to the axis with greater movement
       const start = fillStartRef.current;
       const rowDiff = Math.abs(position.rowIndex - start.rowIndex);
       const colDiff = Math.abs(position.colIndex - start.colIndex);
 
+      // Lock direction on first significant movement
+      if (fillDirectionRef.current === null && (rowDiff > 0 || colDiff > 0)) {
+        fillDirectionRef.current = rowDiff >= colDiff ? 'vertical' : 'horizontal';
+      }
+
+      // Use locked direction (default to vertical if not yet determined)
+      const direction = fillDirectionRef.current || 'vertical';
       let constrainedPosition: CellPosition;
-      if (rowDiff >= colDiff) {
+      if (direction === 'vertical') {
         // Vertical fill - lock to source column
         constrainedPosition = { rowIndex: position.rowIndex, colIndex: start.colIndex };
       } else {
@@ -197,6 +205,7 @@ export default function SheetTable({
         setFillEnd(null);
         fillStartRef.current = null;
         fillEndRef.current = null;
+        fillDirectionRef.current = null;
         onSelectionRangeChange?.(null);
         return;
       }
@@ -231,6 +240,7 @@ export default function SheetTable({
       setFillEnd(null);
       fillStartRef.current = null;
       fillEndRef.current = null;
+      fillDirectionRef.current = null;
       onSelectionRangeChange?.(null);
     }
   }, [selectedCell, rows, columns, getCellValue, onCellUpdate, onSelectionRangeChange]);
