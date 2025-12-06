@@ -41,15 +41,125 @@ export default function SheetPage() {
   const [cellFormats, setCellFormats] = useState<Record<string, CellFormat>>({});
   const [selectedCell, setSelectedCell] = useState<{ rowIndex: number; colIndex: number } | null>(null);
 
+  // Clipboard state for copy/paste
+  type ClipboardData = {
+    value: any;
+    format: CellFormat;
+    cellId: string;
+    isCut: boolean;
+  };
+  const [clipboard, setClipboard] = useState<ClipboardData | null>(null);
+
   const { data: sheet, isLoading } = useQuery({
     queryKey: ['sheets', id],
     queryFn: () => sheetApi.getById(id!),
     enabled: !!id,
   });
 
-  // Keyboard shortcuts for undo/redo
+  // Copy/Cut/Paste handlers
+  const handleCopy = () => {
+    if (!selectedCell || !sheet?.rows || !sheet?.columns) return;
+
+    const row = sheet.rows[selectedCell.rowIndex];
+    const column = sheet.columns[selectedCell.colIndex];
+    const cell = row.cells?.find((c) => c.columnId === column.id);
+
+    if (!cell) return;
+
+    const value = cell.value ? JSON.parse(cell.value) : '';
+    const format = cellFormats[cell.id] || {};
+
+    setClipboard({
+      value,
+      format,
+      cellId: cell.id,
+      isCut: false,
+    });
+  };
+
+  const handleCut = () => {
+    if (!selectedCell || !sheet?.rows || !sheet?.columns) return;
+
+    const row = sheet.rows[selectedCell.rowIndex];
+    const column = sheet.columns[selectedCell.colIndex];
+    const cell = row.cells?.find((c) => c.columnId === column.id);
+
+    if (!cell) return;
+
+    const value = cell.value ? JSON.parse(cell.value) : '';
+    const format = cellFormats[cell.id] || {};
+
+    setClipboard({
+      value,
+      format,
+      cellId: cell.id,
+      isCut: true,
+    });
+  };
+
+  const handlePaste = async () => {
+    if (!clipboard || !selectedCell || !sheet?.rows || !sheet?.columns || isViewOnly) return;
+
+    const row = sheet.rows[selectedCell.rowIndex];
+    const column = sheet.columns[selectedCell.colIndex];
+    const targetCell = row.cells?.find((c) => c.columnId === column.id);
+
+    if (!targetCell) return;
+
+    // Paste value and formatting
+    await sheetApi.updateCell(id!, targetCell.id, {
+      value: clipboard.value,
+      textColor: clipboard.format.color,
+      backgroundColor: clipboard.format.backgroundColor,
+      fontSize: clipboard.format.fontSize,
+      bold: clipboard.format.bold,
+      italic: clipboard.format.italic,
+      underline: clipboard.format.underline,
+      textAlign: clipboard.format.align,
+      hasBorder: clipboard.format.borderStyle === 'solid',
+      numberFormat: clipboard.format.numberFormat,
+      decimalPlaces: clipboard.format.decimals,
+    });
+
+    // Update local format state
+    setCellFormats((prev) => ({
+      ...prev,
+      [targetCell.id]: clipboard.format,
+    }));
+
+    // If it was a cut operation, clear the original cell
+    if (clipboard.isCut) {
+      await sheetApi.updateCell(id!, clipboard.cellId, { value: '' });
+      setClipboard(null); // Clear clipboard after cut+paste
+    }
+
+    // Invalidate queries to refresh the UI
+    queryClient.invalidateQueries({ queryKey: ['sheets', id] });
+  };
+
+  // Keyboard shortcuts for undo/redo and copy/paste
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Prevent shortcuts when typing in an input
+      if ((e.target as HTMLElement).tagName === 'INPUT' || (e.target as HTMLElement).tagName === 'TEXTAREA') {
+        return;
+      }
+
+      // Ctrl+C or Cmd+C for copy
+      if ((e.ctrlKey || e.metaKey) && e.key === 'c' && !e.shiftKey) {
+        e.preventDefault();
+        handleCopy();
+      }
+      // Ctrl+X or Cmd+X for cut
+      if ((e.ctrlKey || e.metaKey) && e.key === 'x' && !e.shiftKey) {
+        e.preventDefault();
+        handleCut();
+      }
+      // Ctrl+V or Cmd+V for paste
+      if ((e.ctrlKey || e.metaKey) && e.key === 'v' && !e.shiftKey) {
+        e.preventDefault();
+        handlePaste();
+      }
       // Ctrl+Z or Cmd+Z for undo
       if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
         e.preventDefault();
@@ -67,7 +177,7 @@ export default function SheetPage() {
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [undo, redo]);
+  }, [undo, redo, selectedCell, clipboard, sheet, cellFormats, id, queryClient, handleCopy, handleCut, handlePaste]);
 
   // Load cell formatting from database when sheet loads
   useEffect(() => {
@@ -791,6 +901,7 @@ export default function SheetPage() {
         onInsertColumnRight={(position: number) => {
           insertColumnMutation.mutate(position);
         }}
+        copiedCellId={clipboard?.cellId}
       />
 
       <ShareModal

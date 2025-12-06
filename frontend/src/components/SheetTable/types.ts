@@ -27,6 +27,7 @@ export interface SheetTableProps {
   onInsertRowBelow?: (position: number) => void;
   onInsertColumnLeft?: (position: number) => void;
   onInsertColumnRight?: (position: number) => void;
+  copiedCellId?: string | null;
 }
 
 export interface TableCellProps {

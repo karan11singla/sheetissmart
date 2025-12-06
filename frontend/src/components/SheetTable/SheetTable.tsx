@@ -20,6 +20,7 @@ export default function SheetTable({
   onInsertRowBelow,
   onInsertColumnLeft,
   onInsertColumnRight,
+  copiedCellId,
 }: SheetTableProps) {
   const [selectedCell, setSelectedCell] = useState<CellPosition | null>(null);
   const [editingCell, setEditingCell] = useState<string | null>(null);
@@ -225,11 +226,16 @@ export default function SheetTable({
                         colIndex >= Math.min(fillStart.colIndex, fillEnd.colIndex) &&
                         colIndex <= Math.max(fillStart.colIndex, fillEnd.colIndex);
 
+                      // Check if this cell is copied
+                      const isCopied = cell?.id === copiedCellId;
+
                       return (
                         <td
                           key={`${row.id}-${column.id}`}
                           className={`border-b border-slate-200 border-l border-slate-200 ${
                             isInFillRange ? 'bg-blue-100 ring-1 ring-inset ring-blue-400' : ''
+                          } ${
+                            isCopied ? 'ring-2 ring-inset ring-dashed ring-blue-500' : ''
                           }`}
                           style={{ height: row.height || 40 }}
                         >
