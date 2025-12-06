@@ -395,19 +395,26 @@ export async function createColumn(sheetId: string, data: CreateColumnInput, use
   }
 
   // Shift positions of existing columns at or after the insertion position
-  await prisma.column.updateMany({
+  // Must update in reverse order (highest position first) to avoid unique constraint violations
+  const columnsToShift = await prisma.column.findMany({
     where: {
       sheetId,
       position: {
         gte: data.position,
       },
     },
-    data: {
-      position: {
-        increment: 1,
-      },
+    orderBy: {
+      position: 'desc',
     },
   });
+
+  // Update each column's position one at a time in reverse order
+  for (const columnToShift of columnsToShift) {
+    await prisma.column.update({
+      where: { id: columnToShift.id },
+      data: { position: columnToShift.position + 1 },
+    });
+  }
 
   // Create the column at the specified position
   const column = await prisma.column.create({
@@ -466,19 +473,26 @@ export async function createRow(sheetId: string, data: CreateRowInput, userId: s
   }
 
   // Shift positions of existing rows at or after the insertion position
-  await prisma.row.updateMany({
+  // Must update in reverse order (highest position first) to avoid unique constraint violations
+  const rowsToShift = await prisma.row.findMany({
     where: {
       sheetId,
       position: {
         gte: data.position,
       },
     },
-    data: {
-      position: {
-        increment: 1,
-      },
+    orderBy: {
+      position: 'desc',
     },
   });
+
+  // Update each row's position one at a time in reverse order
+  for (const rowToShift of rowsToShift) {
+    await prisma.row.update({
+      where: { id: rowToShift.id },
+      data: { position: rowToShift.position + 1 },
+    });
+  }
 
   // Create row at the specified position
   const row = await prisma.row.create({
