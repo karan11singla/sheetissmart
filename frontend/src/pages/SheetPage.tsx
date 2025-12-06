@@ -7,6 +7,7 @@ import ShareModal from '../components/ShareModal';
 import RightSidebar from '../components/RightSidebar';
 import CommentsPanel from '../components/CommentsPanel';
 import SheetTable from '../components/SheetTable/SheetTable';
+import MenuBar from '../components/MenuBar';
 import type { Cell } from '../types';
 import { useUndoRedoStore } from '../store/undoRedoStore';
 import { UpdateCellCommand, AddRowCommand, AddColumnCommand, DeleteRowCommand, DeleteColumnCommand } from '../store/commands';
@@ -525,6 +526,32 @@ export default function SheetPage() {
     return cellFormats[cell.id] || {};
   };
 
+  // Apply formatting to selected cell(s)
+  const applyFormatting = (format: Partial<CellFormat>) => {
+    const cell = getCurrentCell();
+    if (!cell) return;
+
+    setCellFormats(prev => ({
+      ...prev,
+      [cell.id]: { ...prev[cell.id], ...format }
+    }));
+  };
+
+  // Delete selection (cell content or row/column)
+  const handleDeleteSelection = () => {
+    const cell = getCurrentCell();
+    if (!cell || isViewOnly) return;
+
+    const command = new UpdateCellCommand(
+      id!,
+      cell.id,
+      '',
+      cell.value ? JSON.parse(cell.value) : '',
+      queryClient
+    );
+    executeCommand(command);
+  };
+
   // Filter and sort rows based on filters and sortConfig
   const filteredAndSortedRows = useMemo(() => {
     if (!sheet?.rows) return [];
@@ -646,6 +673,30 @@ export default function SheetPage() {
           </div>
         </div>
       </div>
+
+      {/* Menu Bar */}
+      <MenuBar
+        onUndo={() => undo()}
+        onRedo={() => redo()}
+        canUndo={canUndo()}
+        canRedo={canRedo()}
+        onCopy={handleCopy}
+        onPaste={handlePaste}
+        onCut={handleCut}
+        onDelete={handleDeleteSelection}
+        onInsertRowAbove={() => selectedCell && handleInsertRow(selectedCell.rowIndex)}
+        onInsertRowBelow={() => selectedCell && handleInsertRow(selectedCell.rowIndex + 1)}
+        onInsertColumnLeft={() => selectedCell && handleInsertColumn(selectedCell.colIndex)}
+        onInsertColumnRight={() => selectedCell && handleInsertColumn(selectedCell.colIndex + 1)}
+        onShare={() => setIsShareModalOpen(true)}
+        onBold={() => applyFormatting({ bold: !getCurrentFormat().bold })}
+        onItalic={() => applyFormatting({ italic: !getCurrentFormat().italic })}
+        onUnderline={() => applyFormatting({ underline: !getCurrentFormat().underline })}
+        onAlignLeft={() => applyFormatting({ align: 'left' })}
+        onAlignCenter={() => applyFormatting({ align: 'center' })}
+        onAlignRight={() => applyFormatting({ align: 'right' })}
+        isViewOnly={isViewOnly}
+      />
 
       {/* Modern Formatting Toolbar */}
       <div className="bg-white border-b border-slate-200 px-4 sm:px-6 py-3 overflow-x-auto shadow-sm">
