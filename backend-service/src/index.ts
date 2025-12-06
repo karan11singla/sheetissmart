@@ -9,6 +9,7 @@ import sheetRoutes from './routes/sheet.routes';
 import authRoutes from './routes/auth.routes';
 import shareRoutes from './routes/share.routes';
 import conditionalFormatRoutes from './routes/conditionalFormat.routes';
+import notificationRoutes from './routes/notification.routes';
 
 // Load environment variables
 dotenv.config();
@@ -41,6 +42,7 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/sheets', sheetRoutes);
 app.use('/api/v1', shareRoutes);
 app.use('/api/v1', conditionalFormatRoutes);
+app.use('/api/v1/notifications', notificationRoutes);
 
 // Error handling
 app.use(errorHandler);

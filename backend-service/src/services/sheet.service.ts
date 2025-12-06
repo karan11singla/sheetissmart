@@ -763,6 +763,10 @@ export async function createRowComment(rowId: string, sheetId: string, userId: s
     },
   });
 
+  // Create notifications for mentioned users
+  const { createMentionNotifications } = await import('./notification.service');
+  await createMentionNotifications(content, comment.id, sheetId, rowId, userId);
+
   return comment;
 }
 

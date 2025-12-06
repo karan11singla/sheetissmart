@@ -182,4 +182,29 @@ export const authApi = {
   },
 };
 
+// Notification API
+export const notificationApi = {
+  getAll: async (unreadOnly?: boolean) => {
+    const { data } = await api.get('/api/v1/notifications', {
+      params: { unreadOnly },
+    });
+    return data.data.notifications;
+  },
+
+  getUnreadCount: async () => {
+    const { data } = await api.get('/api/v1/notifications/unread-count');
+    return data.data.count;
+  },
+
+  markAsRead: async (notificationId: string) => {
+    const { data } = await api.post(`/api/v1/notifications/${notificationId}/read`);
+    return data;
+  },
+
+  markAllAsRead: async () => {
+    const { data } = await api.post('/api/v1/notifications/mark-all-read');
+    return data;
+  },
+};
+
 export default api;

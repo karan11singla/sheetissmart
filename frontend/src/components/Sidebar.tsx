@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Clock, Star, User, Plus, LogOut, FolderOpen, Search } from 'lucide-react';
+import { Home, Clock, Star, User, Plus, LogOut, FolderOpen, Search, Bell } from 'lucide-react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
-import { sheetApi } from '../services/api';
+import { sheetApi, notificationApi } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import Logo from './Logo';
 import { useState } from 'react';
@@ -9,14 +9,16 @@ import { useState } from 'react';
 interface SidebarProps {
   onNavigate?: () => void;
   onOpenSearch?: () => void;
+  onOpenNotifications?: () => void;
 }
 
-export default function Sidebar({ onNavigate, onOpenSearch }: SidebarProps) {
+export default function Sidebar({ onNavigate, onOpenSearch, onOpenNotifications }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user, logout } = useAuth();
   const [showBrowse, setShowBrowse] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   const { data: sheets } = useQuery({
     queryKey: ['sheets'],
@@ -24,10 +26,18 @@ export default function Sidebar({ onNavigate, onOpenSearch }: SidebarProps) {
     enabled: showBrowse,
   });
 
+  // Fetch unread notification count
+  const { data: unreadCount = 0 } = useQuery({
+    queryKey: ['notifications', 'unread-count'],
+    queryFn: notificationApi.getUnreadCount,
+    refetchInterval: 30000, // Refresh every 30 seconds
+  });
+
   const navItems = [
     { icon: Home, label: 'Home', path: '/' },
     { icon: Search, label: 'Search', path: null, onClick: () => onOpenSearch?.() },
     { icon: FolderOpen, label: 'Browse', path: null, onClick: () => setShowBrowse(!showBrowse) },
+    { icon: Bell, label: 'Notifications', path: null, onClick: () => { setShowNotifications(!showNotifications); onOpenNotifications?.(); }, badge: unreadCount },
     { icon: Clock, label: 'Recent', path: '/recent' },
     { icon: Star, label: 'Favorites', path: '/favorites' },
   ];
@@ -79,8 +89,8 @@ export default function Sidebar({ onNavigate, onOpenSearch }: SidebarProps) {
           const Icon = item.icon;
           const isActive = item.path && location.pathname === item.path;
 
-          if (item.path === null) {
-            // Browse button with dropdown
+          // Browse button with dropdown
+          if (item.label === 'Browse') {
             return (
               <div key={item.label}>
                 <button
@@ -117,6 +127,27 @@ export default function Sidebar({ onNavigate, onOpenSearch }: SidebarProps) {
                   </div>
                 )}
               </div>
+            );
+          }
+
+          // Other buttons without navigation (like Search, Notifications)
+          if (item.path === null) {
+            return (
+              <button
+                key={item.label}
+                onClick={item.onClick}
+                className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all text-slate-300 hover:bg-slate-800 hover:text-white"
+              >
+                <div className="relative">
+                  <Icon className="h-5 w-5 flex-shrink-0" />
+                  {(item as any).badge > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
+                      {(item as any).badge > 9 ? '9+' : (item as any).badge}
+                    </span>
+                  )}
+                </div>
+                <span className="font-medium">{item.label}</span>
+              </button>
             );
           }
 

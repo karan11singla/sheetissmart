@@ -20,10 +20,12 @@ model User {
   updatedAt DateTime @updatedAt
 
   // Relations
-  sheets         Sheet[]
-  sharesCreated  SheetShare[] @relation("ShareCreator")
-  sharesReceived SheetShare[] @relation("ShareRecipient")
-  rowComments    RowComment[]
+  sheets                Sheet[]
+  sharesCreated         SheetShare[]   @relation("ShareCreator")
+  sharesReceived        SheetShare[]   @relation("ShareRecipient")
+  rowComments           RowComment[]
+  notificationsReceived Notification[] @relation("NotificationRecipient")
+  notificationsSent     Notification[] @relation("NotificationSender")
 
   @@map("users")
 }
@@ -152,11 +154,37 @@ model RowComment {
   updatedAt DateTime @updatedAt
 
   // Relations
-  row       Row      @relation(fields: [rowId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  row           Row            @relation(fields: [rowId], references: [id], onDelete: Cascade)
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notifications Notification[]
 
   @@index([rowId])
   @@map("row_comments")
+}
+
+model Notification {
+  id         String           @id @default(cuid())
+  userId     String           // Who receives the notification
+  fromUserId String           // Who triggered the notification
+  type       NotificationType
+  isRead     Boolean          @default(false)
+
+  // Related data for navigation
+  sheetId    String?
+  rowId      String?
+  commentId  String?
+
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  // Relations
+  user       User             @relation("NotificationRecipient", fields: [userId], references: [id], onDelete: Cascade)
+  fromUser   User             @relation("NotificationSender", fields: [fromUserId], references: [id], onDelete: Cascade)
+  comment    RowComment?      @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
+  @@map("notifications")
 }
 
 // Sheet Sharing Model
@@ -187,6 +215,12 @@ enum ColumnType {
   DROPDOWN
   CHECKBOX
   FORMULA
+}
+
+enum NotificationType {
+  MENTION      // Someone mentioned you in a comment
+  COMMENT      // Someone commented on a sheet you own
+  SHARE        // Someone shared a sheet with you
 }
 
 enum SharePermission {

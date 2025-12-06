@@ -129,3 +129,35 @@ export interface RowComment {
 export interface CreateCommentInput {
   content: string;
 }
+
+export type NotificationType = 'MENTION' | 'COMMENT' | 'SHARE';
+
+export interface Notification {
+  id: string;
+  userId: string;
+  fromUserId: string;
+  type: NotificationType;
+  isRead: boolean;
+  sheetId?: string;
+  rowId?: string;
+  commentId?: string;
+  createdAt: string;
+  updatedAt: string;
+  fromUser: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  comment?: {
+    id: string;
+    content: string;
+    row?: {
+      id: string;
+      position: number;
+      sheet?: {
+        id: string;
+        name: string;
+      };
+    };
+  };
+}

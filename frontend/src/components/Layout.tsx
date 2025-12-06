@@ -3,10 +3,13 @@ import { Outlet } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import Sidebar from './Sidebar';
 import GlobalSearch from './GlobalSearch';
+import RightSidebar from './RightSidebar';
+import NotificationsPanel from './NotificationsPanel';
 
 export default function Layout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   return (
     <div className="min-h-screen bg-white flex">
@@ -36,6 +39,7 @@ export default function Layout() {
         <Sidebar
           onNavigate={() => setIsSidebarOpen(false)}
           onOpenSearch={() => setShowSearch(true)}
+          onOpenNotifications={() => setShowNotifications(true)}
         />
       </div>
 
@@ -46,6 +50,15 @@ export default function Layout() {
 
       {/* Global Search Modal - Rendered at layout level */}
       <GlobalSearch isOpen={showSearch} onClose={() => setShowSearch(false)} />
+
+      {/* Notifications Panel */}
+      <RightSidebar
+        isOpen={showNotifications}
+        onClose={() => setShowNotifications(false)}
+        title="Notifications"
+      >
+        <NotificationsPanel onClose={() => setShowNotifications(false)} />
+      </RightSidebar>
     </div>
   );
 }
