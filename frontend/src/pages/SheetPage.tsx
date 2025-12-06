@@ -39,7 +39,7 @@ export default function SheetPage() {
     borderWidth?: string;
   };
   const [cellFormats, setCellFormats] = useState<Record<string, CellFormat>>({});
-  const [selectedCell] = useState<{ rowIndex: number; colIndex: number } | null>(null);
+  const [selectedCell, setSelectedCell] = useState<{ rowIndex: number; colIndex: number } | null>(null);
 
   const { data: sheet, isLoading } = useQuery({
     queryKey: ['sheets', id],
@@ -726,6 +726,7 @@ export default function SheetPage() {
         columns={sheet.columns || []}
         rows={filteredAndSortedRows}
         isViewOnly={isViewOnly}
+        onCellSelect={(position) => setSelectedCell(position)}
         onCellUpdate={(cellId: string, value: any) => {
           // Find the current cell value for undo
           const cell = sheet.rows

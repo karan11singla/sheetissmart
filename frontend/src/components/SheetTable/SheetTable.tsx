@@ -10,6 +10,7 @@ export default function SheetTable({
   rows,
   isViewOnly = false,
   onCellUpdate,
+  onCellSelect,
   onColumnUpdate,
   onColumnDelete,
   onRowUpdate,
@@ -46,7 +47,8 @@ export default function SheetTable({
 
   const handleCellSelect = useCallback((position: CellPosition) => {
     setSelectedCell(position);
-  }, []);
+    onCellSelect?.(position);
+  }, [onCellSelect]);
 
   const handleCellEdit = useCallback((cellId: string, initialValue: string, _position: CellPosition) => {
     setEditingCell(cellId);
