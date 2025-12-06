@@ -35,16 +35,20 @@ COPY --from=builder /app/package*.json ./
 # Copy node_modules (contains prisma dependencies)
 COPY --from=builder /app/node_modules ./node_modules
 
-# Copy prisma schema
+# Copy prisma schema and migrations
 COPY --from=builder /app/prisma ./prisma
 
 # Copy built app
 COPY --from=builder /app/dist ./dist
+
+# Copy entrypoint script
+COPY infra/docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
 
 # Generate Prisma Client for the production environment
 RUN npx prisma generate
 
 EXPOSE 3000
 
-# Start the app
-CMD ["node", "dist/index.js"]
+# Run migrations and start the app
+ENTRYPOINT ["/docker-entrypoint.sh"]

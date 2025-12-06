@@ -263,12 +263,13 @@ sshpass -p "L&AnpRRw34P6m=u" ssh -o StrictHostKeyChecking=no root@134.209.13.154
 sshpass -p "L&AnpRRw34P6m=u" ssh -o StrictHostKeyChecking=no root@134.209.13.154 "cd /opt/sheetissmart/infra && docker-compose ps"
 sshpass -p "L&AnpRRw34P6m=u" ssh -o StrictHostKeyChecking=no root@134.209.13.154 "cd /opt/sheetissmart/infra && docker-compose logs backend --tail=30"
 
-# Database migration (use db push, NOT migrate deploy)
-sshpass -p "L&AnpRRw34P6m=u" ssh -o StrictHostKeyChecking=no root@134.209.13.154 "cd /opt/sheetissmart/infra && docker-compose exec -T backend npx prisma db push"
+# Database migrations run automatically on container startup via docker-entrypoint.sh
+# Manual migration (if needed):
+sshpass -p "L&AnpRRw34P6m=u" ssh -o StrictHostKeyChecking=no root@134.209.13.154 "cd /opt/sheetissmart/infra && docker-compose exec -T backend npx prisma migrate deploy"
 ```
 
 ### Important Deployment Notes
-1. **Always use `prisma db push`** instead of `migrate deploy` for schema changes
+1. **Migrations run automatically** on backend container startup via `docker-entrypoint.sh`
 2. Git reset with `--hard origin/main` to ensure clean state
 3. `--build` flag forces Docker rebuild
 4. Check logs after deployment to verify backend started correctly
@@ -330,11 +331,11 @@ npm run db:studio    # Prisma Studio on http://localhost:5555
 cd backend-service
 npx prisma generate
 
-# 3. Push to database (local)
-npx prisma db push
+# 3. Create migration file
+npx prisma migrate dev --name your_migration_name
 
-# 4. Commit and push to GitHub
-# 5. Deploy (will run prisma db push on server)
+# 4. Commit and push to GitHub (include migration files)
+# 5. Deploy - migrations run automatically on container startup
 ./infra/deploy.sh
 ```
 
