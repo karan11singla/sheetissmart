@@ -26,6 +26,7 @@ model User {
   rowComments           RowComment[]
   notificationsReceived Notification[] @relation("NotificationRecipient")
   notificationsSent     Notification[] @relation("NotificationSender")
+  favorites             UserFavorite[]
 
   @@map("users")
 }
@@ -49,6 +50,7 @@ model Sheet {
   cells             Cell[]
   shares            SheetShare[]
   conditionalFormats ConditionalFormat[]
+  favoritedBy       UserFavorite[]
 
   @@map("sheets")
 }
@@ -185,6 +187,21 @@ model Notification {
   @@index([userId, isRead])
   @@index([userId, createdAt])
   @@map("notifications")
+}
+
+// User-specific favorites (allows shared users to favorite sheets)
+model UserFavorite {
+  id        String   @id @default(cuid())
+  userId    String
+  sheetId   String
+  createdAt DateTime @default(now())
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sheet     Sheet    @relation(fields: [sheetId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, sheetId])
+  @@map("user_favorites")
 }
 
 // Sheet Sharing Model

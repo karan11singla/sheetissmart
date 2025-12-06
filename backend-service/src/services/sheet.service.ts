@@ -168,12 +168,23 @@ export async function getSheetById(id: string, userId: string) {
     })
   );
 
+  // Check if this sheet is favorited by the user
+  const userFavorite = await prisma.userFavorite.findUnique({
+    where: {
+      userId_sheetId: {
+        userId,
+        sheetId: id,
+      },
+    },
+  });
+
   // Add permission info to the response
   return {
     ...sheet,
     rows: rowsWithComputedValues,
     isOwner,
     permission: isOwner ? 'OWNER' : sharedAccess?.permission,
+    isFavorite: !!userFavorite,
   };
 }
 
@@ -186,6 +197,13 @@ export async function getAllSheets(userId: string) {
   if (!user) {
     throw new AppError('User not found', 404);
   }
+
+  // Get user's favorites
+  const userFavorites = await prisma.userFavorite.findMany({
+    where: { userId },
+    select: { sheetId: true },
+  });
+  const favoriteSheetIds = new Set(userFavorites.map((f) => f.sheetId));
 
   // Get sheets owned by user and sheets shared with user
   const [ownedSheets, sharedSheets] = await Promise.all([
@@ -241,14 +259,20 @@ export async function getAllSheets(userId: string) {
     }),
   ]);
 
-  // Combine and mark which are shared
+  // Combine and mark which are shared, with user-specific favorites
   const allSheets = [
-    ...ownedSheets.map((sheet) => ({ ...sheet, isOwner: true, isShared: false })),
+    ...ownedSheets.map((sheet) => ({
+      ...sheet,
+      isOwner: true,
+      isShared: false,
+      isFavorite: favoriteSheetIds.has(sheet.id),
+    })),
     ...sharedSheets.map((sheet) => ({
       ...sheet,
       isOwner: false,
       isShared: true,
       sharedPermission: sheet.shares[0]?.permission,
+      isFavorite: favoriteSheetIds.has(sheet.id),
     })),
   ];
 
@@ -272,22 +296,59 @@ export async function updateSheet(id: string, data: UpdateSheetInput, userId: st
 }
 
 export async function toggleFavorite(id: string, userId: string) {
-  // Check if sheet belongs to user
-  const sheet = await prisma.sheet.findUnique({ where: { id } });
+  // Check if user has access to the sheet (owner or shared)
+  const sheet = await prisma.sheet.findUnique({
+    where: { id },
+    include: { shares: true }
+  });
+
   if (!sheet) {
     throw new AppError('Sheet not found', 404);
   }
-  if (sheet.userId !== userId) {
+
+  // Get user's email to check shares
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    throw new AppError('User not found', 404);
+  }
+
+  // Check if user is owner or has access via share
+  const isOwner = sheet.userId === userId;
+  const hasSharedAccess = sheet.shares.some((share) => share.sharedWithEmail === user.email);
+
+  if (!isOwner && !hasSharedAccess) {
     throw new AppError('Access denied', 403);
   }
 
-  // Toggle the favorite status
-  return await prisma.sheet.update({
-    where: { id },
-    data: {
-      isFavorite: !sheet.isFavorite,
+  // Check if favorite already exists
+  const existingFavorite = await prisma.userFavorite.findUnique({
+    where: {
+      userId_sheetId: {
+        userId,
+        sheetId: id,
+      },
     },
   });
+
+  if (existingFavorite) {
+    // Remove favorite
+    await prisma.userFavorite.delete({
+      where: { id: existingFavorite.id },
+    });
+    return { ...sheet, isFavorite: false };
+  } else {
+    // Add favorite
+    await prisma.userFavorite.create({
+      data: {
+        userId,
+        sheetId: id,
+      },
+    });
+    return { ...sheet, isFavorite: true };
+  }
 }
 
 export async function deleteSheet(id: string, userId: string) {

@@ -138,27 +138,22 @@ export default function TableCell({
       const element = document.elementFromPoint(e.clientX, e.clientY);
       if (!element) return;
 
-      // Walk up the DOM to find an element with data-cell-pos, but stop at table boundaries
-      let current: Element | null = element;
-      let cellElement: Element | null = null;
+      // Only process if we're over a TD element that's a data cell (not row header)
+      const td = element.closest('td');
+      if (!td) return;
 
-      while (current && current.tagName !== 'TABLE') {
-        if (current.hasAttribute && current.hasAttribute('data-cell-pos')) {
-          cellElement = current;
-          break;
-        }
-        current = current.parentElement;
-      }
+      // Skip if this TD doesn't contain a div with data-cell-pos
+      // Row header TDs won't have this
+      const cellDiv = td.querySelector('[data-cell-pos]');
+      if (!cellDiv) return;
 
-      if (cellElement) {
-        const pos = cellElement.getAttribute('data-cell-pos');
-        if (pos) {
-          const [row, col] = pos.split(',').map(Number);
-          // Validate that both row and col are valid numbers (not NaN) and col >= 0
-          // This ensures we only process valid data cells, not row headers
-          if (!isNaN(row) && !isNaN(col) && row >= 0 && col >= 0) {
-            onFillDrag({ rowIndex: row, colIndex: col }, 'drag');
-          }
+      const pos = cellDiv.getAttribute('data-cell-pos');
+      if (pos) {
+        const [row, col] = pos.split(',').map(Number);
+        // Validate that both row and col are valid numbers (not NaN) and col >= 0
+        // This ensures we only process valid data cells, not row headers
+        if (!isNaN(row) && !isNaN(col) && row >= 0 && col >= 0) {
+          onFillDrag({ rowIndex: row, colIndex: col }, 'drag');
         }
       }
     };
