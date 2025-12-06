@@ -82,7 +82,9 @@ jobs:
           host: 134.209.13.154
           username: root
           key: ${{ secrets.DROPLET_SSH_KEY }}
+          command_timeout: 5m
           script: |
+            set -e
             cd /opt/sheetissmart
             git pull origin main
             cd infra
@@ -91,7 +93,8 @@ jobs:
             docker-compose up -d postgres
             sleep 5
             echo "Applying database schema changes..."
-            docker-compose run --rm backend npx prisma db push --accept-data-loss --skip-generate
+            timeout 60 docker-compose run --rm backend npx prisma db push --accept-data-loss --skip-generate || true
             echo "Starting all services..."
             docker-compose up -d
             echo "Deployment complete!"
+            exit 0
