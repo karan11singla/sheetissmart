@@ -136,14 +136,14 @@ export default function TableCell({
         // Find the cell under the mouse - only look for actual table cells, not row headers
         const element = document.elementFromPoint(e.clientX, e.clientY);
 
-        // First find the td element, then look for data-cell-pos inside it
-        const tdElement = element?.closest('td');
-        if (tdElement) {
-          const cellElement = tdElement.querySelector('[data-cell-pos]');
-          if (cellElement) {
-            const pos = cellElement.getAttribute('data-cell-pos');
-            if (pos) {
-              const [row, col] = pos.split(',').map(Number);
+        // Check if the element itself or its parent has data-cell-pos
+        const cellElement = element?.closest('[data-cell-pos]');
+        if (cellElement) {
+          const pos = cellElement.getAttribute('data-cell-pos');
+          if (pos) {
+            const [row, col] = pos.split(',').map(Number);
+            // Validate that both row and col are valid numbers (not NaN)
+            if (!isNaN(row) && !isNaN(col) && col >= 0) {
               onFillDrag({ rowIndex: row, colIndex: col }, 'drag');
             }
           }
@@ -260,12 +260,17 @@ export default function TableCell({
   // Show green hover effect when in formula mode and not the editing cell
   const showFormulaHoverEffect = isFormulaMode && !isEditing && onFormulaSelect;
 
+  // Get text alignment class
+  const alignmentClass = cell?.textAlign === 'center' ? 'text-center' :
+                        cell?.textAlign === 'right' ? 'text-right' :
+                        'text-left';
+
   return (
     <div
       ref={cellRef}
       tabIndex={isSelected ? 0 : -1}
       data-cell-pos={`${rowIndex},${colIndex}`}
-      className={`w-full h-full px-3 py-2 transition-colors focus:outline-none relative ${
+      className={`w-full h-full px-3 py-2 transition-colors focus:outline-none relative ${alignmentClass} ${
         !isViewOnly && !showFormulaHoverEffect ? 'cursor-pointer hover:bg-blue-50/50' : ''
       } ${showFormulaHoverEffect ? 'cursor-crosshair hover:bg-green-100 hover:ring-1 hover:ring-inset hover:ring-green-400' : ''} ${
         isSelected ? 'ring-2 ring-inset ring-blue-500 bg-blue-50/60' : ''
