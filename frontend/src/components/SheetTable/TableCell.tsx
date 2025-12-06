@@ -246,10 +246,8 @@ export default function TableCell({
 
   // Handle mouse enter during drag
   const handleMouseEnter = () => {
-    // Only trigger drag if we're actually dragging
-    // The drag state is managed in SheetTable, so we always call this
-    // and let SheetTable decide if it should update the range
-    if (onDragSelect) {
+    // Only trigger drag if we're actually in a selection drag operation
+    if (isSelectionDragging && onDragSelect) {
       onDragSelect({ rowIndex, colIndex }, 'drag');
     }
   };

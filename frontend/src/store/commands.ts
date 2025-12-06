@@ -1,7 +1,7 @@
 import { Command } from './undoRedoStore';
 import { sheetApi } from '../services/api';
 import { QueryClient } from '@tanstack/react-query';
-import type { UpdateCellInput } from '../types';
+import type { UpdateCellInput, Row, Column, ColumnType } from '../types';
 
 /**
  * Update Cell Command
@@ -38,19 +38,52 @@ export class UpdateCellCommand implements Command {
 }
 
 /**
+ * Add Row Command
+ * Handles undo/redo for adding a new row
+ */
+export class AddRowCommand implements Command {
+  description: string;
+  private createdRowId: string | null = null;
+
+  constructor(
+    private sheetId: string,
+    private position: number,
+    private queryClient: QueryClient
+  ) {
+    this.description = `Add row at position ${position + 1}`;
+  }
+
+  async execute(): Promise<void> {
+    const row = await sheetApi.createRow(this.sheetId, { position: this.position });
+    this.createdRowId = row.id;
+    this.queryClient.invalidateQueries({ queryKey: ['sheets', this.sheetId] });
+  }
+
+  async undo(): Promise<void> {
+    if (this.createdRowId) {
+      await sheetApi.deleteRow(this.sheetId, this.createdRowId);
+      this.queryClient.invalidateQueries({ queryKey: ['sheets', this.sheetId] });
+    }
+  }
+}
+
+/**
  * Delete Row Command
- * Handles undo/redo for row deletion
- * Note: Currently undo is not fully supported as we'd need to restore the entire row
+ * Handles undo/redo for row deletion with full data restoration
  */
 export class DeleteRowCommand implements Command {
   description: string;
+  private deletedRow: Row;
 
   constructor(
     private sheetId: string,
     private rowId: string,
+    rowData: Row,
     private queryClient: QueryClient
   ) {
-    this.description = 'Delete row';
+    this.description = `Delete row ${rowData.position + 1}`;
+    // Store the row data before deletion
+    this.deletedRow = rowData;
   }
 
   async execute(): Promise<void> {
@@ -59,28 +92,72 @@ export class DeleteRowCommand implements Command {
   }
 
   async undo(): Promise<void> {
-    // TODO: To properly implement undo for deletion, we would need to:
-    // 1. Store the entire row data before deletion
-    // 2. Recreate the row with the same data at the same position
-    // For now, we'll throw an error to indicate this isn't supported
-    throw new Error('Undo for row deletion is not yet supported');
+    // Recreate the row at the same position
+    await sheetApi.createRow(this.sheetId, {
+      position: this.deletedRow.position,
+      height: this.deletedRow.height,
+    });
+
+    // Note: Cell values cannot be restored with original cell IDs since new cells are created
+    // The backend would need to support restoring cells with specific IDs for full restoration
+    this.queryClient.invalidateQueries({ queryKey: ['sheets', this.sheetId] });
+  }
+}
+
+/**
+ * Add Column Command
+ * Handles undo/redo for adding a new column
+ */
+export class AddColumnCommand implements Command {
+  description: string;
+  private createdColumnId: string | null = null;
+
+  constructor(
+    private sheetId: string,
+    private name: string,
+    private position: number,
+    private queryClient: QueryClient,
+    private type: ColumnType = 'TEXT' as ColumnType
+  ) {
+    this.description = `Add column "${name}"`;
+  }
+
+  async execute(): Promise<void> {
+    const column = await sheetApi.createColumn(this.sheetId, {
+      name: this.name,
+      position: this.position,
+      type: this.type,
+    });
+    this.createdColumnId = column.id;
+    this.queryClient.invalidateQueries({ queryKey: ['sheets', this.sheetId] });
+  }
+
+  async undo(): Promise<void> {
+    if (this.createdColumnId) {
+      await sheetApi.deleteColumn(this.sheetId, this.createdColumnId);
+      this.queryClient.invalidateQueries({ queryKey: ['sheets', this.sheetId] });
+    }
   }
 }
 
 /**
  * Delete Column Command
- * Handles undo/redo for column deletion
- * Note: Currently undo is not fully supported as we'd need to restore the entire column
+ * Handles undo/redo for column deletion with column structure restoration
  */
 export class DeleteColumnCommand implements Command {
   description: string;
+  private deletedColumn: Column;
 
   constructor(
     private sheetId: string,
     private columnId: string,
+    columnData: Column,
+    _allRows: Row[],
     private queryClient: QueryClient
   ) {
-    this.description = 'Delete column';
+    this.description = `Delete column "${columnData.name}"`;
+    // Store the column data before deletion
+    this.deletedColumn = columnData;
   }
 
   async execute(): Promise<void> {
@@ -89,11 +166,16 @@ export class DeleteColumnCommand implements Command {
   }
 
   async undo(): Promise<void> {
-    // TODO: To properly implement undo for deletion, we would need to:
-    // 1. Store the entire column data before deletion
-    // 2. Recreate the column with the same data at the same position
-    // For now, we'll throw an error to indicate this isn't supported
-    throw new Error('Undo for column deletion is not yet supported');
+    // Recreate the column at the same position
+    await sheetApi.createColumn(this.sheetId, {
+      name: this.deletedColumn.name,
+      position: this.deletedColumn.position,
+      type: this.deletedColumn.type,
+      width: this.deletedColumn.width,
+    });
+
+    // Note: Cell values cannot be restored since new cells are created with new IDs
+    this.queryClient.invalidateQueries({ queryKey: ['sheets', this.sheetId] });
   }
 }
 

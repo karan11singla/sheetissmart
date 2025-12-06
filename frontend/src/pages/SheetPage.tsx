@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
-import { Plus, X, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Star } from 'lucide-react';
+import { Plus, X, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Star, Undo2, Redo2 } from 'lucide-react';
 import { sheetApi } from '../services/api';
 import ShareModal from '../components/ShareModal';
 import RightSidebar from '../components/RightSidebar';
@@ -9,12 +9,12 @@ import CommentsPanel from '../components/CommentsPanel';
 import SheetTable from '../components/SheetTable/SheetTable';
 import type { Cell } from '../types';
 import { useUndoRedoStore } from '../store/undoRedoStore';
-import { UpdateCellCommand } from '../store/commands';
+import { UpdateCellCommand, AddRowCommand, AddColumnCommand, DeleteRowCommand, DeleteColumnCommand } from '../store/commands';
 
 export default function SheetPage() {
   const { id } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
-  const { executeCommand, undo, redo } = useUndoRedoStore();
+  const { executeCommand, undo, redo, canUndo, canRedo, clear: clearUndoStack } = useUndoRedoStore();
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isCommentSidebarOpen, setIsCommentSidebarOpen] = useState(false);
   const [selectedRowForComment, setSelectedRowForComment] = useState<string | null>(null);
@@ -184,7 +184,7 @@ export default function SheetPage() {
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [undo, redo, selectedCell, clipboard, sheet, cellFormats, id, queryClient, handleCopy, handleCut, handlePaste]);
+  }, [selectedCell, clipboard, sheet, cellFormats, id, queryClient, handleCopy, handleCut, handlePaste, undo, redo]);
 
   // Load cell formatting from database when sheet loads
   useEffect(() => {
@@ -225,46 +225,13 @@ export default function SheetPage() {
     setCellFormats(formats);
   }, [sheet]);
 
+  // Clear undo stack when switching sheets
+  useEffect(() => {
+    clearUndoStack();
+  }, [id, clearUndoStack]);
+
   // Check if user has edit permission
   const isViewOnly = sheet && (sheet as any).permission === 'VIEWER';
-
-  const addColumnMutation = useMutation({
-    mutationFn: () => {
-      const columnIndex = sheet?.columns?.length || 0;
-      const columnName = getColumnLetter(columnIndex);
-      return sheetApi.createColumn(id!, {
-        name: columnName,
-        position: columnIndex,
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sheets', id] });
-    },
-  });
-
-  const addRowMutation = useMutation({
-    mutationFn: () =>
-      sheetApi.createRow(id!, {
-        position: sheet?.rows?.length || 0,
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sheets', id] });
-    },
-  });
-
-  const deleteColumnMutation = useMutation({
-    mutationFn: (columnId: string) => sheetApi.deleteColumn(id!, columnId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sheets', id] });
-    },
-  });
-
-  const deleteRowMutation = useMutation({
-    mutationFn: (rowId: string) => sheetApi.deleteRow(id!, rowId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sheets', id] });
-    },
-  });
 
   const updateColumnMutation = useMutation({
     mutationFn: ({ columnId, width, name }: { columnId: string; width?: number; name?: string }) =>
@@ -282,26 +249,44 @@ export default function SheetPage() {
     },
   });
 
-  const insertRowMutation = useMutation({
-    mutationFn: (position: number) =>
-      sheetApi.createRow(id!, { position }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sheets', id] });
-    },
-  });
+  // Command-based handlers for undo/redo support
+  const handleAddRow = () => {
+    const position = sheet?.rows?.length || 0;
+    const command = new AddRowCommand(id!, position, queryClient);
+    executeCommand(command);
+  };
 
-  const insertColumnMutation = useMutation({
-    mutationFn: (position: number) => {
-      const columnName = `Col ${position + 1}`;
-      return sheetApi.createColumn(id!, {
-        name: columnName,
-        position,
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sheets', id] });
-    },
-  });
+  const handleAddColumn = () => {
+    const columnIndex = sheet?.columns?.length || 0;
+    const columnName = getColumnLetter(columnIndex);
+    const command = new AddColumnCommand(id!, columnName, columnIndex, queryClient);
+    executeCommand(command);
+  };
+
+  const handleDeleteRow = (rowId: string) => {
+    const row = sheet?.rows?.find(r => r.id === rowId);
+    if (!row) return;
+    const command = new DeleteRowCommand(id!, rowId, row, queryClient);
+    executeCommand(command);
+  };
+
+  const handleDeleteColumn = (columnId: string) => {
+    const column = sheet?.columns?.find(c => c.id === columnId);
+    if (!column) return;
+    const command = new DeleteColumnCommand(id!, columnId, column, sheet?.rows || [], queryClient);
+    executeCommand(command);
+  };
+
+  const handleInsertRow = (position: number) => {
+    const command = new AddRowCommand(id!, position, queryClient);
+    executeCommand(command);
+  };
+
+  const handleInsertColumn = (position: number) => {
+    const columnName = `Col ${position + 1}`;
+    const command = new AddColumnCommand(id!, columnName, position, queryClient);
+    executeCommand(command);
+  };
 
   const { data: shares = [] } = useQuery({
     queryKey: ['sheet-shares', id],
@@ -671,12 +656,31 @@ export default function SheetPage() {
             </div>
           )}
           <div className="flex items-center space-x-4">
+            {/* Undo/Redo */}
+            <div className="flex items-center space-x-1 border-r border-slate-200 pr-4">
+              <button
+                onClick={() => undo()}
+                disabled={!canUndo()}
+                className="p-2 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                title="Undo (Ctrl+Z)"
+              >
+                <Undo2 className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => redo()}
+                disabled={!canRedo()}
+                className="p-2 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                title="Redo (Ctrl+Y)"
+              >
+                <Redo2 className="h-4 w-4" />
+              </button>
+            </div>
+
             {/* Add Row/Column */}
             {!isViewOnly && (
               <div className="flex items-center space-x-2 border-r border-slate-200 pr-4">
                 <button
-                  onClick={() => addColumnMutation.mutate()}
-                  disabled={addColumnMutation.isPending}
+                  onClick={handleAddColumn}
                   className="inline-flex items-center px-3 py-2 bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg text-sm font-medium text-blue-700 hover:from-blue-100 hover:to-blue-200 hover:border-blue-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow"
                   title="Add Column"
                 >
@@ -684,8 +688,7 @@ export default function SheetPage() {
                   Column
                 </button>
                 <button
-                  onClick={() => addRowMutation.mutate()}
-                  disabled={addRowMutation.isPending}
+                  onClick={handleAddRow}
                   className="inline-flex items-center px-3 py-2 bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg text-sm font-medium text-blue-700 hover:from-blue-100 hover:to-blue-200 hover:border-blue-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow"
                   title="Add Row"
                 >
@@ -916,32 +919,20 @@ export default function SheetPage() {
         onColumnUpdate={(columnId: string, name: string) => {
           updateColumnMutation.mutate({ columnId, name });
         }}
-        onColumnDelete={(columnId: string) => {
-          deleteColumnMutation.mutate(columnId);
-        }}
+        onColumnDelete={handleDeleteColumn}
         onRowUpdate={(rowId: string, name?: string) => {
           const row = sheet.rows?.find(r => r.id === rowId);
           updateRowMutation.mutate({ rowId, height: row?.height, name });
         }}
-        onRowDelete={(rowId: string) => {
-          deleteRowMutation.mutate(rowId);
-        }}
+        onRowDelete={handleDeleteRow}
         onCommentClick={(rowId: string) => {
           setSelectedRowForComment(rowId);
           setIsCommentSidebarOpen(true);
         }}
-        onInsertRowAbove={(position: number) => {
-          insertRowMutation.mutate(position);
-        }}
-        onInsertRowBelow={(position: number) => {
-          insertRowMutation.mutate(position);
-        }}
-        onInsertColumnLeft={(position: number) => {
-          insertColumnMutation.mutate(position);
-        }}
-        onInsertColumnRight={(position: number) => {
-          insertColumnMutation.mutate(position);
-        }}
+        onInsertRowAbove={handleInsertRow}
+        onInsertRowBelow={handleInsertRow}
+        onInsertColumnLeft={handleInsertColumn}
+        onInsertColumnRight={handleInsertColumn}
         copiedCellId={clipboard?.cellId}
         selectionRange={selectionRange}
         onSelectionRangeChange={setSelectionRange}
