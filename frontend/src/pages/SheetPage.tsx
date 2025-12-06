@@ -23,28 +23,6 @@ export default function SheetPage() {
   const [sortConfig] = useState<{ columnId: string; direction: 'asc' | 'desc' } | null>(null);
   const [filters, setFilters] = useState<Record<string, string>>({});
 
-  // Keyboard shortcuts for undo/redo
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Ctrl+Z or Cmd+Z for undo
-      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
-        e.preventDefault();
-        undo();
-      }
-      // Ctrl+Y or Cmd+Shift+Z or Ctrl+Shift+Z for redo
-      if (
-        ((e.ctrlKey || e.metaKey) && e.key === 'y') ||
-        ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'z')
-      ) {
-        e.preventDefault();
-        redo();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [undo, redo]);
-
   // Cell formatting state (stored per cell ID)
   type CellFormat = {
     bold?: boolean;
@@ -68,6 +46,67 @@ export default function SheetPage() {
     queryFn: () => sheetApi.getById(id!),
     enabled: !!id,
   });
+
+  // Keyboard shortcuts for undo/redo
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+Z or Cmd+Z for undo
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+      }
+      // Ctrl+Y or Cmd+Shift+Z or Ctrl+Shift+Z for redo
+      if (
+        ((e.ctrlKey || e.metaKey) && e.key === 'y') ||
+        ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'z')
+      ) {
+        e.preventDefault();
+        redo();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [undo, redo]);
+
+  // Load cell formatting from database when sheet loads
+  useEffect(() => {
+    if (!sheet?.rows) return;
+
+    const formats: Record<string, CellFormat> = {};
+    sheet.rows.forEach((row) => {
+      row.cells?.forEach((cell) => {
+        // Only add formatting if at least one formatting field is set
+        if (
+          cell.textColor ||
+          cell.backgroundColor ||
+          cell.fontSize ||
+          cell.bold ||
+          cell.italic ||
+          cell.underline ||
+          cell.textAlign ||
+          cell.hasBorder ||
+          cell.numberFormat ||
+          cell.decimalPlaces !== undefined
+        ) {
+          formats[cell.id] = {
+            color: cell.textColor,
+            backgroundColor: cell.backgroundColor,
+            fontSize: cell.fontSize,
+            bold: cell.bold,
+            italic: cell.italic,
+            underline: cell.underline,
+            align: cell.textAlign as 'left' | 'center' | 'right',
+            borderStyle: cell.hasBorder ? 'solid' : 'none',
+            numberFormat: cell.numberFormat as 'general' | 'number' | 'currency' | 'percentage' | 'date',
+            decimals: cell.decimalPlaces,
+          };
+        }
+      });
+    });
+
+    setCellFormats(formats);
+  }, [sheet]);
 
   // Check if user has edit permission
   const isViewOnly = sheet && (sheet as any).permission === 'VIEWER';
@@ -244,17 +283,39 @@ export default function SheetPage() {
   };
 
   // Apply formatting to current cell
-  const applyFormat = (format: Partial<CellFormat>) => {
+  const applyFormat = async (format: Partial<CellFormat>) => {
     const cell = getCurrentCell();
     if (!cell) return;
 
+    // Update local state - merge with existing formatting
+    const updatedFormat = {
+      ...cellFormats[cell.id],
+      ...format,
+    };
+
     setCellFormats((prev) => ({
       ...prev,
-      [cell.id]: {
-        ...prev[cell.id],
-        ...format,
-      },
+      [cell.id]: updatedFormat,
     }));
+
+    // Save formatting to backend - send all formatting fields merged
+    const cellValue = cell.value ? JSON.parse(cell.value) : '';
+    await sheetApi.updateCell(id!, cell.id, {
+      value: cellValue,
+      textColor: updatedFormat.color,
+      backgroundColor: updatedFormat.backgroundColor,
+      fontSize: updatedFormat.fontSize,
+      bold: updatedFormat.bold,
+      italic: updatedFormat.italic,
+      underline: updatedFormat.underline,
+      textAlign: updatedFormat.align,
+      hasBorder: updatedFormat.borderStyle === 'solid',
+      numberFormat: updatedFormat.numberFormat,
+      decimalPlaces: updatedFormat.decimals,
+    });
+
+    // Invalidate queries to refresh the UI
+    queryClient.invalidateQueries({ queryKey: ['sheets', id] });
   };
 
   // Toggle formatting
@@ -673,13 +734,29 @@ export default function SheetPage() {
 
           const oldValue = cell?.value ? JSON.parse(cell.value) : '';
 
+          // Get current cell formatting
+          const format = cellFormats[cellId];
+          const formatting = format ? {
+            textColor: format.color,
+            backgroundColor: format.backgroundColor,
+            fontSize: format.fontSize,
+            bold: format.bold,
+            italic: format.italic,
+            underline: format.underline,
+            textAlign: format.align,
+            hasBorder: format.borderStyle === 'solid',
+            numberFormat: format.numberFormat,
+            decimalPlaces: format.decimals,
+          } : undefined;
+
           // Create and execute command for undo/redo support
           const command = new UpdateCellCommand(
             id!,
             cellId,
             oldValue,
             value,
-            queryClient
+            queryClient,
+            formatting
           );
 
           executeCommand(command);

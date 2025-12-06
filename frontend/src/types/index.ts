@@ -51,6 +51,17 @@ export interface Cell {
   value?: string;
   formula?: string;
   computedValue?: string | number;
+  // Cell formatting
+  textColor?: string;
+  backgroundColor?: string;
+  fontSize?: number;
+  bold?: boolean;
+  italic?: boolean;
+  underline?: boolean;
+  textAlign?: string;
+  hasBorder?: boolean;
+  numberFormat?: string;
+  decimalPlaces?: number;
   createdAt: string;
   updatedAt: string;
   column?: Column;
@@ -88,7 +99,17 @@ export interface CreateRowInput {
 }
 
 export interface UpdateCellInput {
-  value: any;
+  value?: any;
+  textColor?: string;
+  backgroundColor?: string;
+  fontSize?: number;
+  bold?: boolean;
+  italic?: boolean;
+  underline?: boolean;
+  textAlign?: string;
+  hasBorder?: boolean;
+  numberFormat?: string;
+  decimalPlaces?: number;
 }
 
 export interface RowComment {

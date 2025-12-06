@@ -1,10 +1,11 @@
 import { Command } from './undoRedoStore';
 import { sheetApi } from '../services/api';
 import { QueryClient } from '@tanstack/react-query';
+import type { UpdateCellInput } from '../types';
 
 /**
  * Update Cell Command
- * Handles undo/redo for cell value changes
+ * Handles undo/redo for cell value changes and formatting
  */
 export class UpdateCellCommand implements Command {
   description: string;
@@ -14,13 +15,17 @@ export class UpdateCellCommand implements Command {
     private cellId: string,
     private oldValue: any,
     private newValue: any,
-    private queryClient: QueryClient
+    private queryClient: QueryClient,
+    private formatting?: Omit<UpdateCellInput, 'value'>
   ) {
     this.description = `Update cell value from "${oldValue || ''}" to "${newValue || ''}"`;
   }
 
   async execute(): Promise<void> {
-    await sheetApi.updateCell(this.sheetId, this.cellId, { value: this.newValue });
+    await sheetApi.updateCell(this.sheetId, this.cellId, {
+      value: this.newValue,
+      ...this.formatting
+    });
     // Invalidate queries to refresh the UI
     this.queryClient.invalidateQueries({ queryKey: ['sheets', this.sheetId] });
   }
