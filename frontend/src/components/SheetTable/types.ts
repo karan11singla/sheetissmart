@@ -46,6 +46,7 @@ export interface TableCellProps {
   isViewOnly: boolean;
   isFormulaMode?: boolean;
   isInSelectionRange?: boolean;
+  isDragSelecting?: boolean;
   onSelect: (position: CellPosition, shiftKey?: boolean) => void;
   onEdit: (cellId: string, initialValue: string, position: CellPosition) => void;
   onSave: (cellId: string, value: string) => void;

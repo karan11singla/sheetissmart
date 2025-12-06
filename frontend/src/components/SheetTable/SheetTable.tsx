@@ -307,6 +307,7 @@ export default function SheetTable({
                             isViewOnly={isViewOnly}
                             isFormulaMode={isFormulaMode}
                             isInSelectionRange={isInSelectionRange || false}
+                            isDragSelecting={isDragging}
                             onSelect={handleCellSelect}
                             onEdit={handleCellEdit}
                             onSave={handleCellSave}
