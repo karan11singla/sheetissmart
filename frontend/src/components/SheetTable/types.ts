@@ -5,6 +5,11 @@ export interface CellPosition {
   colIndex: number;
 }
 
+export interface CellRange {
+  start: CellPosition;
+  end: CellPosition;
+}
+
 export interface CellEditState {
   cellId: string;
   value: string;
@@ -28,6 +33,8 @@ export interface SheetTableProps {
   onInsertColumnLeft?: (position: number) => void;
   onInsertColumnRight?: (position: number) => void;
   copiedCellId?: string | null;
+  selectionRange?: CellRange | null;
+  onSelectionRangeChange?: (range: CellRange | null) => void;
 }
 
 export interface TableCellProps {
@@ -38,12 +45,14 @@ export interface TableCellProps {
   isEditing: boolean;
   isViewOnly: boolean;
   isFormulaMode?: boolean;
-  onSelect: (position: CellPosition) => void;
+  isInSelectionRange?: boolean;
+  onSelect: (position: CellPosition, shiftKey?: boolean) => void;
   onEdit: (cellId: string, initialValue: string, position: CellPosition) => void;
   onSave: (cellId: string, value: string) => void;
   onNavigate: (direction: 'up' | 'down' | 'left' | 'right') => void;
   onFillDrag?: (position: CellPosition, action: 'start' | 'drag' | 'end') => void;
   onFormulaSelect?: (position: CellPosition) => void;
+  onDragSelect?: (position: CellPosition, action: 'start' | 'drag' | 'end') => void;
   editingCellValue?: string;
   onValueChange?: (value: string) => void;
 }

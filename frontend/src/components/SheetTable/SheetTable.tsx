@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import TableCell from './TableCell';
 import ColumnHeader from './ColumnHeader';
 import RowHeader from './RowHeader';
@@ -21,12 +21,18 @@ export default function SheetTable({
   onInsertColumnLeft,
   onInsertColumnRight,
   copiedCellId,
+  selectionRange,
+  onSelectionRangeChange,
 }: SheetTableProps) {
   const [selectedCell, setSelectedCell] = useState<CellPosition | null>(null);
   const [editingCell, setEditingCell] = useState<string | null>(null);
   const [editingCellValue, setEditingCellValue] = useState<string>('');
   const [fillStart, setFillStart] = useState<CellPosition | null>(null);
   const [fillEnd, setFillEnd] = useState<CellPosition | null>(null);
+
+  // Mouse drag selection
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState<CellPosition | null>(null);
 
   const getCellValue = useCallback((row: typeof rows[0], columnId: string): Cell | undefined => {
     return row.cells?.find((c) => c.columnId === columnId);
@@ -46,10 +52,21 @@ export default function SheetTable({
   // Detect if we're in formula mode (editing cell value starts with '=')
   const isFormulaMode = editingCellValue.startsWith('=');
 
-  const handleCellSelect = useCallback((position: CellPosition) => {
-    setSelectedCell(position);
-    onCellSelect?.(position);
-  }, [onCellSelect]);
+  const handleCellSelect = useCallback((position: CellPosition, shiftKey?: boolean) => {
+    if (shiftKey && selectedCell) {
+      // Extend selection range with Shift+Click
+      const range = {
+        start: selectedCell,
+        end: position,
+      };
+      onSelectionRangeChange?.(range);
+    } else {
+      // Normal selection - clear range
+      setSelectedCell(position);
+      onCellSelect?.(position);
+      onSelectionRangeChange?.(null);
+    }
+  }, [selectedCell, onCellSelect, onSelectionRangeChange]);
 
   const handleCellEdit = useCallback((cellId: string, initialValue: string, _position: CellPosition) => {
     setEditingCell(cellId);
@@ -76,6 +93,25 @@ export default function SheetTable({
     setEditingCellValue(prev => prev + cellReference);
   }, [getColumnLetter]);
 
+  const handleDragSelect = useCallback((position: CellPosition, action: 'start' | 'drag' | 'end') => {
+    if (action === 'start') {
+      setIsDragging(true);
+      setDragStart(position);
+      setSelectedCell(position);
+      onSelectionRangeChange?.(null);
+    } else if (action === 'drag' && isDragging && dragStart) {
+      // Update selection range as we drag
+      const range = {
+        start: dragStart,
+        end: position,
+      };
+      onSelectionRangeChange?.(range);
+    } else if (action === 'end') {
+      setIsDragging(false);
+      setDragStart(null);
+    }
+  }, [isDragging, dragStart, onSelectionRangeChange]);
+
   const handleNavigate = useCallback((direction: 'up' | 'down' | 'left' | 'right') => {
     if (!selectedCell) return;
 
@@ -99,7 +135,23 @@ export default function SheetTable({
     }
 
     setSelectedCell({ rowIndex: newRowIndex, colIndex: newColIndex });
-  }, [selectedCell, rows.length, columns.length]);
+    // Clear selection range when navigating
+    onSelectionRangeChange?.(null);
+  }, [selectedCell, rows.length, columns.length, onSelectionRangeChange]);
+
+  // Add global mouseup listener to end drag selection
+  useEffect(() => {
+    const handleMouseUp = () => {
+      if (isDragging) {
+        handleDragSelect({ rowIndex: 0, colIndex: 0 }, 'end');
+      }
+    };
+
+    document.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, handleDragSelect]);
 
   const handleFillDrag = useCallback((position: CellPosition, action: 'start' | 'drag' | 'end') => {
     if (action === 'start') {
@@ -226,6 +278,13 @@ export default function SheetTable({
                         colIndex >= Math.min(fillStart.colIndex, fillEnd.colIndex) &&
                         colIndex <= Math.max(fillStart.colIndex, fillEnd.colIndex);
 
+                      // Check if this cell is in the selection range
+                      const isInSelectionRange = selectionRange &&
+                        rowIndex >= Math.min(selectionRange.start.rowIndex, selectionRange.end.rowIndex) &&
+                        rowIndex <= Math.max(selectionRange.start.rowIndex, selectionRange.end.rowIndex) &&
+                        colIndex >= Math.min(selectionRange.start.colIndex, selectionRange.end.colIndex) &&
+                        colIndex <= Math.max(selectionRange.start.colIndex, selectionRange.end.colIndex);
+
                       // Check if this cell is copied
                       const isCopied = cell?.id === copiedCellId;
 
@@ -247,11 +306,13 @@ export default function SheetTable({
                             isEditing={isEditing}
                             isViewOnly={isViewOnly}
                             isFormulaMode={isFormulaMode}
+                            isInSelectionRange={isInSelectionRange || false}
                             onSelect={handleCellSelect}
                             onEdit={handleCellEdit}
                             onSave={handleCellSave}
                             onNavigate={handleNavigate}
                             onFillDrag={handleFillDrag}
+                            onDragSelect={handleDragSelect}
                             onFormulaSelect={isFormulaMode ? handleFormulaCellSelect : undefined}
                             editingCellValue={isEditing ? editingCellValue : undefined}
                             onValueChange={isEditing ? handleCellValueChange : undefined}

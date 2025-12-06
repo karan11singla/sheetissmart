@@ -9,12 +9,14 @@ export default function TableCell({
   isEditing,
   isViewOnly,
   isFormulaMode = false,
+  isInSelectionRange = false,
   onSelect,
   onEdit,
   onSave,
   onNavigate,
   onFillDrag,
   onFormulaSelect,
+  onDragSelect,
   editingCellValue,
   onValueChange,
 }: TableCellProps) {
@@ -212,8 +214,24 @@ export default function TableCell({
       e.stopPropagation();
       onFormulaSelect({ rowIndex, colIndex });
     } else {
-      // Normal cell selection
-      onSelect({ rowIndex, colIndex });
+      // Normal cell selection - pass shiftKey for range extension
+      onSelect({ rowIndex, colIndex }, e.shiftKey);
+    }
+  };
+
+  // Handle mouse down for drag selection
+  const handleMouseDown = (e: React.MouseEvent) => {
+    // Only start drag selection on left click and not when editing or in formula mode
+    if (e.button === 0 && !isEditing && !isFormulaMode && onDragSelect) {
+      e.preventDefault();
+      onDragSelect({ rowIndex, colIndex }, 'start');
+    }
+  };
+
+  // Handle mouse enter during drag
+  const handleMouseEnter = () => {
+    if (onDragSelect) {
+      onDragSelect({ rowIndex, colIndex }, 'drag');
     }
   };
 
@@ -229,10 +247,14 @@ export default function TableCell({
         !isViewOnly && !showFormulaHoverEffect ? 'cursor-pointer hover:bg-blue-50/50' : ''
       } ${showFormulaHoverEffect ? 'cursor-crosshair hover:bg-green-100 hover:ring-1 hover:ring-inset hover:ring-green-400' : ''} ${
         isSelected ? 'ring-2 ring-inset ring-blue-500 bg-blue-50/60' : ''
-      } ${hasFormula ? 'italic text-indigo-700 font-medium' : ''}`}
+      } ${isInSelectionRange && !isSelected ? 'bg-blue-100/70 ring-1 ring-inset ring-blue-300' : ''} ${
+        hasFormula ? 'italic text-indigo-700 font-medium' : ''
+      }`}
       onClick={handleCellClick}
       onDoubleClick={handleDoubleClick}
       onKeyDown={handleCellKeyDown}
+      onMouseDown={handleMouseDown}
+      onMouseEnter={handleMouseEnter}
     >
       <div className="truncate">
         {cellDisplayValue}

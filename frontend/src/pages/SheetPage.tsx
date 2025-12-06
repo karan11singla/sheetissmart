@@ -41,6 +41,13 @@ export default function SheetPage() {
   const [cellFormats, setCellFormats] = useState<Record<string, CellFormat>>({});
   const [selectedCell, setSelectedCell] = useState<{ rowIndex: number; colIndex: number } | null>(null);
 
+  // Multi-cell selection range
+  type CellRange = {
+    start: { rowIndex: number; colIndex: number };
+    end: { rowIndex: number; colIndex: number };
+  };
+  const [selectionRange, setSelectionRange] = useState<CellRange | null>(null);
+
   // Clipboard state for copy/paste
   type ClipboardData = {
     value: any;
@@ -392,37 +399,71 @@ export default function SheetPage() {
     return row?.cells?.find((c) => c.columnId === column.id) || null;
   };
 
-  // Apply formatting to current cell
+  // Apply formatting to current cell or selection range
   const applyFormat = async (format: Partial<CellFormat>) => {
-    const cell = getCurrentCell();
-    if (!cell) return;
+    if (!sheet?.rows || !sheet?.columns) return;
 
-    // Update local state - merge with existing formatting
-    const updatedFormat = {
-      ...cellFormats[cell.id],
-      ...format,
-    };
+    // Get cells to format - either the selection range or just the current cell
+    const cellsToFormat: Cell[] = [];
 
-    setCellFormats((prev) => ({
-      ...prev,
-      [cell.id]: updatedFormat,
-    }));
+    if (selectionRange) {
+      // Apply to all cells in range
+      const startRow = Math.min(selectionRange.start.rowIndex, selectionRange.end.rowIndex);
+      const endRow = Math.max(selectionRange.start.rowIndex, selectionRange.end.rowIndex);
+      const startCol = Math.min(selectionRange.start.colIndex, selectionRange.end.colIndex);
+      const endCol = Math.max(selectionRange.start.colIndex, selectionRange.end.colIndex);
 
-    // Save formatting to backend - send all formatting fields merged
-    const cellValue = cell.value ? JSON.parse(cell.value) : '';
-    await sheetApi.updateCell(id!, cell.id, {
-      value: cellValue,
-      textColor: updatedFormat.color,
-      backgroundColor: updatedFormat.backgroundColor,
-      fontSize: updatedFormat.fontSize,
-      bold: updatedFormat.bold,
-      italic: updatedFormat.italic,
-      underline: updatedFormat.underline,
-      textAlign: updatedFormat.align,
-      hasBorder: updatedFormat.borderStyle === 'solid',
-      numberFormat: updatedFormat.numberFormat,
-      decimalPlaces: updatedFormat.decimals,
-    });
+      for (let r = startRow; r <= endRow; r++) {
+        for (let c = startCol; c <= endCol; c++) {
+          const row = filteredAndSortedRows[r];
+          const column = sheet.columns[c];
+          const cell = row?.cells?.find((cell) => cell.columnId === column.id);
+          if (cell) {
+            cellsToFormat.push(cell);
+          }
+        }
+      }
+    } else {
+      // Apply to just the current cell
+      const cell = getCurrentCell();
+      if (cell) {
+        cellsToFormat.push(cell);
+      }
+    }
+
+    if (cellsToFormat.length === 0) return;
+
+    // Update local state and backend for all cells
+    const newFormats = { ...cellFormats };
+
+    for (const cell of cellsToFormat) {
+      // Update local state - merge with existing formatting
+      const updatedFormat = {
+        ...cellFormats[cell.id],
+        ...format,
+      };
+
+      newFormats[cell.id] = updatedFormat;
+
+      // Save formatting to backend - send all formatting fields merged
+      const cellValue = cell.value ? JSON.parse(cell.value) : '';
+      await sheetApi.updateCell(id!, cell.id, {
+        value: cellValue,
+        textColor: updatedFormat.color,
+        backgroundColor: updatedFormat.backgroundColor,
+        fontSize: updatedFormat.fontSize,
+        bold: updatedFormat.bold,
+        italic: updatedFormat.italic,
+        underline: updatedFormat.underline,
+        textAlign: updatedFormat.align,
+        hasBorder: updatedFormat.borderStyle === 'solid',
+        numberFormat: updatedFormat.numberFormat,
+        decimalPlaces: updatedFormat.decimals,
+      });
+    }
+
+    // Update all formats at once
+    setCellFormats(newFormats);
 
     // Invalidate queries to refresh the UI
     queryClient.invalidateQueries({ queryKey: ['sheets', id] });
@@ -902,6 +943,8 @@ export default function SheetPage() {
           insertColumnMutation.mutate(position);
         }}
         copiedCellId={clipboard?.cellId}
+        selectionRange={selectionRange}
+        onSelectionRangeChange={setSelectionRange}
       />
 
       <ShareModal
