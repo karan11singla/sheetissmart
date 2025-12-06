@@ -135,13 +135,17 @@ export default function TableCell({
       if (onFillDrag) {
         // Find the cell under the mouse - only look for actual table cells, not row headers
         const element = document.elementFromPoint(e.clientX, e.clientY);
-        // Make sure we're finding a div inside a td, not the row header
-        const cellElement = element?.closest('td [data-cell-pos]');
-        if (cellElement) {
-          const pos = cellElement.getAttribute('data-cell-pos');
-          if (pos) {
-            const [row, col] = pos.split(',').map(Number);
-            onFillDrag({ rowIndex: row, colIndex: col }, 'drag');
+
+        // First find the td element, then look for data-cell-pos inside it
+        const tdElement = element?.closest('td');
+        if (tdElement) {
+          const cellElement = tdElement.querySelector('[data-cell-pos]');
+          if (cellElement) {
+            const pos = cellElement.getAttribute('data-cell-pos');
+            if (pos) {
+              const [row, col] = pos.split(',').map(Number);
+              onFillDrag({ rowIndex: row, colIndex: col }, 'drag');
+            }
           }
         }
       }
