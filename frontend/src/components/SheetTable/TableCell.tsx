@@ -132,20 +132,32 @@ export default function TableCell({
     if (!isDragging) return;
 
     const handleMouseMove = (e: MouseEvent) => {
-      if (onFillDrag) {
-        // Find the cell under the mouse - only look for actual table cells, not row headers
-        const element = document.elementFromPoint(e.clientX, e.clientY);
+      if (!onFillDrag) return;
 
-        // Check if the element itself or its parent has data-cell-pos
-        const cellElement = element?.closest('[data-cell-pos]');
-        if (cellElement) {
-          const pos = cellElement.getAttribute('data-cell-pos');
-          if (pos) {
-            const [row, col] = pos.split(',').map(Number);
-            // Validate that both row and col are valid numbers (not NaN)
-            if (!isNaN(row) && !isNaN(col) && col >= 0) {
-              onFillDrag({ rowIndex: row, colIndex: col }, 'drag');
-            }
+      // Find the cell under the mouse - only look for actual table cells, not row headers
+      const element = document.elementFromPoint(e.clientX, e.clientY);
+      if (!element) return;
+
+      // Walk up the DOM to find an element with data-cell-pos, but stop at table boundaries
+      let current: Element | null = element;
+      let cellElement: Element | null = null;
+
+      while (current && current.tagName !== 'TABLE') {
+        if (current.hasAttribute && current.hasAttribute('data-cell-pos')) {
+          cellElement = current;
+          break;
+        }
+        current = current.parentElement;
+      }
+
+      if (cellElement) {
+        const pos = cellElement.getAttribute('data-cell-pos');
+        if (pos) {
+          const [row, col] = pos.split(',').map(Number);
+          // Validate that both row and col are valid numbers (not NaN) and col >= 0
+          // This ensures we only process valid data cells, not row headers
+          if (!isNaN(row) && !isNaN(col) && row >= 0 && col >= 0) {
+            onFillDrag({ rowIndex: row, colIndex: col }, 'drag');
           }
         }
       }
