@@ -11,6 +11,7 @@ interface UndoRedoState {
   undoStack: Command[];
   redoStack: Command[];
   isExecuting: boolean;
+  commandQueue: Command[];
 
   // Actions
   executeCommand: (command: Command) => Promise<void>;
@@ -19,37 +20,52 @@ interface UndoRedoState {
   canUndo: () => boolean;
   canRedo: () => boolean;
   clear: () => void;
+  processQueue: () => Promise<void>;
 }
 
 export const useUndoRedoStore = create<UndoRedoState>((set, get) => ({
   undoStack: [],
   redoStack: [],
   isExecuting: false,
+  commandQueue: [],
+
+  processQueue: async () => {
+    const state = get();
+    if (state.isExecuting || state.commandQueue.length === 0) return;
+
+    const command = state.commandQueue[0];
+    set({
+      isExecuting: true,
+      commandQueue: state.commandQueue.slice(1)
+    });
+
+    try {
+      await command.execute();
+      const currentState = get();
+      set({
+        undoStack: [...currentState.undoStack, command],
+        redoStack: [],
+        isExecuting: false,
+      });
+      // Process next in queue
+      get().processQueue();
+    } catch (error) {
+      console.error('Failed to execute command:', error);
+      set({ isExecuting: false });
+      // Process next in queue even on error
+      get().processQueue();
+    }
+  },
 
   executeCommand: async (command: Command) => {
     const state = get();
 
-    // Don't allow executing commands while another is in progress
-    if (state.isExecuting) {
-      console.warn('Command execution in progress, skipping');
-      return;
-    }
+    // Queue the command instead of blocking
+    set({ commandQueue: [...state.commandQueue, command] });
 
-    set({ isExecuting: true });
-
-    try {
-      await command.execute();
-
-      // Add to undo stack and clear redo stack
-      set({
-        undoStack: [...state.undoStack, command],
-        redoStack: [],
-        isExecuting: false,
-      });
-    } catch (error) {
-      console.error('Failed to execute command:', error);
-      set({ isExecuting: false });
-      throw error;
+    // Start processing if not already
+    if (!state.isExecuting) {
+      get().processQueue();
     }
   },
 
