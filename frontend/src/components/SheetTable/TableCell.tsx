@@ -133,9 +133,10 @@ export default function TableCell({
 
     const handleMouseMove = (e: MouseEvent) => {
       if (onFillDrag) {
-        // Find the cell under the mouse
+        // Find the cell under the mouse - only look for actual table cells, not row headers
         const element = document.elementFromPoint(e.clientX, e.clientY);
-        const cellElement = element?.closest('[data-cell-pos]');
+        // Make sure we're finding a div inside a td, not the row header
+        const cellElement = element?.closest('td [data-cell-pos]');
         if (cellElement) {
           const pos = cellElement.getAttribute('data-cell-pos');
           if (pos) {
