@@ -1,13 +1,14 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
-import { Plus, X, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Star, Undo2, Redo2 } from 'lucide-react';
+import { X, Star } from 'lucide-react';
 import { sheetApi } from '../services/api';
 import ShareModal from '../components/ShareModal';
 import RightSidebar from '../components/RightSidebar';
 import CommentsPanel from '../components/CommentsPanel';
 import SheetTable from '../components/SheetTable/SheetTable';
 import MenuBar from '../components/MenuBar';
+import Toolbar from '../components/Toolbar';
 import type { Cell } from '../types';
 import { useUndoRedoStore } from '../store/undoRedoStore';
 import { UpdateCellCommand, AddRowCommand, AddColumnCommand, DeleteRowCommand, DeleteColumnCommand } from '../store/commands';
@@ -29,8 +30,11 @@ export default function SheetPage() {
     bold?: boolean;
     italic?: boolean;
     underline?: boolean;
+    strikethrough?: boolean;
     align?: 'left' | 'center' | 'right';
+    verticalAlign?: 'top' | 'middle' | 'bottom';
     fontSize?: number;
+    fontFamily?: string;
     color?: string;
     backgroundColor?: string;
     numberFormat?: 'general' | 'number' | 'currency' | 'percentage' | 'date';
@@ -38,6 +42,7 @@ export default function SheetPage() {
     borderStyle?: 'none' | 'solid';
     borderColor?: string;
     borderWidth?: string;
+    wrap?: boolean;
   };
   const [cellFormats, setCellFormats] = useState<Record<string, CellFormat>>({});
   const [selectedCell, setSelectedCell] = useState<{ rowIndex: number; colIndex: number } | null>(null);
@@ -300,20 +305,6 @@ export default function SheetPage() {
     },
   });
 
-  // Command-based handlers for undo/redo support
-  const handleAddRow = () => {
-    const position = sheet?.rows?.length || 0;
-    const command = new AddRowCommand(id!, position, queryClient);
-    executeCommand(command);
-  };
-
-  const handleAddColumn = () => {
-    const columnIndex = sheet?.columns?.length || 0;
-    const columnName = getColumnLetter(columnIndex);
-    const command = new AddColumnCommand(id!, columnName, columnIndex, queryClient);
-    executeCommand(command);
-  };
-
   const handleDeleteRow = (rowId: string) => {
     const row = sheet?.rows?.find(r => r.id === rowId);
     if (!row) return;
@@ -376,17 +367,6 @@ export default function SheetPage() {
       queryClient.invalidateQueries({ queryKey: ['sheet-shares', id] });
     },
   });
-
-  // Helper function to convert column index to letter (0 -> A, 1 -> B, 25 -> Z, 26 -> AA)
-  const getColumnLetter = (colIndex: number): string => {
-    let letter = '';
-    let index = colIndex;
-    while (index >= 0) {
-      letter = String.fromCharCode(65 + (index % 26)) + letter;
-      index = Math.floor(index / 26) - 1;
-    }
-    return letter;
-  };
 
   // Export functionality - can be added to File menu later
   // const handleDownloadCSV = async () => {
@@ -504,70 +484,6 @@ export default function SheetPage() {
     // Invalidate queries to refresh the UI
     queryClient.invalidateQueries({ queryKey: ['sheets', id] });
   };
-
-  // Toggle formatting
-  const toggleBold = () => {
-    const cell = getCurrentCell();
-    if (!cell) return;
-    const current = cellFormats[cell.id]?.bold || false;
-    applyFormat({ bold: !current });
-  };
-
-  const toggleItalic = () => {
-    const cell = getCurrentCell();
-    if (!cell) return;
-    const current = cellFormats[cell.id]?.italic || false;
-    applyFormat({ italic: !current });
-  };
-
-  const toggleUnderline = () => {
-    const cell = getCurrentCell();
-    if (!cell) return;
-    const current = cellFormats[cell.id]?.underline || false;
-    applyFormat({ underline: !current });
-  };
-
-  const setAlignment = (align: 'left' | 'center' | 'right') => {
-    const cell = getCurrentCell();
-    if (!cell) return;
-    applyFormat({ align });
-  };
-
-  const setFontSize = (fontSize: number) => {
-    const cell = getCurrentCell();
-    if (!cell) return;
-    applyFormat({ fontSize });
-  };
-
-  const setTextColor = (color: string) => {
-    const cell = getCurrentCell();
-    if (!cell) return;
-    applyFormat({ color });
-  };
-
-  const setBackgroundColor = (backgroundColor: string) => {
-    const cell = getCurrentCell();
-    if (!cell) return;
-    applyFormat({ backgroundColor });
-  };
-
-  const setNumberFormat = (numberFormat: 'general' | 'number' | 'currency' | 'percentage' | 'date') => {
-    const cell = getCurrentCell();
-    if (!cell) return;
-    applyFormat({ numberFormat, decimals: numberFormat === 'general' ? undefined : 2 });
-  };
-
-  const toggleBorder = () => {
-    const cell = getCurrentCell();
-    if (!cell) return;
-    const currentBorder = cellFormats[cell.id]?.borderStyle;
-    applyFormat({
-      borderStyle: currentBorder === 'solid' ? 'none' : 'solid',
-      borderColor: '#000000',
-      borderWidth: '2px',
-    });
-  };
-
 
   // Get current cell format
   const getCurrentFormat = (): CellFormat => {
@@ -797,233 +713,49 @@ export default function SheetPage() {
         isViewOnly={isViewOnly}
       />
 
-      {/* Modern Formatting Toolbar */}
-      <div className="bg-white border-b border-slate-200 px-4 sm:px-6 py-3 overflow-x-auto shadow-sm">
-        <div className="flex items-center justify-between min-w-max sm:min-w-0">
-          {isViewOnly && (
-            <div className="absolute top-2 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-amber-500 to-orange-600 text-white px-5 py-2 rounded-full text-sm font-medium shadow-lg border-2 border-amber-400 z-30">
-              <span className="font-bold">View Only:</span> You don't have permission to edit this sheet
-            </div>
-          )}
-          <div className="flex items-center space-x-4">
-            {/* Undo/Redo */}
-            <div className="flex items-center space-x-1 border-r border-slate-200 pr-4">
-              <button
-                onClick={() => undo()}
-                disabled={!canUndo()}
-                className="p-2 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                title="Undo (Ctrl+Z)"
-              >
-                <Undo2 className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => redo()}
-                disabled={!canRedo()}
-                className="p-2 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                title="Redo (Ctrl+Y)"
-              >
-                <Redo2 className="h-4 w-4" />
-              </button>
-            </div>
-
-            {/* Add Row/Column */}
-            {!isViewOnly && (
-              <div className="flex items-center space-x-2 border-r border-slate-200 pr-4">
-                <button
-                  onClick={handleAddColumn}
-                  className="inline-flex items-center px-3 py-2 bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg text-sm font-medium text-blue-700 hover:from-blue-100 hover:to-blue-200 hover:border-blue-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow"
-                  title="Add Column"
-                >
-                  <Plus className="h-4 w-4 mr-1.5" />
-                  Column
-                </button>
-                <button
-                  onClick={handleAddRow}
-                  className="inline-flex items-center px-3 py-2 bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg text-sm font-medium text-blue-700 hover:from-blue-100 hover:to-blue-200 hover:border-blue-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow"
-                  title="Add Row"
-                >
-                  <Plus className="h-4 w-4 mr-1.5" />
-                  Row
-                </button>
-              </div>
-            )}
-
-            {/* Text Formatting */}
-            {!isViewOnly && (
-              <div className="flex items-center space-x-1">
-                <button
-                  onClick={toggleBold}
-                  disabled={!selectedCell}
-                className={`p-1.5 rounded border transition-all disabled:opacity-30 disabled:cursor-not-allowed ${
-                  getCurrentFormat().bold
-                    ? 'bg-blue-100 border-blue-300 text-blue-700'
-                    : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400'
-                }`}
-                title="Bold (Ctrl+B)"
-              >
-                <Bold className="h-4 w-4" />
-              </button>
-              <button
-                onClick={toggleItalic}
-                disabled={!selectedCell}
-                className={`p-1.5 rounded border transition-all disabled:opacity-30 disabled:cursor-not-allowed ${
-                  getCurrentFormat().italic
-                    ? 'bg-blue-100 border-blue-300 text-blue-700'
-                    : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400'
-                }`}
-                title="Italic (Ctrl+I)"
-              >
-                <Italic className="h-4 w-4" />
-              </button>
-              <button
-                onClick={toggleUnderline}
-                disabled={!selectedCell}
-                className={`p-1.5 rounded border transition-all disabled:opacity-30 disabled:cursor-not-allowed ${
-                  getCurrentFormat().underline
-                    ? 'bg-blue-100 border-blue-300 text-blue-700'
-                    : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400'
-                }`}
-                title="Underline (Ctrl+U)"
-              >
-                <Underline className="h-4 w-4" />
-              </button>
-            </div>
-            )}
-
-            {/* Text Alignment */}
-            {!isViewOnly && (
-            <div className="flex items-center space-x-1 border-l border-gray-300 pl-4">
-              <button
-                onClick={() => setAlignment('left')}
-                disabled={!selectedCell}
-                className={`p-1.5 rounded border transition-all disabled:opacity-30 disabled:cursor-not-allowed ${
-                  getCurrentFormat().align === 'left'
-                    ? 'bg-blue-100 border-blue-300 text-blue-700'
-                    : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400'
-                }`}
-                title="Align Left"
-              >
-                <AlignLeft className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => setAlignment('center')}
-                disabled={!selectedCell}
-                className={`p-1.5 rounded border transition-all disabled:opacity-30 disabled:cursor-not-allowed ${
-                  getCurrentFormat().align === 'center'
-                    ? 'bg-blue-100 border-blue-300 text-blue-700'
-                    : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400'
-                }`}
-                title="Align Center"
-              >
-                <AlignCenter className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => setAlignment('right')}
-                disabled={!selectedCell}
-                className={`p-1.5 rounded border transition-all disabled:opacity-30 disabled:cursor-not-allowed ${
-                  getCurrentFormat().align === 'right'
-                    ? 'bg-blue-100 border-blue-300 text-blue-700'
-                    : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400'
-                }`}
-                title="Align Right"
-              >
-                <AlignRight className="h-4 w-4" />
-              </button>
-            </div>
-            )}
-
-            {/* Font Size and Color */}
-            {!isViewOnly && (
-            <div className="flex items-center space-x-1 border-l border-gray-300 pl-4">
-              <select
-                value={getCurrentFormat().fontSize || 14}
-                onChange={(e) => setFontSize(Number(e.target.value))}
-                disabled={!selectedCell}
-                className="px-2 py-1 text-xs border border-gray-300 rounded bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all disabled:opacity-30 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500"
-                title="Font Size"
-              >
-                <option value={10}>10</option>
-                <option value={12}>12</option>
-                <option value={14}>14</option>
-                <option value={16}>16</option>
-                <option value={18}>18</option>
-                <option value={20}>20</option>
-                <option value={24}>24</option>
-              </select>
-              <div className="relative" title="Text Color">
-                <input
-                  type="color"
-                  value={getCurrentFormat().color || '#000000'}
-                  onChange={(e) => setTextColor(e.target.value)}
-                  disabled={!selectedCell}
-                  className="w-8 h-8 rounded border border-gray-300 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
-                />
-              </div>
-              <div className="relative" title="Background Color">
-                <input
-                  type="color"
-                  value={getCurrentFormat().backgroundColor || '#ffffff'}
-                  onChange={(e) => setBackgroundColor(e.target.value)}
-                  disabled={!selectedCell}
-                  className="w-8 h-8 rounded border border-gray-300 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
-                />
-              </div>
-            </div>
-            )}
-
-            {/* Number Format */}
-            {!isViewOnly && (
-            <div className="flex items-center space-x-1 border-l border-gray-300 pl-4">
-              <select
-                value={getCurrentFormat().numberFormat || 'general'}
-                onChange={(e) => setNumberFormat(e.target.value as any)}
-                disabled={!selectedCell}
-                className="px-2 py-1 text-xs border border-gray-300 rounded bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all disabled:opacity-30 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500"
-                title="Number Format"
-              >
-                <option value="general">General</option>
-                <option value="number">Number</option>
-                <option value="currency">Currency</option>
-                <option value="percentage">Percentage</option>
-                <option value="date">Date</option>
-              </select>
-            </div>
-            )}
-
-            {/* Borders */}
-            {!isViewOnly && (
-            <div className="flex items-center space-x-1 border-l border-gray-300 pl-4">
-              <button
-                onClick={toggleBorder}
-                disabled={!selectedCell}
-                className={`px-2 py-1.5 rounded border text-xs font-medium transition-all disabled:opacity-30 disabled:cursor-not-allowed ${
-                  getCurrentFormat().borderStyle === 'solid'
-                    ? 'bg-blue-100 border-blue-300 text-blue-700'
-                    : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400'
-                }`}
-                title="Toggle Border"
-              >
-                Border
-              </button>
-            </div>
-            )}
-          </div>
-          {Object.keys(filters).length > 0 && (
-            <div className="flex items-center space-x-2">
-              <span className="text-xs text-gray-600">
-                {Object.keys(filters).length} filter{Object.keys(filters).length > 1 ? 's' : ''} active
-              </span>
-              <button
-                onClick={clearAllFilters}
-                className="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
-              >
-                <X className="h-3 w-3 mr-1" />
-                Clear all
-              </button>
-            </div>
-          )}
+      {/* View Only Banner */}
+      {isViewOnly && (
+        <div className="bg-amber-50 border-b border-amber-200 px-4 py-2 text-center">
+          <span className="text-sm text-amber-800 font-medium">
+            View Only: You don't have permission to edit this sheet
+          </span>
         </div>
-      </div>
+      )}
+
+      {/* Google Sheets-style Toolbar */}
+      <Toolbar
+        onUndo={undo}
+        onRedo={redo}
+        canUndo={canUndo()}
+        canRedo={canRedo()}
+        currentFormat={getCurrentFormat()}
+        onFormatChange={(format) => applyFormat(format)}
+        hasSelection={!!selectedCell}
+        hasRangeSelection={!!selectionRange}
+        isViewOnly={isViewOnly}
+        onInsertComment={() => {
+          if (selectedCell && filteredAndSortedRows[selectedCell.rowIndex]) {
+            setSelectedRowForComment(filteredAndSortedRows[selectedCell.rowIndex].id);
+            setIsCommentSidebarOpen(true);
+          }
+        }}
+      />
+
+      {/* Active Filters */}
+      {Object.keys(filters).length > 0 && (
+        <div className="bg-blue-50 border-b border-blue-200 px-4 py-2 flex items-center justify-between">
+          <span className="text-xs text-blue-700">
+            {Object.keys(filters).length} filter{Object.keys(filters).length > 1 ? 's' : ''} active
+          </span>
+          <button
+            onClick={clearAllFilters}
+            className="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-100 rounded transition-colors"
+          >
+            <X className="h-3 w-3 mr-1" />
+            Clear all
+          </button>
+        </div>
+      )}
 
       {/* Modern Sheet Grid */}
       <SheetTable
