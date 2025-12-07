@@ -1089,7 +1089,7 @@ export async function mergeCells(sheetId: string, data: MergeCellsInput, userId:
   const colSpan = endCol - startCol + 1;
 
   // Update main cell with span information
-  await prisma.cell.update({
+  const updatedMainCell = await prisma.cell.update({
     where: { id: mainCell.id },
     data: {
       mergeRowSpan: rowSpan,
@@ -1107,7 +1107,7 @@ export async function mergeCells(sheetId: string, data: MergeCellsInput, userId:
     },
   });
 
-  return mainCell;
+  return updatedMainCell;
 }
 
 export async function unmergeCells(sheetId: string, cellId: string, userId: string) {
@@ -1148,7 +1148,7 @@ export async function unmergeCells(sheetId: string, cellId: string, userId: stri
   }
 
   // Reset the main cell
-  await prisma.cell.update({
+  const updatedMainCell = await prisma.cell.update({
     where: { id: mainCell.id },
     data: {
       mergeRowSpan: 1,
@@ -1167,5 +1167,5 @@ export async function unmergeCells(sheetId: string, cellId: string, userId: stri
     },
   });
 
-  return mainCell;
+  return updatedMainCell;
 }
