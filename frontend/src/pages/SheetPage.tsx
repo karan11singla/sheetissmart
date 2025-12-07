@@ -866,6 +866,9 @@ export default function SheetPage() {
           updateColumnMutation.mutate({ columnId, name });
         }}
         onColumnDelete={handleDeleteColumn}
+        onColumnResize={(columnId: string, width: number) => {
+          updateColumnMutation.mutate({ columnId, width });
+        }}
         onRowUpdate={(rowId: string, name?: string) => {
           const row = sheet.rows?.find(r => r.id === rowId);
           updateRowMutation.mutate({ rowId, height: row?.height, name });

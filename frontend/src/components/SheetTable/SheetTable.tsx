@@ -13,6 +13,7 @@ export default function SheetTable({
   onCellSelect,
   onColumnUpdate,
   onColumnDelete,
+  onColumnResize,
   onRowUpdate,
   onRowDelete,
   onCommentClick,
@@ -292,8 +293,9 @@ export default function SheetTable({
                   {columns.map((column) => (
                     <th
                       key={column.id}
+                      data-column-id={column.id}
                       style={{ minWidth: column.width || 150, maxWidth: column.width || 150 }}
-                      className="sticky top-0 z-10 px-4 py-3 text-left text-sm font-bold text-slate-700 bg-gradient-to-br from-slate-100 to-slate-50 border-b-2 border-slate-300 border-l border-slate-200"
+                      className="sticky top-0 z-10 px-4 py-3 text-left text-sm font-bold text-slate-700 bg-gradient-to-br from-slate-100 to-slate-50 border-b-2 border-slate-300 border-l border-slate-200 relative"
                     >
                       <ColumnHeader
                         column={column}
@@ -302,6 +304,7 @@ export default function SheetTable({
                         onDelete={onColumnDelete}
                         onInsertLeft={onInsertColumnLeft}
                         onInsertRight={onInsertColumnRight}
+                        onResize={onColumnResize}
                       />
                     </th>
                   ))}
