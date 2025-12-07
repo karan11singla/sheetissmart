@@ -26,6 +26,8 @@ import {
   Grid3X3,
   ZoomIn,
   ZoomOut,
+  Lock,
+  Unlock,
 } from 'lucide-react';
 
 interface MenuBarProps {
@@ -55,6 +57,13 @@ interface MenuBarProps {
   onFilter?: () => void;
   onSearch?: () => void;
   isViewOnly?: boolean;
+  // Freeze panes
+  frozenRows?: number;
+  frozenColumns?: number;
+  onFreezeRows?: (count: number) => void;
+  onFreezeColumns?: (count: number) => void;
+  selectedRow?: number | null;
+  selectedColumn?: number | null;
 }
 
 interface MenuItem {
@@ -98,6 +107,12 @@ export default function MenuBar({
   onFilter,
   onSearch,
   isViewOnly = false,
+  frozenRows = 0,
+  frozenColumns = 0,
+  onFreezeRows,
+  onFreezeColumns,
+  selectedRow,
+  selectedColumn,
 }: MenuBarProps) {
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -144,6 +159,29 @@ export default function MenuBar({
       items: [
         { label: 'Zoom in', icon: <ZoomIn className="h-4 w-4" />, shortcut: '⌘+=' },
         { label: 'Zoom out', icon: <ZoomOut className="h-4 w-4" />, shortcut: '⌘+-' },
+        { label: 'divider', divider: true },
+        {
+          label: frozenRows > 0 ? `Unfreeze ${frozenRows} row${frozenRows > 1 ? 's' : ''}` : 'Freeze row 1',
+          icon: frozenRows > 0 ? <Unlock className="h-4 w-4" /> : <Lock className="h-4 w-4" />,
+          onClick: () => onFreezeRows?.(frozenRows > 0 ? 0 : 1),
+        },
+        {
+          label: frozenColumns > 0 ? `Unfreeze ${frozenColumns} column${frozenColumns > 1 ? 's' : ''}` : 'Freeze column A',
+          icon: frozenColumns > 0 ? <Unlock className="h-4 w-4" /> : <Lock className="h-4 w-4" />,
+          onClick: () => onFreezeColumns?.(frozenColumns > 0 ? 0 : 1),
+        },
+        {
+          label: selectedRow !== null && selectedRow !== undefined ? `Freeze up to row ${selectedRow + 1}` : 'Freeze up to current row',
+          icon: <Lock className="h-4 w-4" />,
+          onClick: () => selectedRow !== null && selectedRow !== undefined && onFreezeRows?.(selectedRow + 1),
+          disabled: selectedRow === null || selectedRow === undefined,
+        },
+        {
+          label: selectedColumn !== null && selectedColumn !== undefined ? `Freeze up to column ${String.fromCharCode(65 + selectedColumn)}` : 'Freeze up to current column',
+          icon: <Lock className="h-4 w-4" />,
+          onClick: () => selectedColumn !== null && selectedColumn !== undefined && onFreezeColumns?.(selectedColumn + 1),
+          disabled: selectedColumn === null || selectedColumn === undefined,
+        },
         { label: 'divider', divider: true },
         { label: 'Gridlines', icon: <Grid3X3 className="h-4 w-4" /> },
       ],

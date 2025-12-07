@@ -1,14 +1,21 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import TableCell from './TableCell';
 import ColumnHeader from './ColumnHeader';
 import RowHeader from './RowHeader';
 import type { SheetTableProps, CellPosition } from './types';
 import type { Cell } from '../../types';
 
+// Row header width constant
+const ROW_HEADER_WIDTH = 56; // w-14 = 3.5rem = 56px
+// Header row height
+const HEADER_HEIGHT = 48; // py-3 = ~48px
+
 export default function SheetTable({
   columns,
   rows,
   isViewOnly = false,
+  frozenRows = 0,
+  frozenColumns = 0,
   onCellUpdate,
   onCellSelect,
   onColumnUpdate,
@@ -40,6 +47,28 @@ export default function SheetTable({
   // Mouse drag selection
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState<CellPosition | null>(null);
+
+  // Calculate cumulative left offsets for frozen columns
+  const columnLeftOffsets = useMemo(() => {
+    const offsets: number[] = [];
+    let cumulative = ROW_HEADER_WIDTH; // Start after row header
+    for (let i = 0; i < columns.length; i++) {
+      offsets.push(cumulative);
+      cumulative += columns[i].width || 150;
+    }
+    return offsets;
+  }, [columns]);
+
+  // Calculate cumulative top offsets for frozen rows
+  const rowTopOffsets = useMemo(() => {
+    const offsets: number[] = [];
+    let cumulative = HEADER_HEIGHT; // Start after header
+    for (let i = 0; i < rows.length; i++) {
+      offsets.push(cumulative);
+      cumulative += rows[i].height || 40;
+    }
+    return offsets;
+  }, [rows]);
 
   const getCellValue = useCallback((row: typeof rows[0], columnId: string): Cell | undefined => {
     return row.cells?.find((c) => c.columnId === columnId);
@@ -290,35 +319,55 @@ export default function SheetTable({
                   </th>
 
                   {/* Column Headers */}
-                  {columns.map((column) => (
-                    <th
-                      key={column.id}
-                      data-column-id={column.id}
-                      style={{ minWidth: column.width || 150, maxWidth: column.width || 150 }}
-                      className="sticky top-0 z-10 px-4 py-3 text-left text-sm font-bold text-slate-700 bg-gradient-to-br from-slate-100 to-slate-50 border-b-2 border-slate-300 border-l border-slate-200 relative"
-                    >
-                      <ColumnHeader
-                        column={column}
-                        isViewOnly={isViewOnly}
-                        onRename={handleColumnRename}
-                        onDelete={onColumnDelete}
-                        onInsertLeft={onInsertColumnLeft}
-                        onInsertRight={onInsertColumnRight}
-                        onResize={onColumnResize}
-                      />
-                    </th>
-                  ))}
+                  {columns.map((column, colIndex) => {
+                    const isFrozenColumn = colIndex < frozenColumns;
+                    const isLastFrozenColumn = colIndex === frozenColumns - 1;
+
+                    return (
+                      <th
+                        key={column.id}
+                        data-column-id={column.id}
+                        style={{
+                          minWidth: column.width || 150,
+                          maxWidth: column.width || 150,
+                          ...(isFrozenColumn ? { left: columnLeftOffsets[colIndex] } : {}),
+                        }}
+                        className={`sticky top-0 px-4 py-3 text-left text-sm font-bold text-slate-700 bg-gradient-to-br from-slate-100 to-slate-50 border-b-2 border-slate-300 border-l border-slate-200 relative ${
+                          isFrozenColumn ? 'z-20' : 'z-10'
+                        } ${isLastFrozenColumn ? 'border-r-4 border-r-blue-500' : ''}`}
+                      >
+                        <ColumnHeader
+                          column={column}
+                          isViewOnly={isViewOnly}
+                          onRename={handleColumnRename}
+                          onDelete={onColumnDelete}
+                          onInsertLeft={onInsertColumnLeft}
+                          onInsertRight={onInsertColumnRight}
+                          onResize={onColumnResize}
+                        />
+                      </th>
+                    );
+                  })}
                 </tr>
               </thead>
 
               {/* Body */}
               <tbody>
-                {rows.map((row, rowIndex) => (
+                {rows.map((row, rowIndex) => {
+                  const isFrozenRow = rowIndex < frozenRows;
+                  const isLastFrozenRow = rowIndex === frozenRows - 1;
+
+                  return (
                   <tr key={row.id} className="bg-white hover:bg-blue-50/30 transition-colors">
                     {/* Row Header */}
                     <td
-                      className="sticky left-0 z-10 text-center text-sm font-semibold text-slate-600 bg-gradient-to-br from-slate-50 to-white border-r-2 border-b border-slate-200"
-                      style={{ height: row.height || 40 }}
+                      className={`sticky left-0 text-center text-sm font-semibold text-slate-600 bg-gradient-to-br from-slate-50 to-white border-r-2 border-b border-slate-200 ${
+                        isFrozenRow ? 'z-20' : 'z-10'
+                      } ${isLastFrozenRow ? 'border-b-4 border-b-blue-500' : ''}`}
+                      style={{
+                        height: row.height || 40,
+                        ...(isFrozenRow ? { top: rowTopOffsets[rowIndex] } : {}),
+                      }}
                     >
                       <RowHeader
                         row={row}
@@ -366,6 +415,11 @@ export default function SheetTable({
                       // Check if this cell is copied
                       const isCopied = cell?.id === copiedCellId;
 
+                      // Freeze pane logic for cells
+                      const isFrozenColumn = colIndex < frozenColumns;
+                      const isFrozenCell = isFrozenRow || isFrozenColumn;
+                      const isLastFrozenColumn = colIndex === frozenColumns - 1;
+
                       return (
                         <td
                           key={`${row.id}-${column.id}`}
@@ -377,8 +431,18 @@ export default function SheetTable({
                             isCopied ? 'ring-2 ring-inset ring-dashed ring-blue-500' : ''
                           } ${
                             isMerged ? 'bg-blue-50/50' : ''
+                          } ${
+                            isFrozenCell ? 'sticky bg-white z-10' : ''
+                          } ${
+                            isLastFrozenColumn ? 'border-r-4 border-r-blue-500' : ''
+                          } ${
+                            isLastFrozenRow ? 'border-b-4 border-b-blue-500' : ''
                           }`}
-                          style={{ height: row.height || 40 }}
+                          style={{
+                            height: row.height || 40,
+                            ...(isFrozenColumn ? { left: columnLeftOffsets[colIndex] } : {}),
+                            ...(isFrozenRow ? { top: rowTopOffsets[rowIndex] } : {}),
+                          }}
                         >
                           <TableCell
                             cell={cell}
@@ -404,7 +468,8 @@ export default function SheetTable({
                       );
                     })}
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>

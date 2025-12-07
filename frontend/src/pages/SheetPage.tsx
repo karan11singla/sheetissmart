@@ -54,6 +54,10 @@ export default function SheetPage() {
   };
   const [selectionRange, setSelectionRange] = useState<CellRange | null>(null);
 
+  // Freeze panes state
+  const [frozenRows, setFrozenRows] = useState(0);
+  const [frozenColumns, setFrozenColumns] = useState(0);
+
   // Clipboard state for copy/paste
   type ClipboardData = {
     value: any;
@@ -772,6 +776,12 @@ export default function SheetPage() {
         onAlignCenter={() => applyFormatting({ align: 'center' })}
         onAlignRight={() => applyFormatting({ align: 'right' })}
         isViewOnly={isViewOnly}
+        frozenRows={frozenRows}
+        frozenColumns={frozenColumns}
+        onFreezeRows={setFrozenRows}
+        onFreezeColumns={setFrozenColumns}
+        selectedRow={selectedCell?.rowIndex ?? null}
+        selectedColumn={selectedCell?.colIndex ?? null}
       />
 
       {/* View Only Banner */}
@@ -826,6 +836,8 @@ export default function SheetPage() {
         columns={sheet.columns || []}
         rows={filteredAndSortedRows}
         isViewOnly={isViewOnly}
+        frozenRows={frozenRows}
+        frozenColumns={frozenColumns}
         onCellSelect={(position) => setSelectedCell(position)}
         onCellUpdate={(cellId: string, value: any) => {
           // Find the current cell value for undo

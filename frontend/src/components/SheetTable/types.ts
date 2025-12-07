@@ -21,6 +21,8 @@ export interface SheetTableProps {
   columns: Column[];
   rows: Row[];
   isViewOnly?: boolean;
+  frozenRows?: number;
+  frozenColumns?: number;
   onCellUpdate: (cellId: string, value: any) => void;
   onCellSelect?: (position: CellPosition | null) => void;
   onColumnUpdate: (columnId: string, name: string) => void;
