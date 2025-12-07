@@ -57,6 +57,10 @@ interface MenuBarProps {
   onFilter?: () => void;
   onSearch?: () => void;
   isViewOnly?: boolean;
+  // Zoom
+  zoomLevel?: number;
+  onZoomIn?: () => void;
+  onZoomOut?: () => void;
   // Freeze panes
   frozenRows?: number;
   frozenColumns?: number;
@@ -107,6 +111,9 @@ export default function MenuBar({
   onFilter,
   onSearch,
   isViewOnly = false,
+  zoomLevel = 100,
+  onZoomIn,
+  onZoomOut,
   frozenRows = 0,
   frozenColumns = 0,
   onFreezeRows,
@@ -157,8 +164,8 @@ export default function MenuBar({
     {
       label: 'View',
       items: [
-        { label: 'Zoom in', icon: <ZoomIn className="h-4 w-4" />, shortcut: '⌘+=' },
-        { label: 'Zoom out', icon: <ZoomOut className="h-4 w-4" />, shortcut: '⌘+-' },
+        { label: `Zoom in (${zoomLevel}%)`, icon: <ZoomIn className="h-4 w-4" />, onClick: onZoomIn, shortcut: '⌘+=', disabled: zoomLevel >= 200 },
+        { label: 'Zoom out', icon: <ZoomOut className="h-4 w-4" />, onClick: onZoomOut, shortcut: '⌘+-', disabled: zoomLevel <= 50 },
         { label: 'divider', divider: true },
         {
           label: frozenRows > 0 ? `Unfreeze ${frozenRows} row${frozenRows > 1 ? 's' : ''}` : 'Freeze row 1',

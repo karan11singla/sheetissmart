@@ -169,6 +169,12 @@ export const sheetApi = {
     const { data } = await api.delete(`/api/v1/sheets/${sheetId}/merge/${cellId}`);
     return data.data.cell;
   },
+
+  // Export sheet to CSV
+  exportToCsv: async (sheetId: string): Promise<string> => {
+    const { data } = await api.get(`/api/v1/sheets/${sheetId}/export`);
+    return data;
+  },
 };
 
 // Auth API

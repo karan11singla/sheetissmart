@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 import { X, Star } from 'lucide-react';
@@ -9,6 +9,8 @@ import CommentsPanel from '../components/CommentsPanel';
 import SheetTable from '../components/SheetTable/SheetTable';
 import MenuBar from '../components/MenuBar';
 import Toolbar from '../components/Toolbar';
+import FilterPanel from '../components/FilterPanel';
+import SearchPanel from '../components/SearchPanel';
 import type { Cell } from '../types';
 import { useUndoRedoStore } from '../store/undoRedoStore';
 import { UpdateCellCommand, AddRowCommand, AddColumnCommand, DeleteRowCommand, DeleteColumnCommand } from '../store/commands';
@@ -22,8 +24,11 @@ export default function SheetPage() {
   const [selectedRowForComment, setSelectedRowForComment] = useState<string | null>(null);
   const [isEditingName, setIsEditingName] = useState(false);
   const [sheetName, setSheetName] = useState('');
-  const [sortConfig] = useState<{ columnId: string; direction: 'asc' | 'desc' } | null>(null);
+  const [sortConfig, setSortConfig] = useState<{ columnId: string; direction: 'asc' | 'desc' } | null>(null);
   const [filters, setFilters] = useState<Record<string, string>>({});
+  const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
+  const [isSearchPanelOpen, setIsSearchPanelOpen] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(100); // Zoom percentage (50-200%)
 
   // Cell formatting state (stored per cell ID)
   type CellFormat = {
@@ -189,6 +194,21 @@ export default function SheetPage() {
       ) {
         e.preventDefault();
         redo();
+      }
+      // Ctrl+F or Cmd+F for find/search
+      if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+        e.preventDefault();
+        setIsSearchPanelOpen(true);
+      }
+      // Ctrl++ or Cmd++ for zoom in
+      if ((e.ctrlKey || e.metaKey) && (e.key === '=' || e.key === '+')) {
+        e.preventDefault();
+        handleZoomIn();
+      }
+      // Ctrl+- or Cmd+- for zoom out
+      if ((e.ctrlKey || e.metaKey) && e.key === '-') {
+        e.preventDefault();
+        handleZoomOut();
       }
       // Delete or Backspace to clear cell contents
       const viewOnly = sheet && (sheet as any).permission === 'VIEWER';
@@ -470,6 +490,30 @@ export default function SheetPage() {
 
   const clearAllFilters = () => {
     setFilters({});
+    setIsFilterPanelOpen(false);
+  };
+
+  const handleFilterChange = (columnId: string, value: string) => {
+    setFilters(prev => {
+      if (!value) {
+        const newFilters = { ...prev };
+        delete newFilters[columnId];
+        return newFilters;
+      }
+      return { ...prev, [columnId]: value };
+    });
+  };
+
+  const handleNavigateToCell = useCallback((rowIndex: number, colIndex: number) => {
+    setSelectedCell({ rowIndex, colIndex });
+  }, []);
+
+  const handleZoomIn = () => {
+    setZoomLevel(prev => Math.min(200, prev + 10));
+  };
+
+  const handleZoomOut = () => {
+    setZoomLevel(prev => Math.max(50, prev - 10));
   };
 
   // Get current cell for formatting
@@ -782,6 +826,48 @@ export default function SheetPage() {
         onFreezeColumns={setFrozenColumns}
         selectedRow={selectedCell?.rowIndex ?? null}
         selectedColumn={selectedCell?.colIndex ?? null}
+        onExport={async () => {
+          if (!id) return;
+          try {
+            const csv = await sheetApi.exportToCsv(id);
+            // Create blob and download
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${sheet?.name || 'sheet'}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+          } catch (error) {
+            console.error('Export failed:', error);
+          }
+        }}
+        onPrint={() => {
+          window.print();
+        }}
+        onSortAsc={() => {
+          if (selectedCell && sheet?.columns?.[selectedCell.colIndex]) {
+            setSortConfig({
+              columnId: sheet.columns[selectedCell.colIndex].id,
+              direction: 'asc',
+            });
+          }
+        }}
+        onSortDesc={() => {
+          if (selectedCell && sheet?.columns?.[selectedCell.colIndex]) {
+            setSortConfig({
+              columnId: sheet.columns[selectedCell.colIndex].id,
+              direction: 'desc',
+            });
+          }
+        }}
+        onFilter={() => setIsFilterPanelOpen(prev => !prev)}
+        onSearch={() => setIsSearchPanelOpen(prev => !prev)}
+        zoomLevel={zoomLevel}
+        onZoomIn={handleZoomIn}
+        onZoomOut={handleZoomOut}
       />
 
       {/* View Only Banner */}
@@ -815,29 +901,81 @@ export default function SheetPage() {
         }}
       />
 
-      {/* Active Filters */}
-      {Object.keys(filters).length > 0 && (
+      {/* Filter Panel */}
+      {isFilterPanelOpen && (
+        <FilterPanel
+          columns={sheet.columns || []}
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          onClearAll={clearAllFilters}
+          onClose={() => setIsFilterPanelOpen(false)}
+        />
+      )}
+
+      {/* Search Panel */}
+      {isSearchPanelOpen && (
+        <SearchPanel
+          rows={filteredAndSortedRows}
+          columns={sheet.columns || []}
+          onClose={() => setIsSearchPanelOpen(false)}
+          onNavigateToCell={handleNavigateToCell}
+        />
+      )}
+
+      {/* Active Filters and Sort */}
+      {(Object.keys(filters).length > 0 || sortConfig) && (
         <div className="bg-blue-50 border-b border-blue-200 px-4 py-2 flex items-center justify-between">
-          <span className="text-xs text-blue-700">
-            {Object.keys(filters).length} filter{Object.keys(filters).length > 1 ? 's' : ''} active
-          </span>
-          <button
-            onClick={clearAllFilters}
-            className="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-100 rounded transition-colors"
-          >
-            <X className="h-3 w-3 mr-1" />
-            Clear all
-          </button>
+          <div className="flex items-center space-x-4">
+            {Object.keys(filters).length > 0 && (
+              <span className="text-xs text-blue-700">
+                {Object.keys(filters).length} filter{Object.keys(filters).length > 1 ? 's' : ''} active
+              </span>
+            )}
+            {sortConfig && (
+              <span className="text-xs text-blue-700">
+                Sorted by {sheet?.columns?.find(c => c.id === sortConfig.columnId)?.name || 'column'} ({sortConfig.direction === 'asc' ? 'A→Z' : 'Z→A'})
+              </span>
+            )}
+          </div>
+          <div className="flex items-center space-x-2">
+            {sortConfig && (
+              <button
+                onClick={() => setSortConfig(null)}
+                className="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-100 rounded transition-colors"
+              >
+                <X className="h-3 w-3 mr-1" />
+                Clear sort
+              </button>
+            )}
+            {Object.keys(filters).length > 0 && (
+              <button
+                onClick={clearAllFilters}
+                className="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-100 rounded transition-colors"
+              >
+                <X className="h-3 w-3 mr-1" />
+                Clear filters
+              </button>
+            )}
+          </div>
         </div>
       )}
 
-      {/* Modern Sheet Grid */}
-      <SheetTable
-        columns={sheet.columns || []}
-        rows={filteredAndSortedRows}
-        isViewOnly={isViewOnly}
-        frozenRows={frozenRows}
-        frozenColumns={frozenColumns}
+      {/* Modern Sheet Grid with Zoom */}
+      <div
+        className="flex-1 overflow-auto"
+        style={{
+          transform: `scale(${zoomLevel / 100})`,
+          transformOrigin: 'top left',
+          width: `${10000 / zoomLevel}%`,
+          height: `${10000 / zoomLevel}%`,
+        }}
+      >
+        <SheetTable
+          columns={sheet.columns || []}
+          rows={filteredAndSortedRows}
+          isViewOnly={isViewOnly}
+          frozenRows={frozenRows}
+          frozenColumns={frozenColumns}
         onCellSelect={(position) => setSelectedCell(position)}
         onCellUpdate={(cellId: string, value: any) => {
           // Find the current cell value for undo
@@ -897,7 +1035,8 @@ export default function SheetPage() {
         copiedCellId={clipboard?.cellId}
         selectionRange={selectionRange}
         onSelectionRangeChange={setSelectionRange}
-      />
+        />
+      </div>
 
       <ShareModal
         isOpen={isShareModalOpen}
