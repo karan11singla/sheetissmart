@@ -305,6 +305,27 @@ export default function SheetPage() {
     },
   });
 
+  // Merge cells mutation
+  const mergeCellsMutation = useMutation({
+    mutationFn: ({ startRow, endRow, startCol, endCol }: {
+      startRow: number;
+      endRow: number;
+      startCol: number;
+      endCol: number;
+    }) => sheetApi.mergeCells(id!, startRow, endRow, startCol, endCol),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sheets', id] });
+    },
+  });
+
+  // Unmerge cells mutation
+  const unmergeCellsMutation = useMutation({
+    mutationFn: (cellId: string) => sheetApi.unmergeCells(id!, cellId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sheets', id] });
+    },
+  });
+
   const handleDeleteRow = (rowId: string) => {
     const row = sheet?.rows?.find(r => r.id === rowId);
     if (!row) return;
@@ -328,6 +349,46 @@ export default function SheetPage() {
     const columnName = `Col ${position + 1}`;
     const command = new AddColumnCommand(id!, columnName, position, queryClient);
     executeCommand(command);
+  };
+
+  // Handle merge cells
+  const handleMergeCells = () => {
+    if (!selectionRange || isViewOnly) return;
+
+    const startRow = Math.min(selectionRange.start.rowIndex, selectionRange.end.rowIndex);
+    const endRow = Math.max(selectionRange.start.rowIndex, selectionRange.end.rowIndex);
+    const startCol = Math.min(selectionRange.start.colIndex, selectionRange.end.colIndex);
+    const endCol = Math.max(selectionRange.start.colIndex, selectionRange.end.colIndex);
+
+    // Use row positions, not array indices
+    const startRowPos = filteredAndSortedRows[startRow]?.position ?? startRow;
+    const endRowPos = filteredAndSortedRows[endRow]?.position ?? endRow;
+    const startColPos = sheet?.columns?.[startCol]?.position ?? startCol;
+    const endColPos = sheet?.columns?.[endCol]?.position ?? endCol;
+
+    mergeCellsMutation.mutate({
+      startRow: startRowPos,
+      endRow: endRowPos,
+      startCol: startColPos,
+      endCol: endColPos,
+    });
+  };
+
+  // Handle unmerge cells
+  const handleUnmergeCells = () => {
+    const cell = getCurrentCell();
+    if (!cell || isViewOnly) return;
+
+    if ((cell.mergeRowSpan && cell.mergeRowSpan > 1) || (cell.mergeColSpan && cell.mergeColSpan > 1)) {
+      unmergeCellsMutation.mutate(cell.id);
+    }
+  };
+
+  // Check if current cell is merged
+  const isCurrentCellMerged = (): boolean => {
+    const cell = getCurrentCell();
+    if (!cell) return false;
+    return (cell.mergeRowSpan && cell.mergeRowSpan > 1) || (cell.mergeColSpan && cell.mergeColSpan > 1) || false;
   };
 
   const { data: shares = [] } = useQuery({
@@ -732,6 +793,9 @@ export default function SheetPage() {
         onFormatChange={(format) => applyFormat(format)}
         hasSelection={!!selectedCell}
         hasRangeSelection={!!selectionRange}
+        onMergeCells={handleMergeCells}
+        onUnmergeCells={handleUnmergeCells}
+        isMerged={isCurrentCellMerged()}
         isViewOnly={isViewOnly}
         onInsertComment={() => {
           if (selectedCell && filteredAndSortedRows[selectedCell.rowIndex]) {

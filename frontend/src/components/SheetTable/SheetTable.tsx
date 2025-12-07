@@ -332,8 +332,19 @@ export default function SheetTable({
                     {/* Data Cells */}
                     {columns.map((column, colIndex) => {
                       const cell = getCellValue(row, column.id);
+
+                      // Skip cells that are merged into another cell
+                      if (cell?.mergedIntoId) {
+                        return null;
+                      }
+
                       const isSelected = selectedCell?.rowIndex === rowIndex && selectedCell?.colIndex === colIndex;
                       const isEditing = editingCell === cell?.id;
+
+                      // Get merge span values
+                      const rowSpan = cell?.mergeRowSpan || 1;
+                      const colSpan = cell?.mergeColSpan || 1;
+                      const isMerged = rowSpan > 1 || colSpan > 1;
 
                       // Check if this cell is in the fill range
                       const isInFillRange = fillStart && fillEnd &&
@@ -355,10 +366,14 @@ export default function SheetTable({
                       return (
                         <td
                           key={`${row.id}-${column.id}`}
+                          rowSpan={rowSpan > 1 ? rowSpan : undefined}
+                          colSpan={colSpan > 1 ? colSpan : undefined}
                           className={`border-b border-slate-200 border-l border-slate-200 ${
                             isInFillRange ? 'bg-blue-100 ring-1 ring-inset ring-blue-400' : ''
                           } ${
                             isCopied ? 'ring-2 ring-inset ring-dashed ring-blue-500' : ''
+                          } ${
+                            isMerged ? 'bg-blue-50/50' : ''
                           }`}
                           style={{ height: row.height || 40 }}
                         >

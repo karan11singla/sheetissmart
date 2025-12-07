@@ -1002,3 +1002,170 @@ export async function getSheetByToken(token: string) {
 
   return sheet;
 }
+
+// Cell Merge functionality
+interface MergeCellsInput {
+  startRow: number;
+  endRow: number;
+  startCol: number;
+  endCol: number;
+}
+
+export async function mergeCells(sheetId: string, data: MergeCellsInput, userId: string) {
+  // Get sheet to verify permission
+  const sheet = await prisma.sheet.findUnique({
+    where: { id: sheetId },
+    include: {
+      shares: true,
+      rows: { orderBy: { position: 'asc' } },
+      columns: { orderBy: { position: 'asc' } },
+    },
+  });
+
+  if (!sheet) {
+    throw new AppError('Sheet not found', 404);
+  }
+
+  // Check permission
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) throw new AppError('User not found', 404);
+
+  const isOwner = sheet.userId === userId;
+  const sharedAccess = sheet.shares.find((share) => share.sharedWithEmail === user.email);
+  if (!isOwner && (!sharedAccess || sharedAccess.permission === 'VIEWER')) {
+    throw new AppError('Access denied. Edit permission required.', 403);
+  }
+
+  const { startRow, endRow, startCol, endCol } = data;
+
+  // Validate range
+  if (startRow > endRow || startCol > endCol) {
+    throw new AppError('Invalid range: start must be before end', 400);
+  }
+
+  if (startRow === endRow && startCol === endCol) {
+    throw new AppError('Cannot merge a single cell', 400);
+  }
+
+  // Find all cells in the range
+  const rowsInRange = sheet.rows.filter(r => r.position >= startRow && r.position <= endRow);
+  const colsInRange = sheet.columns.filter(c => c.position >= startCol && c.position <= endCol);
+
+  if (rowsInRange.length === 0 || colsInRange.length === 0) {
+    throw new AppError('Invalid row or column range', 400);
+  }
+
+  // Get the top-left cell (main cell)
+  const mainRow = rowsInRange[0];
+  const mainCol = colsInRange[0];
+
+  const mainCell = await prisma.cell.findFirst({
+    where: {
+      sheetId,
+      rowId: mainRow.id,
+      columnId: mainCol.id,
+    },
+  });
+
+  if (!mainCell) {
+    throw new AppError('Main cell not found', 404);
+  }
+
+  // Check if any cell in range is already merged
+  const cellsInRange = await prisma.cell.findMany({
+    where: {
+      sheetId,
+      rowId: { in: rowsInRange.map(r => r.id) },
+      columnId: { in: colsInRange.map(c => c.id) },
+    },
+  });
+
+  const alreadyMerged = cellsInRange.some(c => c.mergedIntoId !== null || c.mergeRowSpan > 1 || c.mergeColSpan > 1);
+  if (alreadyMerged) {
+    throw new AppError('Cannot merge: some cells are already merged. Unmerge them first.', 400);
+  }
+
+  const rowSpan = endRow - startRow + 1;
+  const colSpan = endCol - startCol + 1;
+
+  // Update main cell with span information
+  await prisma.cell.update({
+    where: { id: mainCell.id },
+    data: {
+      mergeRowSpan: rowSpan,
+      mergeColSpan: colSpan,
+    },
+  });
+
+  // Mark all other cells as merged into the main cell
+  const otherCellIds = cellsInRange.filter(c => c.id !== mainCell.id).map(c => c.id);
+  await prisma.cell.updateMany({
+    where: { id: { in: otherCellIds } },
+    data: {
+      mergedIntoId: mainCell.id,
+      value: null, // Clear values from merged cells
+    },
+  });
+
+  return mainCell;
+}
+
+export async function unmergeCells(sheetId: string, cellId: string, userId: string) {
+  // Get sheet to verify permission
+  const sheet = await prisma.sheet.findUnique({
+    where: { id: sheetId },
+    include: { shares: true },
+  });
+
+  if (!sheet) {
+    throw new AppError('Sheet not found', 404);
+  }
+
+  // Check permission
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) throw new AppError('User not found', 404);
+
+  const isOwner = sheet.userId === userId;
+  const sharedAccess = sheet.shares.find((share) => share.sharedWithEmail === user.email);
+  if (!isOwner && (!sharedAccess || sharedAccess.permission === 'VIEWER')) {
+    throw new AppError('Access denied. Edit permission required.', 403);
+  }
+
+  // Get the main cell
+  const mainCell = await prisma.cell.findFirst({
+    where: {
+      id: cellId,
+      sheetId,
+    },
+  });
+
+  if (!mainCell) {
+    throw new AppError('Cell not found', 404);
+  }
+
+  if (mainCell.mergeRowSpan === 1 && mainCell.mergeColSpan === 1) {
+    throw new AppError('Cell is not merged', 400);
+  }
+
+  // Reset the main cell
+  await prisma.cell.update({
+    where: { id: mainCell.id },
+    data: {
+      mergeRowSpan: 1,
+      mergeColSpan: 1,
+    },
+  });
+
+  // Reset all cells merged into this one
+  await prisma.cell.updateMany({
+    where: {
+      sheetId,
+      mergedIntoId: mainCell.id,
+    },
+    data: {
+      mergedIntoId: null,
+    },
+  });
+
+  return mainCell;
+}

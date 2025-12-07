@@ -147,6 +147,28 @@ export const sheetApi = {
     const { data } = await api.get(`/api/v1/sheets/shared/${token}`);
     return data.data.sheet;
   },
+
+  // Cell merge operations
+  mergeCells: async (
+    sheetId: string,
+    startRow: number,
+    endRow: number,
+    startCol: number,
+    endCol: number
+  ) => {
+    const { data } = await api.post(`/api/v1/sheets/${sheetId}/merge`, {
+      startRow,
+      endRow,
+      startCol,
+      endCol,
+    });
+    return data.data.cell;
+  },
+
+  unmergeCells: async (sheetId: string, cellId: string) => {
+    const { data } = await api.delete(`/api/v1/sheets/${sheetId}/merge/${cellId}`);
+    return data.data.cell;
+  },
 };
 
 // Auth API

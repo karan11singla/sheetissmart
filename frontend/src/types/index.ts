@@ -62,6 +62,10 @@ export interface Cell {
   hasBorder?: boolean;
   numberFormat?: string;
   decimalPlaces?: number;
+  // Cell merge
+  mergeRowSpan?: number;
+  mergeColSpan?: number;
+  mergedIntoId?: string;
   createdAt: string;
   updatedAt: string;
   column?: Column;

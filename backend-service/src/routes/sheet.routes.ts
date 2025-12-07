@@ -18,6 +18,8 @@ import {
   createRowComment,
   generateShareToken,
   getSheetByToken,
+  mergeCells,
+  unmergeCells,
 } from '../controllers/sheet.controller';
 import { authenticate } from '../middleware/auth';
 
@@ -54,6 +56,10 @@ router.delete('/:id/rows/:rowId', deleteRow);
 
 // Cell operations
 router.put('/:id/cells/:cellId', updateCell);
+
+// Cell merge operations
+router.post('/:id/merge', mergeCells);
+router.delete('/:id/merge/:cellId', unmergeCells);
 
 // Row comment operations
 router.get('/:id/rows/:rowId/comments', getRowComments);

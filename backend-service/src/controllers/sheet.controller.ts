@@ -319,3 +319,40 @@ export const getSheetByToken = asyncHandler(async (req: Request, res: Response) 
     data: { sheet },
   });
 });
+
+// Merge cells in a sheet
+export const mergeCells = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { startRow, endRow, startCol, endCol } = req.body;
+
+  if (!req.user) {
+    throw new AppError('Not authenticated', 401);
+  }
+
+  if (startRow === undefined || endRow === undefined || startCol === undefined || endCol === undefined) {
+    throw new AppError('startRow, endRow, startCol, and endCol are required', 400);
+  }
+
+  const cell = await sheetService.mergeCells(id, { startRow, endRow, startCol, endCol }, req.user.userId);
+
+  res.json({
+    status: 'success',
+    data: { cell },
+  });
+});
+
+// Unmerge cells in a sheet
+export const unmergeCells = asyncHandler(async (req: Request, res: Response) => {
+  const { id, cellId } = req.params;
+
+  if (!req.user) {
+    throw new AppError('Not authenticated', 401);
+  }
+
+  const cell = await sheetService.unmergeCells(id, cellId, req.user.userId);
+
+  res.json({
+    status: 'success',
+    data: { cell },
+  });
+});

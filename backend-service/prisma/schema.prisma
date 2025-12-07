@@ -112,6 +112,11 @@ model Cell {
   numberFormat   String?  @default("general") // "general", "number", "currency", "percentage", "date"
   decimalPlaces  Int?     @default(2)
 
+  // Cell Merging
+  mergeRowSpan   Int      @default(1) // Number of rows this cell spans (1 = normal, >1 = merged)
+  mergeColSpan   Int      @default(1) // Number of columns this cell spans (1 = normal, >1 = merged)
+  mergedIntoId   String?  // If this cell is part of a merge, points to the main cell
+
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
