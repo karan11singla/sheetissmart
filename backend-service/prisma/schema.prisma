@@ -104,6 +104,7 @@ model Cell {
   textColor      String?  // Hex color (e.g., "#000000")
   backgroundColor String? // Hex color (e.g., "#FFFFFF")
   fontSize       Int?     @default(14) // Font size in pixels
+  fontFamily     String?  // Font family name (e.g., "Arial", "Times New Roman")
   bold           Boolean  @default(false)
   italic         Boolean  @default(false)
   underline      Boolean  @default(false)

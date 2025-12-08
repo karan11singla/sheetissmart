@@ -55,6 +55,7 @@ export interface Cell {
   textColor?: string;
   backgroundColor?: string;
   fontSize?: number;
+  fontFamily?: string;
   bold?: boolean;
   italic?: boolean;
   underline?: boolean;
@@ -107,6 +108,7 @@ export interface UpdateCellInput {
   textColor?: string;
   backgroundColor?: string;
   fontSize?: number;
+  fontFamily?: string;
   bold?: boolean;
   italic?: boolean;
   underline?: boolean;

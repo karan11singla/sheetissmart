@@ -296,6 +296,7 @@ export default function SheetPage() {
           cell.textColor ||
           cell.backgroundColor ||
           cell.fontSize ||
+          cell.fontFamily ||
           cell.bold ||
           cell.italic ||
           cell.underline ||
@@ -308,6 +309,7 @@ export default function SheetPage() {
             color: cell.textColor,
             backgroundColor: cell.backgroundColor,
             fontSize: cell.fontSize,
+            fontFamily: cell.fontFamily,
             bold: cell.bold,
             italic: cell.italic,
             underline: cell.underline,
@@ -595,6 +597,7 @@ export default function SheetPage() {
         textColor: updatedFormat.color,
         backgroundColor: updatedFormat.backgroundColor,
         fontSize: updatedFormat.fontSize,
+        fontFamily: updatedFormat.fontFamily,
         bold: updatedFormat.bold,
         italic: updatedFormat.italic,
         underline: updatedFormat.underline,

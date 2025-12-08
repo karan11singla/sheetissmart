@@ -688,6 +688,7 @@ export async function updateCell(
     textColor?: string;
     backgroundColor?: string;
     fontSize?: number;
+    fontFamily?: string;
     bold?: boolean;
     italic?: boolean;
     underline?: boolean;
@@ -759,6 +760,7 @@ export async function updateCell(
       textColor: data.textColor,
       backgroundColor: data.backgroundColor,
       fontSize: data.fontSize,
+      fontFamily: data.fontFamily,
       bold: data.bold,
       italic: data.italic,
       underline: data.underline,

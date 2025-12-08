@@ -287,6 +287,7 @@ export default function TableCell({
     backgroundColor: cell?.backgroundColor || undefined,
     color: cell?.textColor || undefined,
     fontSize: cell?.fontSize ? `${cell.fontSize}px` : undefined,
+    fontFamily: cell?.fontFamily || undefined,
   };
 
   // Build text formatting classes
