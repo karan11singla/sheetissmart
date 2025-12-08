@@ -210,6 +210,24 @@ export default function SheetPage() {
         e.preventDefault();
         handleZoomOut();
       }
+      // Ctrl+B or Cmd+B for bold
+      if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+        e.preventDefault();
+        const format = getCurrentFormat();
+        applyFormat({ bold: !format.bold });
+      }
+      // Ctrl+I or Cmd+I for italic
+      if ((e.ctrlKey || e.metaKey) && e.key === 'i') {
+        e.preventDefault();
+        const format = getCurrentFormat();
+        applyFormat({ italic: !format.italic });
+      }
+      // Ctrl+U or Cmd+U for underline
+      if ((e.ctrlKey || e.metaKey) && e.key === 'u') {
+        e.preventDefault();
+        const format = getCurrentFormat();
+        applyFormat({ underline: !format.underline });
+      }
       // Delete or Backspace to clear cell contents
       const viewOnly = sheet && (sheet as any).permission === 'VIEWER';
       if ((e.key === 'Delete' || e.key === 'Backspace') && !viewOnly) {

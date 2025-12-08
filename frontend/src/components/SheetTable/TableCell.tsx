@@ -282,6 +282,45 @@ export default function TableCell({
                         cell?.textAlign === 'right' ? 'text-right' :
                         'text-left';
 
+  // Build inline styles for cell formatting
+  const cellStyles: React.CSSProperties = {
+    backgroundColor: cell?.backgroundColor || undefined,
+    color: cell?.textColor || undefined,
+    fontSize: cell?.fontSize ? `${cell.fontSize}px` : undefined,
+  };
+
+  // Build text formatting classes
+  const textFormatClasses = [
+    cell?.bold ? 'font-bold' : '',
+    cell?.italic ? 'italic' : '',
+    cell?.underline ? 'underline' : '',
+  ].filter(Boolean).join(' ');
+
+  // Format number value based on numberFormat
+  const formatDisplayValue = (val: string | number): string => {
+    if (!val && val !== 0) return '';
+    const numVal = typeof val === 'string' ? parseFloat(val) : val;
+
+    if (isNaN(numVal)) return String(val);
+
+    const decimals = cell?.decimalPlaces ?? 2;
+
+    switch (cell?.numberFormat) {
+      case 'currency':
+        return `$${numVal.toFixed(decimals)}`;
+      case 'percentage':
+        return `${(numVal * 100).toFixed(decimals)}%`;
+      case 'number':
+        return numVal.toFixed(decimals);
+      default:
+        return String(val);
+    }
+  };
+
+  const formattedDisplayValue = cell?.numberFormat && cell.numberFormat !== 'general'
+    ? formatDisplayValue(cellDisplayValue)
+    : cellDisplayValue;
+
   return (
     <div
       ref={cellRef}
@@ -292,16 +331,17 @@ export default function TableCell({
       } ${showFormulaHoverEffect ? 'cursor-crosshair hover:bg-green-100 hover:ring-1 hover:ring-inset hover:ring-green-400' : ''} ${
         isSelected ? 'ring-2 ring-inset ring-blue-500 bg-blue-50/60' : ''
       } ${isInSelectionRange && !isSelected ? 'bg-blue-100/70 ring-1 ring-inset ring-blue-300' : ''} ${
-        hasFormula ? 'italic text-indigo-700 font-medium' : ''
-      }`}
+        hasFormula && !cell?.bold && !cell?.italic ? 'italic text-indigo-700 font-medium' : ''
+      } ${cell?.hasBorder ? 'border border-slate-400' : ''}`}
+      style={cellStyles}
       onClick={handleCellClick}
       onDoubleClick={handleDoubleClick}
       onKeyDown={handleCellKeyDown}
       onMouseDown={handleMouseDown}
       onMouseEnter={handleMouseEnter}
     >
-      <div className="truncate">
-        {cellDisplayValue}
+      <div className={`truncate ${textFormatClasses}`}>
+        {formattedDisplayValue}
       </div>
       {isSelected && !isEditing && !isViewOnly && (
         <div

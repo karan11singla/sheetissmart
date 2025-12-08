@@ -11,6 +11,7 @@ import {
   Plus,
   Bold,
   Italic,
+  Underline,
   Strikethrough,
   Type,
   Paintbrush,
@@ -434,6 +435,15 @@ export default function Toolbar({
           title="Italic (Ctrl+I)"
           onClick={() => onFormatChange({ italic: !currentFormat.italic })}
           active={currentFormat.italic}
+          disabled={isViewOnly || !hasSelection}
+        />
+
+        {/* Underline */}
+        <IconButton
+          icon={<Underline className="h-4 w-4" />}
+          title="Underline (Ctrl+U)"
+          onClick={() => onFormatChange({ underline: !currentFormat.underline })}
+          active={currentFormat.underline}
           disabled={isViewOnly || !hasSelection}
         />
 
