@@ -300,7 +300,10 @@ export default function SheetPage() {
           cell.bold ||
           cell.italic ||
           cell.underline ||
+          cell.strikethrough ||
           cell.textAlign ||
+          cell.verticalAlign ||
+          cell.wrapText ||
           cell.hasBorder ||
           cell.numberFormat ||
           cell.decimalPlaces !== undefined
@@ -313,7 +316,10 @@ export default function SheetPage() {
             bold: cell.bold,
             italic: cell.italic,
             underline: cell.underline,
+            strikethrough: cell.strikethrough,
             align: cell.textAlign as 'left' | 'center' | 'right',
+            verticalAlign: cell.verticalAlign as 'top' | 'middle' | 'bottom',
+            wrap: cell.wrapText,
             borderStyle: cell.hasBorder ? 'solid' : 'none',
             numberFormat: cell.numberFormat as 'general' | 'number' | 'currency' | 'percentage' | 'date',
             decimals: cell.decimalPlaces,
@@ -601,7 +607,10 @@ export default function SheetPage() {
         bold: updatedFormat.bold,
         italic: updatedFormat.italic,
         underline: updatedFormat.underline,
+        strikethrough: updatedFormat.strikethrough,
         textAlign: updatedFormat.align,
+        verticalAlign: updatedFormat.verticalAlign,
+        wrapText: updatedFormat.wrap,
         hasBorder: updatedFormat.borderStyle === 'solid',
         numberFormat: updatedFormat.numberFormat,
         decimalPlaces: updatedFormat.decimals,

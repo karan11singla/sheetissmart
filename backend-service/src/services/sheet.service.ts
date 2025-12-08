@@ -692,7 +692,10 @@ export async function updateCell(
     bold?: boolean;
     italic?: boolean;
     underline?: boolean;
+    strikethrough?: boolean;
     textAlign?: string;
+    verticalAlign?: string;
+    wrapText?: boolean;
     hasBorder?: boolean;
     numberFormat?: string;
     decimalPlaces?: number;
@@ -764,7 +767,10 @@ export async function updateCell(
       bold: data.bold,
       italic: data.italic,
       underline: data.underline,
+      strikethrough: data.strikethrough,
       textAlign: data.textAlign,
+      verticalAlign: data.verticalAlign,
+      wrapText: data.wrapText,
       hasBorder: data.hasBorder,
       numberFormat: data.numberFormat,
       decimalPlaces: data.decimalPlaces,

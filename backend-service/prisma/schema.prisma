@@ -108,7 +108,10 @@ model Cell {
   bold           Boolean  @default(false)
   italic         Boolean  @default(false)
   underline      Boolean  @default(false)
+  strikethrough  Boolean  @default(false)
   textAlign      String?  @default("left") // "left", "center", "right"
+  verticalAlign  String?  @default("middle") // "top", "middle", "bottom"
+  wrapText       Boolean  @default(false)
   hasBorder      Boolean  @default(false)
   numberFormat   String?  @default("general") // "general", "number", "currency", "percentage", "date"
   decimalPlaces  Int?     @default(2)

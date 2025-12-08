@@ -282,12 +282,19 @@ export default function TableCell({
                         cell?.textAlign === 'right' ? 'text-right' :
                         'text-left';
 
+  // Get vertical alignment style
+  const verticalAlignStyle = cell?.verticalAlign === 'top' ? 'flex-start' :
+                            cell?.verticalAlign === 'bottom' ? 'flex-end' :
+                            'center';
+
   // Build inline styles for cell formatting
   const cellStyles: React.CSSProperties = {
     backgroundColor: cell?.backgroundColor || undefined,
     color: cell?.textColor || undefined,
     fontSize: cell?.fontSize ? `${cell.fontSize}px` : undefined,
     fontFamily: cell?.fontFamily || undefined,
+    display: 'flex',
+    alignItems: verticalAlignStyle,
   };
 
   // Build text formatting classes
@@ -295,6 +302,7 @@ export default function TableCell({
     cell?.bold ? 'font-bold' : '',
     cell?.italic ? 'italic' : '',
     cell?.underline ? 'underline' : '',
+    cell?.strikethrough ? 'line-through' : '',
   ].filter(Boolean).join(' ');
 
   // Format number value based on numberFormat
@@ -341,7 +349,7 @@ export default function TableCell({
       onMouseDown={handleMouseDown}
       onMouseEnter={handleMouseEnter}
     >
-      <div className={`truncate ${textFormatClasses}`}>
+      <div className={`${cell?.wrapText ? 'whitespace-normal break-words' : 'truncate'} ${textFormatClasses}`}>
         {formattedDisplayValue}
       </div>
       {isSelected && !isEditing && !isViewOnly && (

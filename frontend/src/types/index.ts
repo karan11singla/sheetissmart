@@ -59,7 +59,10 @@ export interface Cell {
   bold?: boolean;
   italic?: boolean;
   underline?: boolean;
+  strikethrough?: boolean;
   textAlign?: string;
+  verticalAlign?: string;
+  wrapText?: boolean;
   hasBorder?: boolean;
   numberFormat?: string;
   decimalPlaces?: number;
@@ -112,7 +115,10 @@ export interface UpdateCellInput {
   bold?: boolean;
   italic?: boolean;
   underline?: boolean;
+  strikethrough?: boolean;
   textAlign?: string;
+  verticalAlign?: string;
+  wrapText?: boolean;
   hasBorder?: boolean;
   numberFormat?: string;
   decimalPlaces?: number;
