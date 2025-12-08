@@ -629,7 +629,7 @@ export default function Toolbar({
               <ChevronDown className="h-3 w-3 ml-0.5 text-slate-400" />
             </div>
           }
-          disabled={isViewOnly || !hasRangeSelection}
+          disabled={isViewOnly || (!hasRangeSelection && !isMerged)}
         >
           <button
             onClick={onMergeCells}
