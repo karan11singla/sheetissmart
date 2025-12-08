@@ -10,6 +10,8 @@ import authRoutes from './routes/auth.routes';
 import shareRoutes from './routes/share.routes';
 import conditionalFormatRoutes from './routes/conditionalFormat.routes';
 import notificationRoutes from './routes/notification.routes';
+import chartRoutes from './routes/chart.routes';
+import dataValidationRoutes from './routes/dataValidation.routes';
 
 // Load environment variables
 dotenv.config();
@@ -41,8 +43,10 @@ app.get('/health', (req, res) => {
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/sheets', sheetRoutes);
 app.use('/api/v1', shareRoutes);
-app.use('/api/v1', conditionalFormatRoutes);
+app.use('/api/v1/conditional', conditionalFormatRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
+app.use('/api/v1', chartRoutes);
+app.use('/api/v1', dataValidationRoutes);
 
 // Error handling
 app.use(errorHandler);

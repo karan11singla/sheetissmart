@@ -51,6 +51,8 @@ model Sheet {
   shares            SheetShare[]
   conditionalFormats ConditionalFormat[]
   favoritedBy       UserFavorite[]
+  charts            Chart[]
+  dataValidations   DataValidation[]
 
   @@map("sheets")
 }
@@ -269,4 +271,65 @@ enum FormatRuleType {
   TOP_BOTTOM          // Top/bottom N values or percentages
   ABOVE_BELOW_AVERAGE // Above/below average
   FORMULA_CUSTOM      // Custom formula-based rule
+}
+
+// Charts and Visualizations
+model Chart {
+  id          String    @id @default(cuid())
+  sheetId     String
+  name        String
+  type        ChartType
+  dataRange   String    // e.g., "A1:D10"
+  labelRange  String?   // e.g., "A1:A10" for X-axis labels
+  config      String    // JSON string for chart-specific configuration
+  position    String    // JSON string: {x, y, width, height} position on sheet
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  sheet       Sheet     @relation(fields: [sheetId], references: [id], onDelete: Cascade)
+
+  @@index([sheetId])
+  @@map("charts")
+}
+
+enum ChartType {
+  BAR
+  LINE
+  PIE
+  AREA
+  SCATTER
+  DOUGHNUT
+  COLUMN
+}
+
+// Data Validation
+model DataValidation {
+  id            String              @id @default(cuid())
+  sheetId       String
+  range         String              // Cell range (e.g., "A1:A100")
+  type          ValidationType
+  criteria      String              // JSON string for validation criteria
+  allowBlank    Boolean             @default(true)
+  showDropdown  Boolean             @default(true) // For list validations
+  errorTitle    String?
+  errorMessage  String?
+  inputTitle    String?
+  inputMessage  String?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  // Relations
+  sheet         Sheet               @relation(fields: [sheetId], references: [id], onDelete: Cascade)
+
+  @@index([sheetId])
+  @@map("data_validations")
+}
+
+enum ValidationType {
+  LIST            // Dropdown list of values
+  NUMBER          // Whole number or decimal
+  TEXT_LENGTH     // Text length constraints
+  DATE            // Date constraints
+  CUSTOM_FORMULA  // Custom formula validation
 }

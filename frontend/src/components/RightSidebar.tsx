@@ -6,9 +6,17 @@ interface RightSidebarProps {
   onClose: () => void;
   title?: string;
   children: React.ReactNode;
+  width?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
-export default function RightSidebar({ isOpen, onClose, title, children }: RightSidebarProps) {
+const widthClasses = {
+  sm: 'w-80',
+  md: 'w-96',
+  lg: 'w-[480px]',
+  xl: 'w-[600px]',
+};
+
+export default function RightSidebar({ isOpen, onClose, title, children, width = 'md' }: RightSidebarProps) {
   // Close on Escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -33,7 +41,7 @@ export default function RightSidebar({ isOpen, onClose, title, children }: Right
 
       {/* Sidebar */}
       <div
-        className={`fixed top-0 right-0 h-full w-96 bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out ${
+        className={`fixed top-0 right-0 h-full ${widthClasses[width]} bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >

@@ -29,6 +29,8 @@ import {
   Lock,
   Unlock,
   Palette,
+  BarChart3,
+  ShieldCheck,
 } from 'lucide-react';
 
 interface MenuBarProps {
@@ -54,6 +56,8 @@ interface MenuBarProps {
   onAlignCenter?: () => void;
   onAlignRight?: () => void;
   onConditionalFormat?: () => void;
+  onChart?: () => void;
+  onDataValidation?: () => void;
   onSortAsc?: () => void;
   onSortDesc?: () => void;
   onFilter?: () => void;
@@ -109,6 +113,8 @@ export default function MenuBar({
   onAlignCenter,
   onAlignRight,
   onConditionalFormat,
+  onChart,
+  onDataValidation,
   onSortAsc,
   onSortDesc,
   onFilter,
@@ -204,6 +210,8 @@ export default function MenuBar({
         { label: 'divider', divider: true },
         { label: 'Column left', icon: <ArrowLeftFromLine className="h-4 w-4" />, onClick: onInsertColumnLeft, disabled: isViewOnly },
         { label: 'Column right', icon: <ArrowRightFromLine className="h-4 w-4" />, onClick: onInsertColumnRight, disabled: isViewOnly },
+        { label: 'divider', divider: true },
+        { label: 'Chart', icon: <BarChart3 className="h-4 w-4" />, onClick: onChart },
       ],
     },
     {
@@ -227,6 +235,8 @@ export default function MenuBar({
         { label: 'Sort Z → A', icon: <SortDesc className="h-4 w-4" />, onClick: onSortDesc, disabled: isViewOnly },
         { label: 'divider', divider: true },
         { label: 'Filter', icon: <Filter className="h-4 w-4" />, onClick: onFilter },
+        { label: 'divider', divider: true },
+        { label: 'Data validation', icon: <ShieldCheck className="h-4 w-4" />, onClick: onDataValidation },
       ],
     },
   ];

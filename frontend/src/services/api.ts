@@ -11,6 +11,12 @@ import type {
   ConditionalFormat,
   CreateConditionalFormatInput,
   UpdateConditionalFormatInput,
+  Chart,
+  CreateChartInput,
+  UpdateChartInput,
+  DataValidation,
+  CreateDataValidationInput,
+  UpdateDataValidationInput,
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
@@ -257,6 +263,88 @@ export const conditionalFormatApi = {
 
   delete: async (formatId: string): Promise<void> => {
     await api.delete(`/api/v1/conditional/formats/${formatId}`);
+  },
+};
+
+// Chart API
+export const chartApi = {
+  getAll: async (sheetId: string): Promise<Chart[]> => {
+    const { data } = await api.get(`/api/v1/sheets/${sheetId}/charts`);
+    return data.data.charts;
+  },
+
+  getById: async (chartId: string): Promise<Chart> => {
+    const { data } = await api.get(`/api/v1/charts/${chartId}`);
+    return data.data.chart;
+  },
+
+  create: async (sheetId: string, input: CreateChartInput): Promise<Chart> => {
+    const { data } = await api.post(`/api/v1/sheets/${sheetId}/charts`, {
+      ...input,
+      config: JSON.stringify(input.config),
+      position: JSON.stringify(input.position),
+    });
+    return data.data.chart;
+  },
+
+  update: async (chartId: string, input: UpdateChartInput): Promise<Chart> => {
+    const payload: Record<string, unknown> = { ...input };
+    if (input.config) {
+      payload.config = JSON.stringify(input.config);
+    }
+    if (input.position) {
+      payload.position = JSON.stringify(input.position);
+    }
+    const { data } = await api.put(`/api/v1/charts/${chartId}`, payload);
+    return data.data.chart;
+  },
+
+  delete: async (chartId: string): Promise<void> => {
+    await api.delete(`/api/v1/charts/${chartId}`);
+  },
+};
+
+// Data Validation API
+export const dataValidationApi = {
+  getAll: async (sheetId: string): Promise<DataValidation[]> => {
+    const { data } = await api.get(`/api/v1/sheets/${sheetId}/validations`);
+    return data.data.validations;
+  },
+
+  getById: async (validationId: string): Promise<DataValidation> => {
+    const { data } = await api.get(`/api/v1/validations/${validationId}`);
+    return data.data.validation;
+  },
+
+  create: async (sheetId: string, input: CreateDataValidationInput): Promise<DataValidation> => {
+    const { data } = await api.post(`/api/v1/sheets/${sheetId}/validations`, {
+      ...input,
+      criteria: JSON.stringify(input.criteria),
+    });
+    return data.data.validation;
+  },
+
+  update: async (validationId: string, input: UpdateDataValidationInput): Promise<DataValidation> => {
+    const payload: Record<string, unknown> = { ...input };
+    if (input.criteria) {
+      payload.criteria = JSON.stringify(input.criteria);
+    }
+    const { data } = await api.put(`/api/v1/validations/${validationId}`, payload);
+    return data.data.validation;
+  },
+
+  delete: async (validationId: string): Promise<void> => {
+    await api.delete(`/api/v1/validations/${validationId}`);
+  },
+
+  validateCell: async (sheetId: string, cellRef: string, value: unknown): Promise<{ isValid: boolean; errorMessage?: string }> => {
+    const { data } = await api.post(`/api/v1/sheets/${sheetId}/validate-cell`, { cellRef, value });
+    return data.data;
+  },
+
+  getCellValidation: async (sheetId: string, cellRef: string): Promise<DataValidation | null> => {
+    const { data } = await api.get(`/api/v1/sheets/${sheetId}/cell-validation/${cellRef}`);
+    return data.data.validation;
   },
 };
 

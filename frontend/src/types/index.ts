@@ -234,3 +234,118 @@ export interface UpdateConditionalFormatInput {
   priority?: number;
   range?: string;
 }
+
+// Chart Types
+export type ChartType = 'BAR' | 'LINE' | 'PIE' | 'AREA' | 'SCATTER' | 'DOUGHNUT' | 'COLUMN';
+
+export interface Chart {
+  id: string;
+  sheetId: string;
+  name: string;
+  type: ChartType;
+  dataRange: string;
+  labelRange?: string;
+  config: string; // JSON string
+  position: string; // JSON string: {x, y, width, height}
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ChartConfig {
+  title?: string;
+  showLegend?: boolean;
+  legendPosition?: 'top' | 'bottom' | 'left' | 'right';
+  colors?: string[];
+  xAxisLabel?: string;
+  yAxisLabel?: string;
+  showGrid?: boolean;
+  stacked?: boolean;
+}
+
+export interface ChartPosition {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export interface CreateChartInput {
+  name: string;
+  type: ChartType;
+  dataRange: string;
+  labelRange?: string;
+  config: ChartConfig;
+  position: ChartPosition;
+}
+
+export interface UpdateChartInput {
+  name?: string;
+  type?: ChartType;
+  dataRange?: string;
+  labelRange?: string;
+  config?: ChartConfig;
+  position?: ChartPosition;
+}
+
+// Data Validation Types
+export type ValidationType = 'LIST' | 'NUMBER' | 'TEXT_LENGTH' | 'DATE' | 'CUSTOM_FORMULA';
+
+export interface DataValidation {
+  id: string;
+  sheetId: string;
+  range: string;
+  type: ValidationType;
+  criteria: string; // JSON string
+  allowBlank: boolean;
+  showDropdown: boolean;
+  errorTitle?: string;
+  errorMessage?: string;
+  inputTitle?: string;
+  inputMessage?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ListValidationCriteria {
+  values: string[];
+}
+
+export interface NumberValidationCriteria {
+  min?: number;
+  max?: number;
+  integer?: boolean;
+}
+
+export interface TextLengthValidationCriteria {
+  min?: number;
+  max?: number;
+}
+
+export interface DateValidationCriteria {
+  minDate?: string;
+  maxDate?: string;
+}
+
+export interface CreateDataValidationInput {
+  range: string;
+  type: ValidationType;
+  criteria: ListValidationCriteria | NumberValidationCriteria | TextLengthValidationCriteria | DateValidationCriteria;
+  allowBlank?: boolean;
+  showDropdown?: boolean;
+  errorTitle?: string;
+  errorMessage?: string;
+  inputTitle?: string;
+  inputMessage?: string;
+}
+
+export interface UpdateDataValidationInput {
+  range?: string;
+  type?: ValidationType;
+  criteria?: ListValidationCriteria | NumberValidationCriteria | TextLengthValidationCriteria | DateValidationCriteria;
+  allowBlank?: boolean;
+  showDropdown?: boolean;
+  errorTitle?: string;
+  errorMessage?: string;
+  inputTitle?: string;
+  inputMessage?: string;
+}

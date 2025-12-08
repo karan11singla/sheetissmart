@@ -7,6 +7,8 @@ import ShareModal from '../components/ShareModal';
 import RightSidebar from '../components/RightSidebar';
 import CommentsPanel from '../components/CommentsPanel';
 import ConditionalFormatPanel from '../components/ConditionalFormatPanel';
+import ChartPanel from '../components/ChartPanel';
+import DataValidationPanel from '../components/DataValidationPanel';
 import SheetTable from '../components/SheetTable/SheetTable';
 import MenuBar from '../components/MenuBar';
 import Toolbar from '../components/Toolbar';
@@ -30,6 +32,8 @@ export default function SheetPage() {
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
   const [isSearchPanelOpen, setIsSearchPanelOpen] = useState(false);
   const [isConditionalFormatOpen, setIsConditionalFormatOpen] = useState(false);
+  const [isChartPanelOpen, setIsChartPanelOpen] = useState(false);
+  const [isDataValidationPanelOpen, setIsDataValidationPanelOpen] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(100); // Zoom percentage (50-200%)
 
   // Cell formatting state (stored per cell ID)
@@ -1005,6 +1009,8 @@ export default function SheetPage() {
         onAlignCenter={() => applyFormatting({ align: 'center' })}
         onAlignRight={() => applyFormatting({ align: 'right' })}
         onConditionalFormat={() => setIsConditionalFormatOpen(true)}
+        onChart={() => setIsChartPanelOpen(true)}
+        onDataValidation={() => setIsDataValidationPanelOpen(true)}
         isViewOnly={isViewOnly}
         frozenRows={frozenRows}
         frozenColumns={frozenColumns}
@@ -1279,6 +1285,29 @@ export default function SheetPage() {
         <ConditionalFormatPanel
           sheetId={id!}
           isViewOnly={isViewOnly}
+        />
+      </RightSidebar>
+
+      <RightSidebar
+        isOpen={isChartPanelOpen}
+        onClose={() => setIsChartPanelOpen(false)}
+        title="Charts"
+        width="lg"
+      >
+        <ChartPanel
+          sheet={sheet}
+          onClose={() => setIsChartPanelOpen(false)}
+        />
+      </RightSidebar>
+
+      <RightSidebar
+        isOpen={isDataValidationPanelOpen}
+        onClose={() => setIsDataValidationPanelOpen(false)}
+        title="Data Validation"
+      >
+        <DataValidationPanel
+          sheetId={id!}
+          onClose={() => setIsDataValidationPanelOpen(false)}
         />
       </RightSidebar>
     </div>
