@@ -169,30 +169,32 @@ export default function Sidebar({ onNavigate, onOpenSearch, onOpenNotifications 
         })}
       </nav>
 
-      {/* User Section */}
-      <div className="p-4 border-t border-slate-700 space-y-2">
-        <Link
-          to="/account"
-          onClick={onNavigate}
-          className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
-            location.pathname === '/account'
-              ? 'bg-slate-700 text-white'
-              : 'text-slate-300 hover:bg-slate-800 hover:text-white'
-          }`}
-        >
-          <User className="h-5 w-5 flex-shrink-0" />
-          <div className="flex-1 min-w-0">
-            <p className="font-medium truncate">{user?.name || 'Account'}</p>
-            <p className="text-xs text-slate-400 truncate">{user?.email}</p>
-          </div>
-        </Link>
-        <button
-          onClick={logout}
-          className="w-full flex items-center space-x-3 px-4 py-2 text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-all"
-        >
-          <LogOut className="h-5 w-5" />
-          <span className="font-medium">Logout</span>
-        </button>
+      {/* User Section - fixed at bottom with full background */}
+      <div className="mt-auto bg-slate-800/50 border-t border-slate-700">
+        <div className="p-4 space-y-2">
+          <Link
+            to="/account"
+            onClick={onNavigate}
+            className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
+              location.pathname === '/account'
+                ? 'bg-slate-700 text-white'
+                : 'text-slate-300 hover:bg-slate-700 hover:text-white'
+            }`}
+          >
+            <User className="h-5 w-5 flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="font-medium truncate">{user?.name || 'Account'}</p>
+              <p className="text-xs text-slate-400 truncate">{user?.email}</p>
+            </div>
+          </Link>
+          <button
+            onClick={logout}
+            className="w-full flex items-center space-x-3 px-4 py-3 text-slate-300 hover:bg-slate-700 hover:text-white rounded-lg transition-all"
+          >
+            <LogOut className="h-5 w-5" />
+            <span className="font-medium">Logout</span>
+          </button>
+        </div>
       </div>
     </aside>
   );

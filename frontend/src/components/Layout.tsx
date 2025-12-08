@@ -12,7 +12,7 @@ export default function Layout() {
   const [showNotifications, setShowNotifications] = useState(false);
 
   return (
-    <div className="min-h-screen bg-white flex">
+    <div className="h-screen overflow-hidden bg-white flex">
       {/* Mobile hamburger menu button */}
       <button
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
