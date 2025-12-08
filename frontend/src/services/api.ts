@@ -17,6 +17,10 @@ import type {
   DataValidation,
   CreateDataValidationInput,
   UpdateDataValidationInput,
+  PivotTable,
+  CreatePivotTableInput,
+  UpdatePivotTableInput,
+  PivotTableComputedData,
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
@@ -345,6 +349,43 @@ export const dataValidationApi = {
   getCellValidation: async (sheetId: string, cellRef: string): Promise<DataValidation | null> => {
     const { data } = await api.get(`/api/v1/sheets/${sheetId}/cell-validation/${cellRef}`);
     return data.data.validation;
+  },
+};
+
+// Pivot Table API
+export const pivotTableApi = {
+  getAll: async (sheetId: string): Promise<PivotTable[]> => {
+    const { data } = await api.get(`/api/v1/sheets/${sheetId}/pivot-tables`);
+    return data.data.pivotTables;
+  },
+
+  getById: async (pivotTableId: string): Promise<PivotTable> => {
+    const { data } = await api.get(`/api/v1/pivot-tables/${pivotTableId}`);
+    return data.data.pivotTable;
+  },
+
+  create: async (sheetId: string, input: CreatePivotTableInput): Promise<PivotTable> => {
+    const { data } = await api.post(`/api/v1/sheets/${sheetId}/pivot-tables`, input);
+    return data.data.pivotTable;
+  },
+
+  update: async (pivotTableId: string, input: UpdatePivotTableInput): Promise<PivotTable> => {
+    const { data } = await api.put(`/api/v1/pivot-tables/${pivotTableId}`, input);
+    return data.data.pivotTable;
+  },
+
+  delete: async (pivotTableId: string): Promise<void> => {
+    await api.delete(`/api/v1/pivot-tables/${pivotTableId}`);
+  },
+
+  compute: async (pivotTableId: string): Promise<PivotTableComputedData> => {
+    const { data } = await api.get(`/api/v1/pivot-tables/${pivotTableId}/compute`);
+    return data.data;
+  },
+
+  getColumns: async (sheetId: string): Promise<{ id: string; name: string; type: string }[]> => {
+    const { data } = await api.get(`/api/v1/sheets/${sheetId}/pivot-columns`);
+    return data.data.columns;
   },
 };
 

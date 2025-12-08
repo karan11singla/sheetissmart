@@ -53,6 +53,7 @@ model Sheet {
   favoritedBy       UserFavorite[]
   charts            Chart[]
   dataValidations   DataValidation[]
+  pivotTables       PivotTable[]
 
   @@map("sheets")
 }
@@ -332,4 +333,34 @@ enum ValidationType {
   TEXT_LENGTH     // Text length constraints
   DATE            // Date constraints
   CUSTOM_FORMULA  // Custom formula validation
+}
+
+// Pivot Tables
+model PivotTable {
+  id            String              @id @default(cuid())
+  sheetId       String
+  name          String
+  sourceRange   String              // e.g., "A1:E100"
+  rowFields     String              // JSON array of column names for row grouping
+  columnFields  String?             // JSON array of column names for column grouping
+  valueFields   String              // JSON array: [{column: "Sales", aggregation: "SUM"}]
+  filters       String?             // JSON object for filters
+  config        String?             // JSON string for additional configuration
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  // Relations
+  sheet         Sheet               @relation(fields: [sheetId], references: [id], onDelete: Cascade)
+
+  @@index([sheetId])
+  @@map("pivot_tables")
+}
+
+enum AggregationType {
+  SUM
+  COUNT
+  AVERAGE
+  MIN
+  MAX
+  COUNT_DISTINCT
 }

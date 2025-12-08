@@ -12,6 +12,7 @@ import conditionalFormatRoutes from './routes/conditionalFormat.routes';
 import notificationRoutes from './routes/notification.routes';
 import chartRoutes from './routes/chart.routes';
 import dataValidationRoutes from './routes/dataValidation.routes';
+import pivotTableRoutes from './routes/pivotTable.routes';
 
 // Load environment variables
 dotenv.config();
@@ -47,6 +48,7 @@ app.use('/api/v1/conditional', conditionalFormatRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1', chartRoutes);
 app.use('/api/v1', dataValidationRoutes);
+app.use('/api/v1', pivotTableRoutes);
 
 // Error handling
 app.use(errorHandler);

@@ -349,3 +349,61 @@ export interface UpdateDataValidationInput {
   inputTitle?: string;
   inputMessage?: string;
 }
+
+// Pivot Table Types
+export type AggregationType = 'SUM' | 'COUNT' | 'AVERAGE' | 'MIN' | 'MAX' | 'COUNT_DISTINCT';
+
+export interface ValueField {
+  column: string;
+  aggregation: AggregationType;
+}
+
+export interface PivotTable {
+  id: string;
+  sheetId: string;
+  name: string;
+  sourceRange: string;
+  rowFields: string; // JSON array
+  columnFields?: string; // JSON array
+  valueFields: string; // JSON array
+  filters?: string; // JSON object
+  config?: string; // JSON object
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreatePivotTableInput {
+  name: string;
+  sourceRange: string;
+  rowFields: string[];
+  columnFields?: string[];
+  valueFields: ValueField[];
+  filters?: Record<string, string[]>;
+  config?: Record<string, unknown>;
+}
+
+export interface UpdatePivotTableInput {
+  name?: string;
+  sourceRange?: string;
+  rowFields?: string[];
+  columnFields?: string[];
+  valueFields?: ValueField[];
+  filters?: Record<string, string[]>;
+  config?: Record<string, unknown>;
+}
+
+export interface PivotTableComputedData {
+  pivotTable: PivotTable;
+  data: {
+    rows: Array<{
+      rowValues: Record<string, string>;
+      aggregations: Record<string, number | null>;
+      columnAggregations?: Record<string, Record<string, number | null>>;
+    }>;
+    columnValues: string[];
+    grandTotals: Record<string, number | null>;
+  };
+  rowFields: string[];
+  columnFields: string[];
+  valueFields: ValueField[];
+}

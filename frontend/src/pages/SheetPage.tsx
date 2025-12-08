@@ -9,6 +9,7 @@ import CommentsPanel from '../components/CommentsPanel';
 import ConditionalFormatPanel from '../components/ConditionalFormatPanel';
 import ChartPanel from '../components/ChartPanel';
 import DataValidationPanel from '../components/DataValidationPanel';
+import PivotTablePanel from '../components/PivotTablePanel';
 import SheetTable from '../components/SheetTable/SheetTable';
 import MenuBar from '../components/MenuBar';
 import Toolbar from '../components/Toolbar';
@@ -34,6 +35,7 @@ export default function SheetPage() {
   const [isConditionalFormatOpen, setIsConditionalFormatOpen] = useState(false);
   const [isChartPanelOpen, setIsChartPanelOpen] = useState(false);
   const [isDataValidationPanelOpen, setIsDataValidationPanelOpen] = useState(false);
+  const [isPivotTablePanelOpen, setIsPivotTablePanelOpen] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(100); // Zoom percentage (50-200%)
 
   // Cell formatting state (stored per cell ID)
@@ -1011,6 +1013,7 @@ export default function SheetPage() {
         onConditionalFormat={() => setIsConditionalFormatOpen(true)}
         onChart={() => setIsChartPanelOpen(true)}
         onDataValidation={() => setIsDataValidationPanelOpen(true)}
+        onPivotTable={() => setIsPivotTablePanelOpen(true)}
         isViewOnly={isViewOnly}
         frozenRows={frozenRows}
         frozenColumns={frozenColumns}
@@ -1308,6 +1311,18 @@ export default function SheetPage() {
         <DataValidationPanel
           sheetId={id!}
           onClose={() => setIsDataValidationPanelOpen(false)}
+        />
+      </RightSidebar>
+
+      <RightSidebar
+        isOpen={isPivotTablePanelOpen}
+        onClose={() => setIsPivotTablePanelOpen(false)}
+        title="Pivot Tables"
+        width="xl"
+      >
+        <PivotTablePanel
+          sheetId={id!}
+          onClose={() => setIsPivotTablePanelOpen(false)}
         />
       </RightSidebar>
     </div>

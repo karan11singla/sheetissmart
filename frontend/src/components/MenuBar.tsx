@@ -31,6 +31,7 @@ import {
   Palette,
   BarChart3,
   ShieldCheck,
+  Table2,
 } from 'lucide-react';
 
 interface MenuBarProps {
@@ -58,6 +59,7 @@ interface MenuBarProps {
   onConditionalFormat?: () => void;
   onChart?: () => void;
   onDataValidation?: () => void;
+  onPivotTable?: () => void;
   onSortAsc?: () => void;
   onSortDesc?: () => void;
   onFilter?: () => void;
@@ -115,6 +117,7 @@ export default function MenuBar({
   onConditionalFormat,
   onChart,
   onDataValidation,
+  onPivotTable,
   onSortAsc,
   onSortDesc,
   onFilter,
@@ -212,6 +215,7 @@ export default function MenuBar({
         { label: 'Column right', icon: <ArrowRightFromLine className="h-4 w-4" />, onClick: onInsertColumnRight, disabled: isViewOnly },
         { label: 'divider', divider: true },
         { label: 'Chart', icon: <BarChart3 className="h-4 w-4" />, onClick: onChart },
+        { label: 'Pivot table', icon: <Table2 className="h-4 w-4" />, onClick: onPivotTable },
       ],
     },
     {
