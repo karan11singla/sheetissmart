@@ -17,7 +17,7 @@ import FilterPanel from '../components/FilterPanel';
 import SearchPanel from '../components/SearchPanel';
 import type { Cell } from '../types';
 import { useUndoRedoStore } from '../store/undoRedoStore';
-import { UpdateCellCommand, AddRowCommand, AddColumnCommand, DeleteRowCommand, DeleteColumnCommand } from '../store/commands';
+import { UpdateCellCommand, AddRowCommand, AddColumnCommand, DeleteRowCommand, DeleteColumnCommand, UpdateCellFormatCommand } from '../store/commands';
 
 export default function SheetPage() {
   const { id } = useParams<{ id: string }>();
@@ -587,9 +587,51 @@ export default function SheetPage() {
     return row?.cells?.find((c) => c.columnId === column.id) || null;
   };
 
-  // Apply formatting to current cell or selection range
+  // Helper to convert CellFormat to UpdateCellInput
+  const formatToInput = (format: Partial<CellFormat>) => ({
+    textColor: format.color,
+    backgroundColor: format.backgroundColor,
+    fontSize: format.fontSize,
+    fontFamily: format.fontFamily,
+    bold: format.bold,
+    italic: format.italic,
+    underline: format.underline,
+    strikethrough: format.strikethrough,
+    textAlign: format.align,
+    verticalAlign: format.verticalAlign,
+    wrapText: format.wrap,
+    hasBorder: format.borderStyle === 'solid',
+    borderTop: format.borderTop,
+    borderBottom: format.borderBottom,
+    borderLeft: format.borderLeft,
+    borderRight: format.borderRight,
+    textRotation: format.textRotation,
+    numberFormat: format.numberFormat,
+    decimalPlaces: format.decimals,
+  });
+
+  // Helper to update local cell format state
+  const updateLocalFormat = (cellId: string, formatInput: { textColor?: string; backgroundColor?: string; bold?: boolean; italic?: boolean; underline?: boolean; strikethrough?: boolean; textAlign?: string; numberFormat?: string; decimalPlaces?: number }) => {
+    setCellFormats(prev => ({
+      ...prev,
+      [cellId]: {
+        ...prev[cellId],
+        color: formatInput.textColor,
+        backgroundColor: formatInput.backgroundColor,
+        bold: formatInput.bold,
+        italic: formatInput.italic,
+        underline: formatInput.underline,
+        strikethrough: formatInput.strikethrough,
+        align: formatInput.textAlign as 'left' | 'center' | 'right' | undefined,
+        numberFormat: formatInput.numberFormat as CellFormat['numberFormat'],
+        decimals: formatInput.decimalPlaces,
+      }
+    }));
+  };
+
+  // Apply formatting to current cell or selection range (with undo support)
   const applyFormat = async (format: Partial<CellFormat>) => {
-    if (!sheet?.rows || !sheet?.columns) return;
+    if (!sheet?.rows || !sheet?.columns || !id) return;
 
     // Get cells to format - either the selection range or just the current cell
     const cellsToFormat: Cell[] = [];
@@ -621,49 +663,28 @@ export default function SheetPage() {
 
     if (cellsToFormat.length === 0) return;
 
-    // Update local state and backend for all cells
-    const newFormats = { ...cellFormats };
-
+    // Execute format commands for each cell (with undo support)
     for (const cell of cellsToFormat) {
-      // Update local state - merge with existing formatting
-      const updatedFormat = {
-        ...cellFormats[cell.id],
-        ...format,
-      };
+      // Get current format and merge with new format
+      const currentFormat = cellFormats[cell.id] || {};
+      const updatedFormat = { ...currentFormat, ...format };
 
-      newFormats[cell.id] = updatedFormat;
-
-      // Save formatting to backend - send all formatting fields merged
       const cellValue = cell.value ? JSON.parse(cell.value) : '';
-      await sheetApi.updateCell(id!, cell.id, {
-        value: cellValue,
-        textColor: updatedFormat.color,
-        backgroundColor: updatedFormat.backgroundColor,
-        fontSize: updatedFormat.fontSize,
-        fontFamily: updatedFormat.fontFamily,
-        bold: updatedFormat.bold,
-        italic: updatedFormat.italic,
-        underline: updatedFormat.underline,
-        strikethrough: updatedFormat.strikethrough,
-        textAlign: updatedFormat.align,
-        verticalAlign: updatedFormat.verticalAlign,
-        wrapText: updatedFormat.wrap,
-        hasBorder: updatedFormat.borderStyle === 'solid',
-        borderTop: updatedFormat.borderTop,
-        borderBottom: updatedFormat.borderBottom,
-        borderLeft: updatedFormat.borderLeft,
-        borderRight: updatedFormat.borderRight,
-        textRotation: updatedFormat.textRotation,
-        numberFormat: updatedFormat.numberFormat,
-        decimalPlaces: updatedFormat.decimals,
-      });
+      const oldFormatInput = formatToInput(currentFormat);
+      const newFormatInput = formatToInput(updatedFormat);
+
+      // Create and execute the command
+      const command = new UpdateCellFormatCommand(
+        id,
+        cell.id,
+        cellValue,
+        oldFormatInput,
+        newFormatInput,
+        queryClient,
+        updateLocalFormat
+      );
+      executeCommand(command);
     }
-
-    // Update all formats at once
-    setCellFormats(newFormats);
-
-    // Invalidate queries to refresh the UI
-    queryClient.invalidateQueries({ queryKey: ['sheets', id] });
   };
 
   // Get current cell format

@@ -211,6 +211,52 @@ export class UpdateColumnCommand implements Command {
 }
 
 /**
+ * Update Cell Format Command
+ * Handles undo/redo for cell formatting changes (bold, italic, color, number format, etc.)
+ */
+export class UpdateCellFormatCommand implements Command {
+  description: string;
+
+  constructor(
+    private sheetId: string,
+    private cellId: string,
+    private cellValue: any,
+    private oldFormat: UpdateCellInput,
+    private newFormat: UpdateCellInput,
+    private queryClient: QueryClient,
+    private onLocalUpdate?: (cellId: string, format: UpdateCellInput) => void
+  ) {
+    // Build description from format changes
+    const changes: string[] = [];
+    if (newFormat.bold !== oldFormat.bold) changes.push(`bold: ${oldFormat.bold || false} → ${newFormat.bold}`);
+    if (newFormat.italic !== oldFormat.italic) changes.push(`italic: ${oldFormat.italic || false} → ${newFormat.italic}`);
+    if (newFormat.underline !== oldFormat.underline) changes.push(`underline: ${oldFormat.underline || false} → ${newFormat.underline}`);
+    if (newFormat.numberFormat !== oldFormat.numberFormat) changes.push(`format: ${oldFormat.numberFormat || 'general'} → ${newFormat.numberFormat}`);
+    if (newFormat.textColor !== oldFormat.textColor) changes.push(`color changed`);
+    if (newFormat.backgroundColor !== oldFormat.backgroundColor) changes.push(`bg color changed`);
+    this.description = changes.length > 0 ? `Format cell (${changes.join(', ')})` : 'Format cell';
+  }
+
+  async execute(): Promise<void> {
+    await sheetApi.updateCell(this.sheetId, this.cellId, {
+      value: this.cellValue,
+      ...this.newFormat
+    });
+    this.onLocalUpdate?.(this.cellId, this.newFormat);
+    this.queryClient.invalidateQueries({ queryKey: ['sheets', this.sheetId] });
+  }
+
+  async undo(): Promise<void> {
+    await sheetApi.updateCell(this.sheetId, this.cellId, {
+      value: this.cellValue,
+      ...this.oldFormat
+    });
+    this.onLocalUpdate?.(this.cellId, this.oldFormat);
+    this.queryClient.invalidateQueries({ queryKey: ['sheets', this.sheetId] });
+  }
+}
+
+/**
  * Update Row Command
  * Handles undo/redo for row updates (height, name changes)
  */
