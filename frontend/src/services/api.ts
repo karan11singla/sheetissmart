@@ -8,6 +8,9 @@ import type {
   UpdateCellInput,
   RowComment,
   CreateCommentInput,
+  ConditionalFormat,
+  CreateConditionalFormatInput,
+  UpdateConditionalFormatInput,
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
@@ -232,6 +235,28 @@ export const notificationApi = {
   markAllAsRead: async () => {
     const { data } = await api.post('/api/v1/notifications/mark-all-read');
     return data;
+  },
+};
+
+// Conditional Formatting API
+export const conditionalFormatApi = {
+  getAll: async (sheetId: string): Promise<ConditionalFormat[]> => {
+    const { data } = await api.get(`/api/v1/conditional/sheets/${sheetId}/formats`);
+    return data.data.formats;
+  },
+
+  create: async (sheetId: string, format: CreateConditionalFormatInput): Promise<ConditionalFormat> => {
+    const { data } = await api.post(`/api/v1/conditional/sheets/${sheetId}/formats`, format);
+    return data.data.format;
+  },
+
+  update: async (formatId: string, format: UpdateConditionalFormatInput): Promise<ConditionalFormat> => {
+    const { data } = await api.put(`/api/v1/conditional/formats/${formatId}`, format);
+    return data.data.format;
+  },
+
+  delete: async (formatId: string): Promise<void> => {
+    await api.delete(`/api/v1/conditional/formats/${formatId}`);
   },
 };
 

@@ -183,3 +183,54 @@ export interface Notification {
     };
   };
 }
+
+// Conditional Formatting Types
+export type FormatRuleType =
+  | 'CELL_VALUE'
+  | 'TEXT_CONTAINS'
+  | 'DATE_IS'
+  | 'DUPLICATE_VALUES'
+  | 'UNIQUE_VALUES'
+  | 'TOP_BOTTOM'
+  | 'ABOVE_BELOW_AVERAGE'
+  | 'FORMULA_CUSTOM';
+
+export interface ConditionalFormat {
+  id: string;
+  sheetId: string;
+  name: string;
+  ruleType: FormatRuleType;
+  condition: string; // JSON string
+  backgroundColor?: string;
+  textColor?: string;
+  bold: boolean;
+  italic: boolean;
+  priority: number;
+  range: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateConditionalFormatInput {
+  name: string;
+  ruleType: FormatRuleType;
+  condition: string;
+  backgroundColor?: string;
+  textColor?: string;
+  bold?: boolean;
+  italic?: boolean;
+  priority?: number;
+  range: string;
+}
+
+export interface UpdateConditionalFormatInput {
+  name?: string;
+  ruleType?: FormatRuleType;
+  condition?: string;
+  backgroundColor?: string;
+  textColor?: string;
+  bold?: boolean;
+  italic?: boolean;
+  priority?: number;
+  range?: string;
+}

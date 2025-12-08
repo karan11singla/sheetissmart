@@ -28,6 +28,7 @@ import {
   ZoomOut,
   Lock,
   Unlock,
+  Palette,
 } from 'lucide-react';
 
 interface MenuBarProps {
@@ -52,6 +53,7 @@ interface MenuBarProps {
   onAlignLeft?: () => void;
   onAlignCenter?: () => void;
   onAlignRight?: () => void;
+  onConditionalFormat?: () => void;
   onSortAsc?: () => void;
   onSortDesc?: () => void;
   onFilter?: () => void;
@@ -106,6 +108,7 @@ export default function MenuBar({
   onAlignLeft,
   onAlignCenter,
   onAlignRight,
+  onConditionalFormat,
   onSortAsc,
   onSortDesc,
   onFilter,
@@ -213,6 +216,8 @@ export default function MenuBar({
         { label: 'Align left', icon: <AlignLeft className="h-4 w-4" />, onClick: onAlignLeft, disabled: isViewOnly },
         { label: 'Align center', icon: <AlignCenter className="h-4 w-4" />, onClick: onAlignCenter, disabled: isViewOnly },
         { label: 'Align right', icon: <AlignRight className="h-4 w-4" />, onClick: onAlignRight, disabled: isViewOnly },
+        { label: 'divider', divider: true },
+        { label: 'Conditional formatting', icon: <Palette className="h-4 w-4" />, onClick: onConditionalFormat },
       ],
     },
     {

@@ -6,6 +6,7 @@ import { sheetApi } from '../services/api';
 import ShareModal from '../components/ShareModal';
 import RightSidebar from '../components/RightSidebar';
 import CommentsPanel from '../components/CommentsPanel';
+import ConditionalFormatPanel from '../components/ConditionalFormatPanel';
 import SheetTable from '../components/SheetTable/SheetTable';
 import MenuBar from '../components/MenuBar';
 import Toolbar from '../components/Toolbar';
@@ -28,6 +29,7 @@ export default function SheetPage() {
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
   const [isSearchPanelOpen, setIsSearchPanelOpen] = useState(false);
+  const [isConditionalFormatOpen, setIsConditionalFormatOpen] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(100); // Zoom percentage (50-200%)
 
   // Cell formatting state (stored per cell ID)
@@ -990,6 +992,7 @@ export default function SheetPage() {
         onAlignLeft={() => applyFormatting({ align: 'left' })}
         onAlignCenter={() => applyFormatting({ align: 'center' })}
         onAlignRight={() => applyFormatting({ align: 'right' })}
+        onConditionalFormat={() => setIsConditionalFormatOpen(true)}
         isViewOnly={isViewOnly}
         frozenRows={frozenRows}
         frozenColumns={frozenColumns}
@@ -1250,6 +1253,17 @@ export default function SheetPage() {
         <CommentsPanel
           sheetId={id!}
           rowId={selectedRowForComment}
+          isViewOnly={isViewOnly}
+        />
+      </RightSidebar>
+
+      <RightSidebar
+        isOpen={isConditionalFormatOpen}
+        onClose={() => setIsConditionalFormatOpen(false)}
+        title="Conditional formatting"
+      >
+        <ConditionalFormatPanel
+          sheetId={id!}
           isViewOnly={isViewOnly}
         />
       </RightSidebar>
