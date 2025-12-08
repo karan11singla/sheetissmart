@@ -30,10 +30,33 @@ interface CreateRowInput {
 }
 
 export async function createSheet(data: CreateSheetInput, userId: string) {
+  // Generate unique name if sheet with same name exists
+  let uniqueName = data.name;
+  const existingSheets = await prisma.sheet.findMany({
+    where: {
+      userId,
+      name: {
+        startsWith: data.name,
+      },
+    },
+    select: { name: true },
+  });
+
+  if (existingSheets.length > 0) {
+    const existingNames = new Set(existingSheets.map(s => s.name));
+    if (existingNames.has(data.name)) {
+      let counter = 1;
+      while (existingNames.has(`${data.name} (${counter})`)) {
+        counter++;
+      }
+      uniqueName = `${data.name} (${counter})`;
+    }
+  }
+
   // Create the sheet
   const sheet = await prisma.sheet.create({
     data: {
-      name: data.name,
+      name: uniqueName,
       description: data.description,
       userId,
     },
