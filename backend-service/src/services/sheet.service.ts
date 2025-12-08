@@ -697,6 +697,10 @@ export async function updateCell(
     verticalAlign?: string;
     wrapText?: boolean;
     hasBorder?: boolean;
+    borderTop?: boolean;
+    borderBottom?: boolean;
+    borderLeft?: boolean;
+    borderRight?: boolean;
     numberFormat?: string;
     decimalPlaces?: number;
   },
@@ -772,6 +776,10 @@ export async function updateCell(
       verticalAlign: data.verticalAlign,
       wrapText: data.wrapText,
       hasBorder: data.hasBorder,
+      borderTop: data.borderTop,
+      borderBottom: data.borderBottom,
+      borderLeft: data.borderLeft,
+      borderRight: data.borderRight,
       numberFormat: data.numberFormat,
       decimalPlaces: data.decimalPlaces,
     },

@@ -64,6 +64,10 @@ export interface Cell {
   verticalAlign?: string;
   wrapText?: boolean;
   hasBorder?: boolean;
+  borderTop?: boolean;
+  borderBottom?: boolean;
+  borderLeft?: boolean;
+  borderRight?: boolean;
   numberFormat?: string;
   decimalPlaces?: number;
   // Cell merge
@@ -120,6 +124,10 @@ export interface UpdateCellInput {
   verticalAlign?: string;
   wrapText?: boolean;
   hasBorder?: boolean;
+  borderTop?: boolean;
+  borderBottom?: boolean;
+  borderLeft?: boolean;
+  borderRight?: boolean;
   numberFormat?: string;
   decimalPlaces?: number;
 }

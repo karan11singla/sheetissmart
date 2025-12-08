@@ -330,6 +330,15 @@ export default function TableCell({
     ? formatDisplayValue(cellDisplayValue)
     : cellDisplayValue;
 
+  // Build border classes based on individual border settings
+  const borderClasses = [
+    cell?.hasBorder ? 'border border-slate-400' : '',
+    cell?.borderTop ? 'border-t border-t-slate-400' : '',
+    cell?.borderBottom ? 'border-b border-b-slate-400' : '',
+    cell?.borderLeft ? 'border-l border-l-slate-400' : '',
+    cell?.borderRight ? 'border-r border-r-slate-400' : '',
+  ].filter(Boolean).join(' ');
+
   return (
     <div
       ref={cellRef}
@@ -341,7 +350,7 @@ export default function TableCell({
         isSelected ? 'ring-2 ring-inset ring-blue-500 bg-blue-50/60' : ''
       } ${isInSelectionRange && !isSelected ? 'bg-blue-100/70 ring-1 ring-inset ring-blue-300' : ''} ${
         hasFormula && !cell?.bold && !cell?.italic ? 'italic text-indigo-700 font-medium' : ''
-      } ${cell?.hasBorder ? 'border border-slate-400' : ''}`}
+      } ${borderClasses}`}
       style={cellStyles}
       onClick={handleCellClick}
       onDoubleClick={handleDoubleClick}

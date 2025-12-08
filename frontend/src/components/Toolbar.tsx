@@ -48,6 +48,10 @@ interface CellFormat {
   numberFormat?: 'general' | 'number' | 'currency' | 'percentage' | 'date';
   decimals?: number;
   borderStyle?: 'none' | 'solid';
+  borderTop?: boolean;
+  borderBottom?: boolean;
+  borderLeft?: boolean;
+  borderRight?: boolean;
   wrap?: boolean;
 }
 
@@ -513,16 +517,48 @@ export default function Toolbar({
           disabled={isViewOnly || !hasSelection}
         >
           <button
-            onClick={() => onFormatChange({ borderStyle: 'solid' })}
+            onClick={() => onFormatChange({ borderStyle: 'solid', borderTop: true, borderBottom: true, borderLeft: true, borderRight: true })}
             className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 flex items-center gap-2"
           >
             <Grid3X3 className="h-4 w-4" /> All borders
           </button>
           <button
-            onClick={() => onFormatChange({ borderStyle: 'none' })}
+            onClick={() => onFormatChange({ borderStyle: 'none', borderTop: false, borderBottom: false, borderLeft: false, borderRight: false })}
             className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 flex items-center gap-2"
           >
             <div className="h-4 w-4 border border-dashed border-slate-300" /> No borders
+          </button>
+          <div className="border-t border-slate-200 my-1" />
+          <button
+            onClick={() => onFormatChange({ borderTop: true, borderBottom: false, borderLeft: false, borderRight: false })}
+            className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 flex items-center gap-2"
+          >
+            <div className="h-4 w-4 border-t-2 border-slate-600" /> Top border
+          </button>
+          <button
+            onClick={() => onFormatChange({ borderTop: false, borderBottom: true, borderLeft: false, borderRight: false })}
+            className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 flex items-center gap-2"
+          >
+            <div className="h-4 w-4 border-b-2 border-slate-600" /> Bottom border
+          </button>
+          <button
+            onClick={() => onFormatChange({ borderTop: false, borderBottom: false, borderLeft: true, borderRight: false })}
+            className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 flex items-center gap-2"
+          >
+            <div className="h-4 w-4 border-l-2 border-slate-600" /> Left border
+          </button>
+          <button
+            onClick={() => onFormatChange({ borderTop: false, borderBottom: false, borderLeft: false, borderRight: true })}
+            className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 flex items-center gap-2"
+          >
+            <div className="h-4 w-4 border-r-2 border-slate-600" /> Right border
+          </button>
+          <div className="border-t border-slate-200 my-1" />
+          <button
+            onClick={() => onFormatChange({ borderTop: true, borderBottom: true, borderLeft: true, borderRight: true })}
+            className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 flex items-center gap-2"
+          >
+            <div className="h-4 w-4 border-2 border-slate-600" /> Outside borders
           </button>
         </ToolbarDropdown>
 

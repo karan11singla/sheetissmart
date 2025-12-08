@@ -45,8 +45,10 @@ export default function SheetPage() {
     numberFormat?: 'general' | 'number' | 'currency' | 'percentage' | 'date';
     decimals?: number;
     borderStyle?: 'none' | 'solid';
-    borderColor?: string;
-    borderWidth?: string;
+    borderTop?: boolean;
+    borderBottom?: boolean;
+    borderLeft?: boolean;
+    borderRight?: boolean;
     wrap?: boolean;
   };
   const [cellFormats, setCellFormats] = useState<Record<string, CellFormat>>({});
@@ -305,6 +307,10 @@ export default function SheetPage() {
           cell.verticalAlign ||
           cell.wrapText ||
           cell.hasBorder ||
+          cell.borderTop ||
+          cell.borderBottom ||
+          cell.borderLeft ||
+          cell.borderRight ||
           cell.numberFormat ||
           cell.decimalPlaces !== undefined
         ) {
@@ -321,6 +327,10 @@ export default function SheetPage() {
             verticalAlign: cell.verticalAlign as 'top' | 'middle' | 'bottom',
             wrap: cell.wrapText,
             borderStyle: cell.hasBorder ? 'solid' : 'none',
+            borderTop: cell.borderTop,
+            borderBottom: cell.borderBottom,
+            borderLeft: cell.borderLeft,
+            borderRight: cell.borderRight,
             numberFormat: cell.numberFormat as 'general' | 'number' | 'currency' | 'percentage' | 'date',
             decimals: cell.decimalPlaces,
           };
@@ -612,6 +622,10 @@ export default function SheetPage() {
         verticalAlign: updatedFormat.verticalAlign,
         wrapText: updatedFormat.wrap,
         hasBorder: updatedFormat.borderStyle === 'solid',
+        borderTop: updatedFormat.borderTop,
+        borderBottom: updatedFormat.borderBottom,
+        borderLeft: updatedFormat.borderLeft,
+        borderRight: updatedFormat.borderRight,
         numberFormat: updatedFormat.numberFormat,
         decimalPlaces: updatedFormat.decimals,
       });

@@ -113,6 +113,10 @@ model Cell {
   verticalAlign  String?  @default("middle") // "top", "middle", "bottom"
   wrapText       Boolean  @default(false)
   hasBorder      Boolean  @default(false)
+  borderTop      Boolean  @default(false)
+  borderBottom   Boolean  @default(false)
+  borderLeft     Boolean  @default(false)
+  borderRight    Boolean  @default(false)
   numberFormat   String?  @default("general") // "general", "number", "currency", "percentage", "date"
   decimalPlaces  Int?     @default(2)
 
