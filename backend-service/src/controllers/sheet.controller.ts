@@ -3,7 +3,7 @@ import { asyncHandler, AppError } from '../middleware/errorHandler';
 import * as sheetService from '../services/sheet.service';
 
 export const createSheet = asyncHandler(async (req: Request, res: Response) => {
-  const { name, description } = req.body;
+  const { name, description, template } = req.body;
 
   if (!name) {
     throw new AppError('Sheet name is required', 400);
@@ -13,7 +13,7 @@ export const createSheet = asyncHandler(async (req: Request, res: Response) => {
     throw new AppError('Not authenticated', 401);
   }
 
-  const sheet = await sheetService.createSheet({ name, description }, req.user.userId);
+  const sheet = await sheetService.createSheet({ name, description, template }, req.user.userId);
 
   res.status(201).json({
     status: 'success',
