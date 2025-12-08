@@ -92,6 +92,10 @@ export enum ColumnType {
 export interface CreateSheetInput {
   name: string;
   description?: string;
+  template?: {
+    columns: string[];
+    rows?: number;
+  };
 }
 
 export interface UpdateSheetInput {

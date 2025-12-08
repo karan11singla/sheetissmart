@@ -6,6 +6,10 @@ import crypto from 'crypto';
 interface CreateSheetInput {
   name: string;
   description?: string;
+  template?: {
+    columns: string[];  // Column names for template
+    rows?: number;      // Number of initial rows (default 10)
+  };
 }
 
 interface UpdateSheetInput {
@@ -46,13 +50,17 @@ export async function createSheet(data: CreateSheetInput, userId: string) {
     return letter;
   };
 
-  // Create 10 default columns (A, B, C, ..., J)
+  // Determine column names: use template columns if provided, otherwise default A-J
+  const columnNames = data.template?.columns || Array.from({ length: 10 }, (_, i) => getColumnLetter(i));
+  const numRows = data.template?.rows || 10;
+
+  // Create columns with template or default names
   const columns = await Promise.all(
-    Array.from({ length: 10 }, (_, i) =>
+    columnNames.map((name, i) =>
       prisma.column.create({
         data: {
           sheetId: sheet.id,
-          name: getColumnLetter(i),
+          name: name,
           type: 'TEXT',
           position: i,
           width: 150,
@@ -61,9 +69,9 @@ export async function createSheet(data: CreateSheetInput, userId: string) {
     )
   );
 
-  // Create 10 default rows
+  // Create rows
   const rows = await Promise.all(
-    Array.from({ length: 10 }, (_, i) =>
+    Array.from({ length: numRows }, (_, i) =>
       prisma.row.create({
         data: {
           sheetId: sheet.id,
@@ -74,7 +82,7 @@ export async function createSheet(data: CreateSheetInput, userId: string) {
     )
   );
 
-  // Create cells for all rows and columns (10x10 = 100 cells)
+  // Create cells for all rows and columns
   const cellsData = rows.flatMap((row) =>
     columns.map((column) => ({
       sheetId: sheet.id,

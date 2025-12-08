@@ -1,9 +1,49 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { Plus, FileText, Trash2, Clock, Share2, Star } from 'lucide-react';
+import { Plus, FileText, Trash2, Clock, Share2, Star, ClipboardList, DollarSign, Calendar, Package } from 'lucide-react';
 import { sheetApi } from '../services/api';
 import type { Sheet, CreateSheetInput } from '../types';
+
+// Sheet templates
+const TEMPLATES = [
+  {
+    id: 'project-tracker',
+    name: 'Project Tracker',
+    description: 'Track tasks, assignees, and deadlines',
+    icon: ClipboardList,
+    color: 'bg-blue-500',
+    columns: ['Task', 'Status', 'Priority', 'Assignee', 'Due Date', 'Notes'],
+    rows: 15,
+  },
+  {
+    id: 'budget',
+    name: 'Budget Tracker',
+    description: 'Manage income and expenses',
+    icon: DollarSign,
+    color: 'bg-green-500',
+    columns: ['Category', 'Description', 'Amount', 'Date', 'Type', 'Notes'],
+    rows: 20,
+  },
+  {
+    id: 'content-calendar',
+    name: 'Content Calendar',
+    description: 'Plan and schedule content',
+    icon: Calendar,
+    color: 'bg-purple-500',
+    columns: ['Title', 'Platform', 'Publish Date', 'Status', 'Author', 'Notes'],
+    rows: 15,
+  },
+  {
+    id: 'inventory',
+    name: 'Inventory',
+    description: 'Track stock and supplies',
+    icon: Package,
+    color: 'bg-orange-500',
+    columns: ['Item Name', 'SKU', 'Quantity', 'Price', 'Category', 'Supplier'],
+    rows: 25,
+  },
+];
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -52,6 +92,17 @@ export default function HomePage() {
     }
   };
 
+  const handleCreateFromTemplate = (template: typeof TEMPLATES[0]) => {
+    createMutation.mutate({
+      name: template.name,
+      description: template.description,
+      template: {
+        columns: template.columns,
+        rows: template.rows,
+      },
+    });
+  };
+
   const ownedSheets = sheets?.filter((s: any) => s.isOwner !== false) || [];
   const sharedSheets = sheets?.filter((s: any) => s.isShared) || [];
 
@@ -84,6 +135,48 @@ export default function HomePage() {
             <Plus className="h-5 w-5 mr-2" />
             New Sheet
           </button>
+        </div>
+
+        {/* Templates Section */}
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Start from a template</h2>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+            {/* Blank sheet option */}
+            <button
+              onClick={() => setIsCreating(true)}
+              className="relative group p-4 rounded-lg border-2 border-dashed border-gray-300 hover:border-blue-500 hover:bg-blue-50/50 transition-all text-left"
+            >
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-gray-100 rounded-lg group-hover:bg-blue-100 transition-colors">
+                  <Plus className="h-5 w-5 text-gray-600 group-hover:text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-gray-900">Blank Sheet</h3>
+                  <p className="text-xs text-gray-500">Start fresh</p>
+                </div>
+              </div>
+            </button>
+
+            {/* Template cards */}
+            {TEMPLATES.map((template) => (
+              <button
+                key={template.id}
+                onClick={() => handleCreateFromTemplate(template)}
+                disabled={createMutation.isPending}
+                className="relative group p-4 rounded-lg border border-gray-200 hover:border-blue-500 hover:shadow-md transition-all text-left bg-white disabled:opacity-50"
+              >
+                <div className="flex items-center space-x-3">
+                  <div className={`p-2 ${template.color} rounded-lg`}>
+                    <template.icon className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-900">{template.name}</h3>
+                    <p className="text-xs text-gray-500 line-clamp-1">{template.description}</p>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* My Sheets */}
