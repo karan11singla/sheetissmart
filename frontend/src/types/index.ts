@@ -68,6 +68,7 @@ export interface Cell {
   borderBottom?: boolean;
   borderLeft?: boolean;
   borderRight?: boolean;
+  textRotation?: number;
   numberFormat?: string;
   decimalPlaces?: number;
   // Cell merge
@@ -128,6 +129,7 @@ export interface UpdateCellInput {
   borderBottom?: boolean;
   borderLeft?: boolean;
   borderRight?: boolean;
+  textRotation?: number;
   numberFormat?: string;
   decimalPlaces?: number;
 }

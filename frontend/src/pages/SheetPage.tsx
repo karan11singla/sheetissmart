@@ -49,6 +49,7 @@ export default function SheetPage() {
     borderBottom?: boolean;
     borderLeft?: boolean;
     borderRight?: boolean;
+    textRotation?: number;
     wrap?: boolean;
   };
   const [cellFormats, setCellFormats] = useState<Record<string, CellFormat>>({});
@@ -73,6 +74,10 @@ export default function SheetPage() {
     isCut: boolean;
   };
   const [clipboard, setClipboard] = useState<ClipboardData | null>(null);
+
+  // Format painter state
+  const [isFormatPainterActive, setIsFormatPainterActive] = useState(false);
+  const [formatPainterFormat, setFormatPainterFormat] = useState<CellFormat | null>(null);
 
   const { data: sheet, isLoading } = useQuery({
     queryKey: ['sheets', id],
@@ -311,6 +316,7 @@ export default function SheetPage() {
           cell.borderBottom ||
           cell.borderLeft ||
           cell.borderRight ||
+          cell.textRotation ||
           cell.numberFormat ||
           cell.decimalPlaces !== undefined
         ) {
@@ -331,6 +337,7 @@ export default function SheetPage() {
             borderBottom: cell.borderBottom,
             borderLeft: cell.borderLeft,
             borderRight: cell.borderRight,
+            textRotation: cell.textRotation,
             numberFormat: cell.numberFormat as 'general' | 'number' | 'currency' | 'percentage' | 'date',
             decimals: cell.decimalPlaces,
           };
@@ -626,6 +633,7 @@ export default function SheetPage() {
         borderBottom: updatedFormat.borderBottom,
         borderLeft: updatedFormat.borderLeft,
         borderRight: updatedFormat.borderRight,
+        textRotation: updatedFormat.textRotation,
         numberFormat: updatedFormat.numberFormat,
         decimalPlaces: updatedFormat.decimals,
       });
@@ -654,6 +662,125 @@ export default function SheetPage() {
       ...prev,
       [cell.id]: { ...prev[cell.id], ...format }
     }));
+  };
+
+  // Format painter - copy formatting from selected cell
+  const handleFormatPainterClick = () => {
+    if (isFormatPainterActive) {
+      // Turn off format painter
+      setIsFormatPainterActive(false);
+      setFormatPainterFormat(null);
+    } else {
+      // Turn on format painter and store current format
+      const currentFormat = getCurrentFormat();
+      setFormatPainterFormat(currentFormat);
+      setIsFormatPainterActive(true);
+    }
+  };
+
+  // Apply format painter format to a cell
+  const applyFormatPainter = async (targetCell: Cell) => {
+    if (!formatPainterFormat || !id) return;
+
+    // Apply the stored format to the target cell
+    const cellValue = targetCell.value ? JSON.parse(targetCell.value) : '';
+    await sheetApi.updateCell(id, targetCell.id, {
+      value: cellValue,
+      textColor: formatPainterFormat.color,
+      backgroundColor: formatPainterFormat.backgroundColor,
+      fontSize: formatPainterFormat.fontSize,
+      fontFamily: formatPainterFormat.fontFamily,
+      bold: formatPainterFormat.bold,
+      italic: formatPainterFormat.italic,
+      underline: formatPainterFormat.underline,
+      strikethrough: formatPainterFormat.strikethrough,
+      textAlign: formatPainterFormat.align,
+      verticalAlign: formatPainterFormat.verticalAlign,
+      wrapText: formatPainterFormat.wrap,
+      hasBorder: formatPainterFormat.borderStyle === 'solid',
+      borderTop: formatPainterFormat.borderTop,
+      borderBottom: formatPainterFormat.borderBottom,
+      borderLeft: formatPainterFormat.borderLeft,
+      borderRight: formatPainterFormat.borderRight,
+      textRotation: formatPainterFormat.textRotation,
+      numberFormat: formatPainterFormat.numberFormat,
+      decimalPlaces: formatPainterFormat.decimals,
+    });
+
+    // Update local state
+    setCellFormats(prev => ({
+      ...prev,
+      [targetCell.id]: formatPainterFormat,
+    }));
+
+    // Turn off format painter after use
+    setIsFormatPainterActive(false);
+    setFormatPainterFormat(null);
+
+    // Refresh data
+    queryClient.invalidateQueries({ queryKey: ['sheets', id] });
+  };
+
+  // Clear formatting from selected cell(s)
+  const handleClearFormatting = async () => {
+    if (!sheet?.rows || !sheet?.columns || isViewOnly) return;
+
+    const cellsToUpdate: Cell[] = [];
+
+    if (selectionRange) {
+      // Clear formatting for all cells in range
+      const startRow = Math.min(selectionRange.start.rowIndex, selectionRange.end.rowIndex);
+      const endRow = Math.max(selectionRange.start.rowIndex, selectionRange.end.rowIndex);
+      const startCol = Math.min(selectionRange.start.colIndex, selectionRange.end.colIndex);
+      const endCol = Math.max(selectionRange.start.colIndex, selectionRange.end.colIndex);
+
+      for (let r = startRow; r <= endRow; r++) {
+        for (let c = startCol; c <= endCol; c++) {
+          const row = filteredAndSortedRows[r];
+          const column = sheet.columns[c];
+          const cell = row?.cells?.find((cell) => cell.columnId === column.id);
+          if (cell) cellsToUpdate.push(cell);
+        }
+      }
+    } else {
+      const cell = getCurrentCell();
+      if (cell) cellsToUpdate.push(cell);
+    }
+
+    // Clear formatting for each cell
+    for (const cell of cellsToUpdate) {
+      const cellValue = cell.value ? JSON.parse(cell.value) : '';
+      await sheetApi.updateCell(id!, cell.id, {
+        value: cellValue,
+        textColor: undefined,
+        backgroundColor: undefined,
+        fontSize: undefined,
+        fontFamily: undefined,
+        bold: false,
+        italic: false,
+        underline: false,
+        strikethrough: false,
+        textAlign: 'left',
+        verticalAlign: 'middle',
+        wrapText: false,
+        hasBorder: false,
+        borderTop: false,
+        borderBottom: false,
+        borderLeft: false,
+        borderRight: false,
+        textRotation: 0,
+        numberFormat: 'general',
+        decimalPlaces: 2,
+      });
+
+      setCellFormats(prev => {
+        const newFormats = { ...prev };
+        delete newFormats[cell.id];
+        return newFormats;
+      });
+    }
+
+    queryClient.invalidateQueries({ queryKey: ['sheets', id] });
   };
 
   // Delete selection (cell content or multiple cells)
@@ -936,6 +1063,9 @@ export default function SheetPage() {
         onMergeCells={handleMergeCells}
         onUnmergeCells={handleUnmergeCells}
         isMerged={isCurrentCellMerged()}
+        onFormatPainterClick={handleFormatPainterClick}
+        isFormatPainterActive={isFormatPainterActive}
+        onClearFormatting={handleClearFormatting}
         isViewOnly={isViewOnly}
         onInsertComment={() => {
           if (selectedCell && filteredAndSortedRows[selectedCell.rowIndex]) {
@@ -1020,7 +1150,18 @@ export default function SheetPage() {
           isViewOnly={isViewOnly}
           frozenRows={frozenRows}
           frozenColumns={frozenColumns}
-        onCellSelect={(position) => setSelectedCell(position)}
+        onCellSelect={(position) => {
+          // If format painter is active, apply the format to the clicked cell
+          if (isFormatPainterActive && formatPainterFormat && position) {
+            const row = filteredAndSortedRows[position.rowIndex];
+            const column = sheet?.columns?.[position.colIndex];
+            const cell = row?.cells?.find((c) => c.columnId === column?.id);
+            if (cell) {
+              applyFormatPainter(cell);
+            }
+          }
+          setSelectedCell(position);
+        }}
         onCellUpdate={(cellId: string, value: any) => {
           // Find the current cell value for undo
           const cell = sheet.rows

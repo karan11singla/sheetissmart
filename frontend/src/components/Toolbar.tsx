@@ -24,6 +24,7 @@ import {
   AlignVerticalJustifyEnd,
   WrapText,
   RotateCcw,
+  Eraser,
   Link,
   MessageSquare,
   BarChart3,
@@ -52,6 +53,7 @@ interface CellFormat {
   borderBottom?: boolean;
   borderLeft?: boolean;
   borderRight?: boolean;
+  textRotation?: number;
   wrap?: boolean;
 }
 
@@ -74,6 +76,11 @@ interface ToolbarProps {
   onMergeCells?: () => void;
   onUnmergeCells?: () => void;
   isMerged?: boolean;
+
+  // Format painter
+  onFormatPainterClick?: () => void;
+  isFormatPainterActive?: boolean;
+  onClearFormatting?: () => void;
 
   // Other actions
   onPrint?: () => void;
@@ -178,6 +185,9 @@ export default function Toolbar({
   onMergeCells,
   onUnmergeCells,
   isMerged,
+  onFormatPainterClick,
+  isFormatPainterActive,
+  onClearFormatting,
   onPrint,
   onInsertLink,
   onInsertComment,
@@ -248,7 +258,17 @@ export default function Toolbar({
         {/* Format Painter */}
         <IconButton
           icon={<Paintbrush className="h-4 w-4" />}
-          title="Format painter"
+          title="Format painter (copy formatting)"
+          onClick={onFormatPainterClick}
+          active={isFormatPainterActive}
+          disabled={isViewOnly || !hasSelection}
+        />
+
+        {/* Clear Formatting */}
+        <IconButton
+          icon={<Eraser className="h-4 w-4" />}
+          title="Clear formatting"
+          onClick={onClearFormatting}
           disabled={isViewOnly || !hasSelection}
         />
 
@@ -686,11 +706,56 @@ export default function Toolbar({
         />
 
         {/* Text rotation */}
-        <IconButton
-          icon={<RotateCcw className="h-4 w-4" />}
-          title="Text rotation"
+        <ToolbarDropdown
+          trigger={
+            <div className="flex items-center p-1.5 hover:bg-slate-100 rounded">
+              <RotateCcw className="h-4 w-4 text-slate-600" />
+              <ChevronDown className="h-3 w-3 ml-0.5 text-slate-400" />
+            </div>
+          }
           disabled={isViewOnly || !hasSelection}
-        />
+        >
+          <button
+            onClick={() => onFormatChange({ textRotation: 0 })}
+            className={`w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 flex items-center gap-2 ${
+              (currentFormat.textRotation || 0) === 0 ? 'bg-blue-50 text-blue-700' : ''
+            }`}
+          >
+            <span className="w-4 text-center">—</span> None
+          </button>
+          <button
+            onClick={() => onFormatChange({ textRotation: -45 })}
+            className={`w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 flex items-center gap-2 ${
+              currentFormat.textRotation === -45 ? 'bg-blue-50 text-blue-700' : ''
+            }`}
+          >
+            <span className="w-4 text-center transform -rotate-45">↗</span> Tilt up
+          </button>
+          <button
+            onClick={() => onFormatChange({ textRotation: 45 })}
+            className={`w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 flex items-center gap-2 ${
+              currentFormat.textRotation === 45 ? 'bg-blue-50 text-blue-700' : ''
+            }`}
+          >
+            <span className="w-4 text-center transform rotate-45">↘</span> Tilt down
+          </button>
+          <button
+            onClick={() => onFormatChange({ textRotation: -90 })}
+            className={`w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 flex items-center gap-2 ${
+              currentFormat.textRotation === -90 ? 'bg-blue-50 text-blue-700' : ''
+            }`}
+          >
+            <span className="w-4 text-center">↑</span> Vertical up
+          </button>
+          <button
+            onClick={() => onFormatChange({ textRotation: 90 })}
+            className={`w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 flex items-center gap-2 ${
+              currentFormat.textRotation === 90 ? 'bg-blue-50 text-blue-700' : ''
+            }`}
+          >
+            <span className="w-4 text-center">↓</span> Vertical down
+          </button>
+        </ToolbarDropdown>
 
         <Separator />
 

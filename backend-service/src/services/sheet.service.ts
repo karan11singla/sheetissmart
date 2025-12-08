@@ -701,6 +701,7 @@ export async function updateCell(
     borderBottom?: boolean;
     borderLeft?: boolean;
     borderRight?: boolean;
+    textRotation?: number;
     numberFormat?: string;
     decimalPlaces?: number;
   },
@@ -780,6 +781,7 @@ export async function updateCell(
       borderBottom: data.borderBottom,
       borderLeft: data.borderLeft,
       borderRight: data.borderRight,
+      textRotation: data.textRotation,
       numberFormat: data.numberFormat,
       decimalPlaces: data.decimalPlaces,
     },

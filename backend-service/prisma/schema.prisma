@@ -117,6 +117,7 @@ model Cell {
   borderBottom   Boolean  @default(false)
   borderLeft     Boolean  @default(false)
   borderRight    Boolean  @default(false)
+  textRotation   Int?     @default(0) // Rotation in degrees (-90 to 90)
   numberFormat   String?  @default("general") // "general", "number", "currency", "percentage", "date"
   decimalPlaces  Int?     @default(2)
 

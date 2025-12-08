@@ -297,6 +297,13 @@ export default function TableCell({
     alignItems: verticalAlignStyle,
   };
 
+  // Text rotation style
+  const textRotationStyle: React.CSSProperties = cell?.textRotation ? {
+    transform: `rotate(${cell.textRotation}deg)`,
+    transformOrigin: 'center center',
+    whiteSpace: cell.textRotation === 90 || cell.textRotation === -90 ? 'nowrap' : undefined,
+  } : {};
+
   // Build text formatting classes
   const textFormatClasses = [
     cell?.bold ? 'font-bold' : '',
@@ -358,7 +365,10 @@ export default function TableCell({
       onMouseDown={handleMouseDown}
       onMouseEnter={handleMouseEnter}
     >
-      <div className={`${cell?.wrapText ? 'whitespace-normal break-words' : 'truncate'} ${textFormatClasses}`}>
+      <div
+        className={`${cell?.wrapText ? 'whitespace-normal break-words' : 'truncate'} ${textFormatClasses}`}
+        style={textRotationStyle}
+      >
         {formattedDisplayValue}
       </div>
       {isSelected && !isEditing && !isViewOnly && (
