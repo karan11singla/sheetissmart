@@ -952,9 +952,9 @@ export default function SheetPage() {
   }
 
   return (
-    <div className="h-full flex flex-col bg-gradient-to-br from-slate-50 via-white to-slate-50">
-      {/* Fixed Header Section - stays at top */}
-      <div className="flex-shrink-0 z-40 bg-white">
+    <div className="h-full flex flex-col overflow-hidden bg-gradient-to-br from-slate-50 via-white to-slate-50">
+      {/* Fixed Header Section - stays at top, never scrolls */}
+      <div className="flex-shrink-0 z-40 bg-white border-b border-slate-200">
         {/* Modern Header Bar */}
         <div className="border-b border-slate-200 shadow-sm">
         <div className="flex items-center justify-between px-4 sm:px-6 h-16">
@@ -1185,12 +1185,11 @@ export default function SheetPage() {
         </div>
       )}
 
-      {/* Modern Sheet Grid with Zoom */}
+      {/* Modern Sheet Grid with Zoom - using CSS zoom to preserve sticky positioning */}
       <div
-        className="flex-1 min-h-0 origin-top-left"
+        className="flex-1 min-h-0 overflow-auto"
         style={{
-          transform: `scale(${zoomLevel / 100})`,
-          transformOrigin: 'top left',
+          zoom: zoomLevel / 100,
         }}
       >
         <SheetTable

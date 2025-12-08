@@ -304,9 +304,9 @@ export default function SheetTable({
   }, [onRowUpdate]);
 
   return (
-    <div className="h-full overflow-auto bg-white">
-      {/* Table with sticky headers */}
-      <table className="border-collapse relative">
+    <div className="bg-white">
+      {/* Table with sticky headers - scroll handled by parent */}
+      <table className="border-collapse">
               {/* Header */}
               <thead>
                 <tr>
