@@ -312,16 +312,46 @@ export default function TableCell({
     cell?.strikethrough ? 'line-through' : '',
   ].filter(Boolean).join(' ');
 
-  // Format number value based on numberFormat
+  // Format value based on numberFormat
   const formatDisplayValue = (val: string | number): string => {
     if (!val && val !== 0) return '';
-    const numVal = typeof val === 'string' ? parseFloat(val) : val;
 
+    const format = cell?.numberFormat;
+
+    // Handle date formats
+    if (format && format.startsWith('date')) {
+      // Try to parse as date
+      const dateVal = new Date(val);
+      if (!isNaN(dateVal.getTime())) {
+        switch (format) {
+          case 'date_short': // 1/15/2024
+            return dateVal.toLocaleDateString('en-US');
+          case 'date_medium': // Jan 15, 2024
+            return dateVal.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+          case 'date_long': // January 15, 2024
+            return dateVal.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+          case 'date_iso': // 2024-01-15
+            return dateVal.toISOString().split('T')[0];
+          case 'date_time': // 1/15/2024 2:30 PM
+            return dateVal.toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' });
+          case 'date_time_long': // January 15, 2024 at 2:30 PM
+            return dateVal.toLocaleString('en-US', { dateStyle: 'long', timeStyle: 'short' });
+          case 'date': // default date format
+            return dateVal.toLocaleDateString('en-US');
+          default:
+            return String(val);
+        }
+      }
+      return String(val);
+    }
+
+    // Handle number formats
+    const numVal = typeof val === 'string' ? parseFloat(val) : val;
     if (isNaN(numVal)) return String(val);
 
     const decimals = cell?.decimalPlaces ?? 2;
 
-    switch (cell?.numberFormat) {
+    switch (format) {
       case 'currency':
         return `$${numVal.toFixed(decimals)}`;
       case 'percentage':

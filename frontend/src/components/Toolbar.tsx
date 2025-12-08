@@ -46,7 +46,7 @@ interface CellFormat {
   fontFamily?: string;
   color?: string;
   backgroundColor?: string;
-  numberFormat?: 'general' | 'number' | 'currency' | 'percentage' | 'date';
+  numberFormat?: 'general' | 'number' | 'currency' | 'percentage' | 'date' | 'date_short' | 'date_medium' | 'date_long' | 'date_iso' | 'date_time' | 'date_time_long';
   decimals?: number;
   borderStyle?: 'none' | 'solid';
   borderTop?: boolean;
@@ -346,35 +346,72 @@ export default function Toolbar({
           }
           disabled={isViewOnly || !hasSelection}
         >
+          <div className="px-3 py-1 text-xs font-medium text-slate-500 uppercase tracking-wide">General</div>
           <button
             onClick={() => onFormatChange({ numberFormat: 'general' })}
             className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100"
           >
             Automatic
           </button>
+          <div className="border-t border-slate-200 my-1" />
+          <div className="px-3 py-1 text-xs font-medium text-slate-500 uppercase tracking-wide">Number</div>
           <button
             onClick={() => onFormatChange({ numberFormat: 'number' })}
             className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100"
           >
-            Number
+            Number (1,234.56)
           </button>
           <button
             onClick={() => onFormatChange({ numberFormat: 'currency' })}
             className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100"
           >
-            Currency
+            Currency ($1,234.56)
           </button>
           <button
             onClick={() => onFormatChange({ numberFormat: 'percentage' })}
             className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100"
           >
-            Percent
+            Percent (12.34%)
           </button>
+          <div className="border-t border-slate-200 my-1" />
+          <div className="px-3 py-1 text-xs font-medium text-slate-500 uppercase tracking-wide">Date</div>
           <button
-            onClick={() => onFormatChange({ numberFormat: 'date' })}
+            onClick={() => onFormatChange({ numberFormat: 'date_short' })}
             className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100"
           >
-            Date
+            1/15/2024
+          </button>
+          <button
+            onClick={() => onFormatChange({ numberFormat: 'date_medium' })}
+            className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100"
+          >
+            Jan 15, 2024
+          </button>
+          <button
+            onClick={() => onFormatChange({ numberFormat: 'date_long' })}
+            className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100"
+          >
+            January 15, 2024
+          </button>
+          <button
+            onClick={() => onFormatChange({ numberFormat: 'date_iso' })}
+            className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100"
+          >
+            2024-01-15 (ISO)
+          </button>
+          <div className="border-t border-slate-200 my-1" />
+          <div className="px-3 py-1 text-xs font-medium text-slate-500 uppercase tracking-wide">Date & Time</div>
+          <button
+            onClick={() => onFormatChange({ numberFormat: 'date_time' })}
+            className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100"
+          >
+            1/15/2024 2:30 PM
+          </button>
+          <button
+            onClick={() => onFormatChange({ numberFormat: 'date_time_long' })}
+            className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100"
+          >
+            January 15, 2024 at 2:30 PM
           </button>
         </ToolbarDropdown>
 

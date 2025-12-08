@@ -44,7 +44,7 @@ export default function SheetPage() {
     fontFamily?: string;
     color?: string;
     backgroundColor?: string;
-    numberFormat?: 'general' | 'number' | 'currency' | 'percentage' | 'date';
+    numberFormat?: 'general' | 'number' | 'currency' | 'percentage' | 'date' | 'date_short' | 'date_medium' | 'date_long' | 'date_iso' | 'date_time' | 'date_time_long';
     decimals?: number;
     borderStyle?: 'none' | 'solid';
     borderTop?: boolean;
