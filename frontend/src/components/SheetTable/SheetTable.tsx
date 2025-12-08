@@ -304,12 +304,10 @@ export default function SheetTable({
   }, [onRowUpdate]);
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Table */}
-      <div className="flex-1 overflow-auto p-6">
-        <div className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
-          <div className="overflow-auto">
-            <table className="min-w-full border-collapse">
+    <div className="flex flex-col h-full p-6">
+      {/* Table Container */}
+      <div className="flex-1 overflow-auto bg-white rounded-xl shadow-lg border border-slate-200">
+        <table className="min-w-full border-collapse">
               {/* Header */}
               <thead>
                 <tr>
@@ -472,8 +470,6 @@ export default function SheetTable({
                 })}
               </tbody>
             </table>
-          </div>
-        </div>
       </div>
     </div>
   );

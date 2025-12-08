@@ -302,7 +302,7 @@ export default function Toolbar({
         <IconButton
           icon={<DollarSign className="h-4 w-4" />}
           title="Format as currency"
-          onClick={() => onFormatChange({ numberFormat: 'currency' })}
+          onClick={() => onFormatChange({ numberFormat: currentFormat.numberFormat === 'currency' ? 'general' : 'currency' })}
           active={currentFormat.numberFormat === 'currency'}
           disabled={isViewOnly || !hasSelection}
         />
@@ -311,7 +311,7 @@ export default function Toolbar({
         <IconButton
           icon={<Percent className="h-4 w-4" />}
           title="Format as percent"
-          onClick={() => onFormatChange({ numberFormat: 'percentage' })}
+          onClick={() => onFormatChange({ numberFormat: currentFormat.numberFormat === 'percentage' ? 'general' : 'percentage' })}
           active={currentFormat.numberFormat === 'percentage'}
           disabled={isViewOnly || !hasSelection}
         />
