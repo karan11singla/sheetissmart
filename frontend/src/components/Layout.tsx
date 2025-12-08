@@ -43,8 +43,8 @@ export default function Layout() {
         />
       </div>
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-auto bg-gray-50 w-full lg:w-auto">
+      {/* Main Content - overflow-hidden so each page controls its own scroll */}
+      <main className="flex-1 overflow-hidden bg-gray-50 w-full lg:w-auto">
         <Outlet />
       </main>
 
