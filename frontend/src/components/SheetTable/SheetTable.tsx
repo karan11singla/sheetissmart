@@ -16,6 +16,7 @@ export default function SheetTable({
   isViewOnly = false,
   frozenRows = 0,
   frozenColumns = 0,
+  zoomLevel = 100,
   onCellUpdate,
   onCellSelect,
   onColumnUpdate,
@@ -304,8 +305,11 @@ export default function SheetTable({
   }, [onRowUpdate]);
 
   return (
-    <div className="bg-white">
-      {/* Table with sticky headers - scroll handled by parent */}
+    <div
+      className="h-full overflow-auto bg-white"
+      style={{ zoom: zoomLevel / 100 }}
+    >
+      {/* Table with sticky headers */}
       <table className="border-collapse">
               {/* Header */}
               <thead>

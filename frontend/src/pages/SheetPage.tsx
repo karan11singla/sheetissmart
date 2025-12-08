@@ -1185,14 +1185,10 @@ export default function SheetPage() {
         </div>
       )}
 
-      {/* Modern Sheet Grid with Zoom - using CSS zoom to preserve sticky positioning */}
-      <div
-        className="flex-1 min-h-0 overflow-auto"
-        style={{
-          zoom: zoomLevel / 100,
-        }}
-      >
+      {/* Modern Sheet Grid with Zoom */}
+      <div className="flex-1 min-h-0">
         <SheetTable
+          zoomLevel={zoomLevel}
           columns={sheet.columns || []}
           rows={filteredAndSortedRows}
           isViewOnly={isViewOnly}
