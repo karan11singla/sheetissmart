@@ -553,6 +553,18 @@ export default function SheetPage() {
     setSelectedCell({ rowIndex, colIndex });
   }, []);
 
+  // Handle replace from search panel
+  const handleSearchReplace = useCallback(async (cellId: string, _oldValue: string, newValue: string) => {
+    if (!id || isViewOnly) return;
+
+    try {
+      await sheetApi.updateCell(id, cellId, { value: newValue });
+      queryClient.invalidateQueries({ queryKey: ['sheets', id] });
+    } catch (error) {
+      console.error('Replace failed:', error);
+    }
+  }, [id, isViewOnly, queryClient]);
+
   const handleZoomIn = () => {
     setZoomLevel(prev => Math.min(200, prev + 10));
   };
@@ -1096,6 +1108,8 @@ export default function SheetPage() {
           columns={sheet.columns || []}
           onClose={() => setIsSearchPanelOpen(false)}
           onNavigateToCell={handleNavigateToCell}
+          onReplace={handleSearchReplace}
+          isViewOnly={isViewOnly}
         />
       )}
 
