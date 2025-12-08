@@ -694,17 +694,6 @@ export default function SheetPage() {
     return cellFormats[cell.id] || {};
   };
 
-  // Apply formatting to selected cell(s)
-  const applyFormatting = (format: Partial<CellFormat>) => {
-    const cell = getCurrentCell();
-    if (!cell) return;
-
-    setCellFormats(prev => ({
-      ...prev,
-      [cell.id]: { ...prev[cell.id], ...format }
-    }));
-  };
-
   // Format painter - copy formatting from selected cell
   const handleFormatPainterClick = () => {
     if (isFormatPainterActive) {
@@ -1027,12 +1016,12 @@ export default function SheetPage() {
           }
         }}
         onShare={() => setIsShareModalOpen(true)}
-        onBold={() => applyFormatting({ bold: !getCurrentFormat().bold })}
-        onItalic={() => applyFormatting({ italic: !getCurrentFormat().italic })}
-        onUnderline={() => applyFormatting({ underline: !getCurrentFormat().underline })}
-        onAlignLeft={() => applyFormatting({ align: 'left' })}
-        onAlignCenter={() => applyFormatting({ align: 'center' })}
-        onAlignRight={() => applyFormatting({ align: 'right' })}
+        onBold={() => applyFormat({ bold: !getCurrentFormat().bold })}
+        onItalic={() => applyFormat({ italic: !getCurrentFormat().italic })}
+        onUnderline={() => applyFormat({ underline: !getCurrentFormat().underline })}
+        onAlignLeft={() => applyFormat({ align: 'left' })}
+        onAlignCenter={() => applyFormat({ align: 'center' })}
+        onAlignRight={() => applyFormat({ align: 'right' })}
         onConditionalFormat={() => setIsConditionalFormatOpen(true)}
         onChart={() => setIsChartPanelOpen(true)}
         onDataValidation={() => setIsDataValidationPanelOpen(true)}
