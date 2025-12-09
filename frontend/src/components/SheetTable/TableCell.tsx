@@ -277,10 +277,10 @@ export default function TableCell({
   // Show green hover effect when in formula mode and not the editing cell
   const showFormulaHoverEffect = isFormulaMode && !isEditing && onFormulaSelect;
 
-  // Get text alignment class
-  const alignmentClass = cell?.textAlign === 'center' ? 'text-center' :
-                        cell?.textAlign === 'right' ? 'text-right' :
-                        'text-left';
+  // Get horizontal alignment style for flexbox
+  const horizontalAlignStyle = cell?.textAlign === 'center' ? 'center' :
+                              cell?.textAlign === 'right' ? 'flex-end' :
+                              'flex-start';
 
   // Get vertical alignment style
   const verticalAlignStyle = cell?.verticalAlign === 'top' ? 'flex-start' :
@@ -295,6 +295,7 @@ export default function TableCell({
     fontFamily: cell?.fontFamily || undefined,
     display: 'flex',
     alignItems: verticalAlignStyle,
+    justifyContent: horizontalAlignStyle,
   };
 
   // Text rotation style
@@ -381,7 +382,7 @@ export default function TableCell({
       ref={cellRef}
       tabIndex={isSelected ? 0 : -1}
       data-cell-pos={`${rowIndex},${colIndex}`}
-      className={`w-full h-full px-3 py-2 transition-colors focus:outline-none relative select-none ${alignmentClass} ${
+      className={`w-full h-full px-3 py-2 transition-colors focus:outline-none relative select-none ${
         !isViewOnly && !showFormulaHoverEffect ? 'cursor-pointer hover:bg-blue-50/50' : ''
       } ${showFormulaHoverEffect ? 'cursor-crosshair hover:bg-green-100 hover:ring-1 hover:ring-inset hover:ring-green-400' : ''} ${
         isSelected ? 'ring-2 ring-inset ring-blue-500 bg-blue-50/60' : ''
