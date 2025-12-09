@@ -277,10 +277,10 @@ export default function TableCell({
   // Show green hover effect when in formula mode and not the editing cell
   const showFormulaHoverEffect = isFormulaMode && !isEditing && onFormulaSelect;
 
-  // Get horizontal alignment style for flexbox
-  const horizontalAlignStyle = cell?.textAlign === 'center' ? 'center' :
-                              cell?.textAlign === 'right' ? 'flex-end' :
-                              'flex-start';
+  // Get text alignment style
+  const textAlignStyle = cell?.textAlign === 'center' ? 'center' :
+                        cell?.textAlign === 'right' ? 'right' :
+                        'left';
 
   // Get vertical alignment style
   const verticalAlignStyle = cell?.verticalAlign === 'top' ? 'flex-start' :
@@ -295,7 +295,12 @@ export default function TableCell({
     fontFamily: cell?.fontFamily || undefined,
     display: 'flex',
     alignItems: verticalAlignStyle,
-    justifyContent: horizontalAlignStyle,
+  };
+
+  // Text content styles (for alignment)
+  const textContentStyles: React.CSSProperties = {
+    width: '100%',
+    textAlign: textAlignStyle as 'left' | 'center' | 'right',
   };
 
   // Text rotation style
@@ -398,7 +403,7 @@ export default function TableCell({
     >
       <div
         className={`${cell?.wrapText ? 'whitespace-normal break-words' : 'truncate'} ${textFormatClasses}`}
-        style={textRotationStyle}
+        style={{ ...textContentStyles, ...textRotationStyle }}
       >
         {formattedDisplayValue}
       </div>
