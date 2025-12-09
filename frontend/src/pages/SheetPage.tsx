@@ -37,6 +37,7 @@ export default function SheetPage() {
   const [isDataValidationPanelOpen, setIsDataValidationPanelOpen] = useState(false);
   const [isPivotTablePanelOpen, setIsPivotTablePanelOpen] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(100); // Zoom percentage (50-200%)
+  const [showGridlines, setShowGridlines] = useState(true); // Toggle gridlines visibility
 
   // Cell formatting state (stored per cell ID)
   type CellFormat = {
@@ -1075,6 +1076,8 @@ export default function SheetPage() {
         zoomLevel={zoomLevel}
         onZoomIn={handleZoomIn}
         onZoomOut={handleZoomOut}
+        showGridlines={showGridlines}
+        onToggleGridlines={() => setShowGridlines(prev => !prev)}
       />
 
       {/* View Only Banner */}
@@ -1103,12 +1106,16 @@ export default function SheetPage() {
         isFormatPainterActive={isFormatPainterActive}
         onClearFormatting={handleClearFormatting}
         isViewOnly={isViewOnly}
+        onPrint={() => window.print()}
         onInsertComment={() => {
           if (selectedCell && filteredAndSortedRows[selectedCell.rowIndex]) {
             setSelectedRowForComment(filteredAndSortedRows[selectedCell.rowIndex].id);
             setIsCommentSidebarOpen(true);
           }
         }}
+        onInsertChart={() => setIsChartPanelOpen(true)}
+        zoom={zoomLevel}
+        onZoomChange={setZoomLevel}
       />
       </div>
       {/* End Sticky Header Section */}
@@ -1183,6 +1190,7 @@ export default function SheetPage() {
           isViewOnly={isViewOnly}
           frozenRows={frozenRows}
           frozenColumns={frozenColumns}
+          showGridlines={showGridlines}
         onCellSelect={(position) => {
           // If format painter is active, apply the format to the clicked cell
           if (isFormatPainterActive && formatPainterFormat && position) {

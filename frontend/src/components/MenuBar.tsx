@@ -32,6 +32,7 @@ import {
   BarChart3,
   ShieldCheck,
   Table2,
+  Check,
 } from 'lucide-react';
 
 interface MenuBarProps {
@@ -76,6 +77,9 @@ interface MenuBarProps {
   onFreezeColumns?: (count: number) => void;
   selectedRow?: number | null;
   selectedColumn?: number | null;
+  // Gridlines
+  showGridlines?: boolean;
+  onToggleGridlines?: () => void;
 }
 
 interface MenuItem {
@@ -132,6 +136,8 @@ export default function MenuBar({
   onFreezeColumns,
   selectedRow,
   selectedColumn,
+  showGridlines = true,
+  onToggleGridlines,
 }: MenuBarProps) {
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -202,7 +208,7 @@ export default function MenuBar({
           disabled: selectedColumn === null || selectedColumn === undefined,
         },
         { label: 'divider', divider: true },
-        { label: 'Gridlines', icon: <Grid3X3 className="h-4 w-4" /> },
+        { label: showGridlines ? 'Hide gridlines' : 'Show gridlines', icon: showGridlines ? <Check className="h-4 w-4" /> : <Grid3X3 className="h-4 w-4" />, onClick: onToggleGridlines },
       ],
     },
     {

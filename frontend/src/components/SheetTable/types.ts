@@ -24,6 +24,7 @@ export interface SheetTableProps {
   frozenRows?: number;
   frozenColumns?: number;
   zoomLevel?: number;
+  showGridlines?: boolean;
   onCellUpdate: (cellId: string, value: any) => void;
   onCellSelect?: (position: CellPosition | null) => void;
   onColumnUpdate: (columnId: string, name: string) => void;

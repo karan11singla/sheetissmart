@@ -17,6 +17,7 @@ export default function SheetTable({
   frozenRows = 0,
   frozenColumns = 0,
   zoomLevel = 100,
+  showGridlines = true,
   onCellUpdate,
   onCellSelect,
   onColumnUpdate,
@@ -362,7 +363,7 @@ export default function SheetTable({
                   <tr key={row.id} className="bg-white hover:bg-blue-50/30 transition-colors">
                     {/* Row Header */}
                     <td
-                      className={`sticky left-0 text-center text-sm font-semibold text-slate-600 bg-gradient-to-br from-slate-50 to-white border-r-2 border-b border-slate-200 ${
+                      className={`sticky left-0 text-center text-sm font-semibold text-slate-600 bg-gradient-to-br from-slate-50 to-white border-r-2 ${showGridlines ? 'border-b border-slate-200' : ''} ${
                         isFrozenRow ? 'z-20' : 'z-10'
                       } ${isLastFrozenRow ? 'border-b-4 border-b-blue-500' : ''}`}
                       style={{
@@ -426,7 +427,7 @@ export default function SheetTable({
                           key={`${row.id}-${column.id}`}
                           rowSpan={rowSpan > 1 ? rowSpan : undefined}
                           colSpan={colSpan > 1 ? colSpan : undefined}
-                          className={`border-b border-slate-200 border-l border-slate-200 ${
+                          className={`${showGridlines ? 'border-b border-slate-200 border-l border-slate-200' : ''} ${
                             isInFillRange ? 'bg-blue-100 ring-1 ring-inset ring-blue-400' : ''
                           } ${
                             isCopied ? 'ring-2 ring-inset ring-dashed ring-blue-500' : ''
