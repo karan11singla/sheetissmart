@@ -131,22 +131,34 @@ export default function SheetTable({
     setEditingCellValue(prev => prev + cellReference);
   }, [getColumnLetter]);
 
+  // Track if an actual drag occurred (not just a click)
+  const actualDragOccurred = useRef(false);
+
   const handleDragSelect = useCallback((position: CellPosition, action: 'start' | 'drag' | 'end') => {
     if (action === 'start') {
       setIsDragging(true);
       setDragStart(position);
       setSelectedCell(position);
       onSelectionRangeChange?.(null);
+      actualDragOccurred.current = false;
     } else if (action === 'drag' && isDragging && dragStart) {
-      // Update selection range as we drag
-      const range = {
-        start: dragStart,
-        end: position,
-      };
-      onSelectionRangeChange?.(range);
+      // Only create a range if we've moved to a different cell
+      if (position.rowIndex !== dragStart.rowIndex || position.colIndex !== dragStart.colIndex) {
+        actualDragOccurred.current = true;
+        const range = {
+          start: dragStart,
+          end: position,
+        };
+        onSelectionRangeChange?.(range);
+      }
     } else if (action === 'end') {
+      // If no actual drag occurred, clear any lingering range
+      if (!actualDragOccurred.current) {
+        onSelectionRangeChange?.(null);
+      }
       setIsDragging(false);
       setDragStart(null);
+      actualDragOccurred.current = false;
     }
   }, [isDragging, dragStart, onSelectionRangeChange]);
 

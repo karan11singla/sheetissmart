@@ -244,6 +244,10 @@ export default function TableCell({
     ? (computedValue !== undefined && computedValue !== null ? String(computedValue) : '')
     : (displayValue || '');
 
+  // Track if mouse has moved since mousedown (to differentiate click from drag)
+  const mouseDownPosRef = useRef<{ x: number; y: number } | null>(null);
+  const hasDraggedRef = useRef(false);
+
   // Handle cell click - if in formula mode (but not this cell being edited), call onFormulaSelect
   const handleCellClick = (e: React.MouseEvent) => {
     // If we're in formula mode and this is NOT the editing cell, add cell reference
@@ -251,25 +255,43 @@ export default function TableCell({
       e.preventDefault();
       e.stopPropagation();
       onFormulaSelect({ rowIndex, colIndex });
-    } else if (!isDragSelecting) {
+    } else if (!hasDraggedRef.current) {
       // Normal cell selection - pass shiftKey for range extension
-      // Only select if we're not in a drag operation
+      // Only select if we haven't actually dragged (just clicked)
       onSelect({ rowIndex, colIndex }, e.shiftKey);
     }
+    // Reset drag tracking
+    hasDraggedRef.current = false;
+    mouseDownPosRef.current = null;
   };
 
-  // Handle mouse down for drag selection
+  // Handle mouse down for potential drag selection
   const handleMouseDown = (e: React.MouseEvent) => {
-    // Only start drag selection on left click and not when editing or in formula mode
+    // Only start potential drag selection on left click and not when editing or in formula mode
     if (e.button === 0 && !isEditing && !isFormulaMode && onDragSelect) {
+      // Record the starting position to detect actual drag
+      mouseDownPosRef.current = { x: e.clientX, y: e.clientY };
+      hasDraggedRef.current = false;
+      // Start drag selection - this sets the anchor point
       onDragSelect({ rowIndex, colIndex }, 'start');
     }
   };
 
   // Handle mouse enter during drag
-  const handleMouseEnter = () => {
+  const handleMouseEnter = (e: React.MouseEvent) => {
     // Only trigger drag if we're actually in a selection drag operation (from parent state)
-    if (isDragSelecting && onDragSelect) {
+    // and the mouse has actually moved from the start position (beyond threshold)
+    if (isDragSelecting && onDragSelect && mouseDownPosRef.current) {
+      const dx = Math.abs(e.clientX - mouseDownPosRef.current.x);
+      const dy = Math.abs(e.clientY - mouseDownPosRef.current.y);
+      // Only consider it a drag if moved at least 5 pixels
+      if (dx > 5 || dy > 5) {
+        hasDraggedRef.current = true;
+        onDragSelect({ rowIndex, colIndex }, 'drag');
+      }
+    } else if (isDragSelecting && onDragSelect) {
+      // If entering from another cell during drag, update selection
+      hasDraggedRef.current = true;
       onDragSelect({ rowIndex, colIndex }, 'drag');
     }
   };
