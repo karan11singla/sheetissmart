@@ -121,7 +121,9 @@ export const sheetApi = {
 
   // Share operations
   shareSheet: async (sheetId: string, email: string, permission: 'VIEWER' | 'EDITOR') => {
-    const { data } = await api.post(`/api/v1/sheets/${sheetId}/share`, { email, permission });
+    // Map frontend permission names to backend enum values
+    const backendPermission = permission === 'EDITOR' ? 'EDIT' : 'VIEWER';
+    const { data } = await api.post(`/api/v1/sheets/${sheetId}/share`, { email, permission: backendPermission });
     return data.data;
   },
 
