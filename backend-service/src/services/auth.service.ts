@@ -42,6 +42,17 @@ export async function register(data: RegisterInput) {
     },
   });
 
+  // Link any pending shares that were created before this user registered
+  await prisma.sheetShare.updateMany({
+    where: {
+      sharedWithEmail: normalizedEmail,
+      sharedWithId: null,
+    },
+    data: {
+      sharedWithId: user.id,
+    },
+  });
+
   // Generate JWT token
   const token = jwt.sign(
     { userId: user.id, email: user.email },
