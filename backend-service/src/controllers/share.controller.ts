@@ -23,10 +23,10 @@ export async function shareSheet(req: Request, res: Response, next: NextFunction
       return;
     }
 
-    if (!permission || !['VIEWER', 'EDITOR'].includes(permission)) {
+    if (!permission || !['VIEWER', 'EDIT', 'EDIT_CAN_SHARE'].includes(permission)) {
       res.status(400).json({
         success: false,
-        message: 'Valid permission (VIEWER or EDITOR) is required',
+        message: 'Valid permission (VIEWER, EDIT, or EDIT_CAN_SHARE) is required',
       });
       return;
     }
