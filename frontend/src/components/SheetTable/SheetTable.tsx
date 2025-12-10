@@ -133,6 +133,8 @@ export default function SheetTable({
 
   // Track if an actual drag occurred (not just a click)
   const actualDragOccurred = useRef(false);
+  // Lock drag direction once determined (vertical or horizontal)
+  const dragDirectionRef = useRef<'vertical' | 'horizontal' | null>(null);
 
   const handleDragSelect = useCallback((position: CellPosition, action: 'start' | 'drag' | 'end') => {
     if (action === 'start') {
@@ -141,13 +143,32 @@ export default function SheetTable({
       setSelectedCell(position);
       onSelectionRangeChange?.(null);
       actualDragOccurred.current = false;
+      dragDirectionRef.current = null; // Reset direction lock
     } else if (action === 'drag' && isDragging && dragStart) {
       // Only create a range if we've moved to a different cell
       if (position.rowIndex !== dragStart.rowIndex || position.colIndex !== dragStart.colIndex) {
         actualDragOccurred.current = true;
+
+        // Determine and lock drag direction on first movement
+        if (dragDirectionRef.current === null) {
+          const rowDiff = Math.abs(position.rowIndex - dragStart.rowIndex);
+          const colDiff = Math.abs(position.colIndex - dragStart.colIndex);
+          dragDirectionRef.current = rowDiff >= colDiff ? 'vertical' : 'horizontal';
+        }
+
+        // Constrain position based on locked direction
+        let constrainedPosition: CellPosition;
+        if (dragDirectionRef.current === 'vertical') {
+          // Vertical drag - lock to start column
+          constrainedPosition = { rowIndex: position.rowIndex, colIndex: dragStart.colIndex };
+        } else {
+          // Horizontal drag - lock to start row
+          constrainedPosition = { rowIndex: dragStart.rowIndex, colIndex: position.colIndex };
+        }
+
         const range = {
           start: dragStart,
-          end: position,
+          end: constrainedPosition,
         };
         onSelectionRangeChange?.(range);
       }
@@ -159,6 +180,7 @@ export default function SheetTable({
       setIsDragging(false);
       setDragStart(null);
       actualDragOccurred.current = false;
+      dragDirectionRef.current = null;
     }
   }, [isDragging, dragStart, onSelectionRangeChange]);
 
