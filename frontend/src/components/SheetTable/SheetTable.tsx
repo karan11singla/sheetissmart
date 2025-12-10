@@ -134,8 +134,6 @@ export default function SheetTable({
 
   // Track if an actual drag occurred (not just a click)
   const actualDragOccurred = useRef(false);
-  // Lock drag direction once determined (vertical or horizontal)
-  const dragDirectionRef = useRef<'vertical' | 'horizontal' | null>(null);
 
   const handleDragSelect = useCallback((position: CellPosition, action: 'start' | 'drag' | 'end') => {
     if (action === 'start') {
@@ -144,7 +142,6 @@ export default function SheetTable({
       setSelectedCell(position);
       onSelectionRangeChange?.(null);
       actualDragOccurred.current = false;
-      dragDirectionRef.current = null; // Reset direction lock
     } else if (action === 'drag' && dragStartRef.current) {
       // Use ref for immediate access to start position
       const start = dragStartRef.current;
@@ -153,20 +150,18 @@ export default function SheetTable({
       if (position.rowIndex !== start.rowIndex || position.colIndex !== start.colIndex) {
         actualDragOccurred.current = true;
 
-        // Determine and lock drag direction on first movement
-        if (dragDirectionRef.current === null) {
-          const rowDiff = Math.abs(position.rowIndex - start.rowIndex);
-          const colDiff = Math.abs(position.colIndex - start.colIndex);
-          dragDirectionRef.current = rowDiff >= colDiff ? 'vertical' : 'horizontal';
-        }
+        // Always compute direction based on cumulative movement from start
+        // This prevents wrong direction lock when mouse briefly crosses adjacent column
+        const rowDiff = Math.abs(position.rowIndex - start.rowIndex);
+        const colDiff = Math.abs(position.colIndex - start.colIndex);
 
-        // Constrain position based on locked direction
+        // Constrain to dominant direction based on total movement
         let constrainedPosition: CellPosition;
-        if (dragDirectionRef.current === 'vertical') {
-          // Vertical drag - lock to start column
+        if (rowDiff >= colDiff) {
+          // Vertical dominant - lock to start column
           constrainedPosition = { rowIndex: position.rowIndex, colIndex: start.colIndex };
         } else {
-          // Horizontal drag - lock to start row
+          // Horizontal dominant - lock to start row
           constrainedPosition = { rowIndex: start.rowIndex, colIndex: position.colIndex };
         }
 
@@ -184,7 +179,6 @@ export default function SheetTable({
       setIsDragging(false);
       dragStartRef.current = null; // Clear ref
       actualDragOccurred.current = false;
-      dragDirectionRef.current = null;
     }
   }, [onSelectionRangeChange]);
 
