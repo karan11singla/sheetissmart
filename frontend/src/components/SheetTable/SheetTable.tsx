@@ -48,7 +48,8 @@ export default function SheetTable({
 
   // Mouse drag selection
   const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState<CellPosition | null>(null);
+  // Use ref for immediate access to drag start position (state updates are async)
+  const dragStartRef = useRef<CellPosition | null>(null);
 
   // Calculate cumulative left offsets for frozen columns
   const columnLeftOffsets = useMemo(() => {
@@ -139,20 +140,23 @@ export default function SheetTable({
   const handleDragSelect = useCallback((position: CellPosition, action: 'start' | 'drag' | 'end') => {
     if (action === 'start') {
       setIsDragging(true);
-      setDragStart(position);
+      dragStartRef.current = position; // Set ref immediately
       setSelectedCell(position);
       onSelectionRangeChange?.(null);
       actualDragOccurred.current = false;
       dragDirectionRef.current = null; // Reset direction lock
-    } else if (action === 'drag' && isDragging && dragStart) {
+    } else if (action === 'drag' && dragStartRef.current) {
+      // Use ref for immediate access to start position
+      const start = dragStartRef.current;
+
       // Only create a range if we've moved to a different cell
-      if (position.rowIndex !== dragStart.rowIndex || position.colIndex !== dragStart.colIndex) {
+      if (position.rowIndex !== start.rowIndex || position.colIndex !== start.colIndex) {
         actualDragOccurred.current = true;
 
         // Determine and lock drag direction on first movement
         if (dragDirectionRef.current === null) {
-          const rowDiff = Math.abs(position.rowIndex - dragStart.rowIndex);
-          const colDiff = Math.abs(position.colIndex - dragStart.colIndex);
+          const rowDiff = Math.abs(position.rowIndex - start.rowIndex);
+          const colDiff = Math.abs(position.colIndex - start.colIndex);
           dragDirectionRef.current = rowDiff >= colDiff ? 'vertical' : 'horizontal';
         }
 
@@ -160,14 +164,14 @@ export default function SheetTable({
         let constrainedPosition: CellPosition;
         if (dragDirectionRef.current === 'vertical') {
           // Vertical drag - lock to start column
-          constrainedPosition = { rowIndex: position.rowIndex, colIndex: dragStart.colIndex };
+          constrainedPosition = { rowIndex: position.rowIndex, colIndex: start.colIndex };
         } else {
           // Horizontal drag - lock to start row
-          constrainedPosition = { rowIndex: dragStart.rowIndex, colIndex: position.colIndex };
+          constrainedPosition = { rowIndex: start.rowIndex, colIndex: position.colIndex };
         }
 
         const range = {
-          start: dragStart,
+          start: start,
           end: constrainedPosition,
         };
         onSelectionRangeChange?.(range);
@@ -178,11 +182,11 @@ export default function SheetTable({
         onSelectionRangeChange?.(null);
       }
       setIsDragging(false);
-      setDragStart(null);
+      dragStartRef.current = null; // Clear ref
       actualDragOccurred.current = false;
       dragDirectionRef.current = null;
     }
-  }, [isDragging, dragStart, onSelectionRangeChange]);
+  }, [onSelectionRangeChange]);
 
   const handleNavigate = useCallback((direction: 'up' | 'down' | 'left' | 'right') => {
     if (!selectedCell) return;
