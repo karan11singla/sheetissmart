@@ -77,20 +77,31 @@ model Column {
 }
 
 model Row {
-  id        String   @id @default(cuid())
-  sheetId   String
-  name      String?  // Optional custom name for the row
-  position  Int
-  height    Int?     @default(35)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(cuid())
+  sheetId     String
+  name        String?  // Optional custom name for the row
+  position    Int
+  height      Int?     @default(35)
+
+  // Row Hierarchy (Smartsheet-style indentation)
+  parentRowId String?  // Reference to parent row (null = top-level)
+  level       Int      @default(0) // Indentation level: 0 = top-level, 1 = child, 2 = grandchild, etc.
+  isExpanded  Boolean  @default(true) // Whether children are visible (for collapse/expand)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   // Relations
-  sheet     Sheet       @relation(fields: [sheetId], references: [id], onDelete: Cascade)
-  cells     Cell[]
-  comments  RowComment[]
+  sheet       Sheet       @relation(fields: [sheetId], references: [id], onDelete: Cascade)
+  cells       Cell[]
+  comments    RowComment[]
+
+  // Self-referencing relation for parent-child hierarchy
+  parentRow   Row?        @relation("RowHierarchy", fields: [parentRowId], references: [id], onDelete: SetNull)
+  childRows   Row[]       @relation("RowHierarchy")
 
   @@unique([sheetId, position])
+  @@index([sheetId, parentRowId])
   @@map("rows")
 }
 

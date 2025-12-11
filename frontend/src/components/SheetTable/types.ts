@@ -40,6 +40,10 @@ export interface SheetTableProps {
   copiedCellId?: string | null;
   selectionRange?: CellRange | null;
   onSelectionRangeChange?: (range: CellRange | null) => void;
+  // Row hierarchy callbacks
+  onIndentRow?: (rowId: string) => void;
+  onOutdentRow?: (rowId: string) => void;
+  onToggleRowExpand?: (rowId: string) => void;
 }
 
 export interface TableCellProps {
@@ -82,4 +86,9 @@ export interface RowHeaderProps {
   onCommentClick?: (rowId: string) => void;
   onInsertAbove?: (position: number) => void;
   onInsertBelow?: (position: number) => void;
+  // Row hierarchy
+  hasChildren?: boolean;
+  onIndent?: (rowId: string) => void;
+  onOutdent?: (rowId: string) => void;
+  onToggleExpand?: (rowId: string) => void;
 }

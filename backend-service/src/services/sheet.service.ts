@@ -1220,3 +1220,252 @@ export async function unmergeCells(sheetId: string, cellId: string, userId: stri
 
   return updatedMainCell;
 }
+
+// ==========================================
+// ROW HIERARCHY (Smartsheet-style indentation)
+// ==========================================
+
+/**
+ * Indent a row - makes it a child of the row above it (at same or lower level)
+ * This is how Smartsheet works: indent makes row a child of the previous sibling
+ */
+export async function indentRow(sheetId: string, rowId: string, userId: string) {
+  // Check permission
+  const permission = await getUserPermission(sheetId, userId);
+  if (permission === 'VIEWER') {
+    throw new AppError('Access denied. Edit permission required.', 403);
+  }
+
+  // Get the row and all rows in the sheet
+  const row = await prisma.row.findUnique({
+    where: { id: rowId },
+    include: { sheet: true },
+  });
+
+  if (!row || row.sheetId !== sheetId) {
+    throw new AppError('Row not found', 404);
+  }
+
+  // Max indent level is 7 (like Smartsheet)
+  if (row.level >= 7) {
+    throw new AppError('Maximum indent level (7) reached', 400);
+  }
+
+  // Get all rows in the sheet ordered by position
+  const allRows = await prisma.row.findMany({
+    where: { sheetId },
+    orderBy: { position: 'asc' },
+  });
+
+  // Find the row just above this one
+  const rowIndex = allRows.findIndex(r => r.id === rowId);
+  if (rowIndex === 0) {
+    throw new AppError('Cannot indent the first row - no parent available', 400);
+  }
+
+  const previousRow = allRows[rowIndex - 1];
+
+  // Can only indent if the previous row is at the same level or one level up
+  // (i.e., you can become a child of the row above, or a sibling of its children)
+  if (previousRow.level < row.level) {
+    throw new AppError('Cannot indent further - would skip hierarchy levels', 400);
+  }
+
+  // The new parent will be the previous row
+  const newLevel = previousRow.level + 1;
+  const newParentId = previousRow.id;
+
+  // Update the row
+  const updatedRow = await prisma.row.update({
+    where: { id: rowId },
+    data: {
+      level: newLevel,
+      parentRowId: newParentId,
+    },
+  });
+
+  // Also indent all child rows (those that were already children of this row)
+  // They should maintain their relative hierarchy
+  await updateChildrenLevels(sheetId, rowId, row.level, newLevel);
+
+  return updatedRow;
+}
+
+/**
+ * Outdent a row - moves it up one level in the hierarchy
+ */
+export async function outdentRow(sheetId: string, rowId: string, userId: string) {
+  // Check permission
+  const permission = await getUserPermission(sheetId, userId);
+  if (permission === 'VIEWER') {
+    throw new AppError('Access denied. Edit permission required.', 403);
+  }
+
+  // Get the row
+  const row = await prisma.row.findUnique({
+    where: { id: rowId },
+    include: {
+      parentRow: true,
+    },
+  });
+
+  if (!row || row.sheetId !== sheetId) {
+    throw new AppError('Row not found', 404);
+  }
+
+  // Can't outdent a top-level row
+  if (row.level === 0) {
+    throw new AppError('Cannot outdent a top-level row', 400);
+  }
+
+  // New parent is the grandparent (parent's parent)
+  const newParentId = row.parentRow?.parentRowId || null;
+  const newLevel = row.level - 1;
+
+  // Update the row
+  const updatedRow = await prisma.row.update({
+    where: { id: rowId },
+    data: {
+      level: newLevel,
+      parentRowId: newParentId,
+    },
+  });
+
+  // Update all child rows to maintain relative hierarchy
+  await updateChildrenLevels(sheetId, rowId, row.level, newLevel);
+
+  return updatedRow;
+}
+
+/**
+ * Toggle expand/collapse state of a row
+ */
+export async function toggleRowExpand(sheetId: string, rowId: string, userId: string) {
+  // Check permission (even viewers should be able to expand/collapse for their view)
+  await getUserPermission(sheetId, userId);
+
+  // Get the row
+  const row = await prisma.row.findUnique({
+    where: { id: rowId },
+  });
+
+  if (!row || row.sheetId !== sheetId) {
+    throw new AppError('Row not found', 404);
+  }
+
+  // Toggle the expanded state
+  const updatedRow = await prisma.row.update({
+    where: { id: rowId },
+    data: {
+      isExpanded: !row.isExpanded,
+    },
+  });
+
+  return updatedRow;
+}
+
+/**
+ * Helper function to update all children's levels when a parent's level changes
+ */
+async function updateChildrenLevels(
+  sheetId: string,
+  parentId: string,
+  oldParentLevel: number,
+  newParentLevel: number
+) {
+  const levelDiff = newParentLevel - oldParentLevel;
+  if (levelDiff === 0) return;
+
+  // Find all descendant rows (direct and indirect children)
+  const descendants = await findAllDescendants(sheetId, parentId);
+
+  // Update each descendant's level
+  for (const descendant of descendants) {
+    await prisma.row.update({
+      where: { id: descendant.id },
+      data: {
+        level: descendant.level + levelDiff,
+      },
+    });
+  }
+}
+
+/**
+ * Helper function to find all descendants of a row
+ */
+async function findAllDescendants(sheetId: string, parentId: string): Promise<{ id: string; level: number }[]> {
+  const directChildren = await prisma.row.findMany({
+    where: {
+      sheetId,
+      parentRowId: parentId,
+    },
+    select: { id: true, level: true },
+  });
+
+  const allDescendants = [...directChildren];
+
+  for (const child of directChildren) {
+    const childDescendants = await findAllDescendants(sheetId, child.id);
+    allDescendants.push(...childDescendants);
+  }
+
+  return allDescendants;
+}
+
+/**
+ * Get rows with hierarchy information for display
+ * Returns rows in display order with visibility based on parent expand states
+ */
+export async function getRowsWithHierarchy(sheetId: string, userId: string) {
+  await getUserPermission(sheetId, userId);
+
+  const rows = await prisma.row.findMany({
+    where: { sheetId },
+    orderBy: { position: 'asc' },
+    include: {
+      cells: true,
+      _count: {
+        select: { comments: true },
+      },
+    },
+  });
+
+  // Build visibility map based on parent expanded states
+  const expandedParents = new Set<string>();
+  const collapsedParents = new Set<string>();
+
+  for (const row of rows) {
+    if (row.isExpanded) {
+      expandedParents.add(row.id);
+    } else {
+      collapsedParents.add(row.id);
+    }
+  }
+
+  // Determine which rows should be visible
+  const visibleRows = rows.map(row => {
+    let isVisible = true;
+    let currentParentId = row.parentRowId;
+
+    // Walk up the hierarchy - if any ancestor is collapsed, this row is hidden
+    while (currentParentId) {
+      if (collapsedParents.has(currentParentId)) {
+        isVisible = false;
+        break;
+      }
+      const parentRow = rows.find(r => r.id === currentParentId);
+      currentParentId = parentRow?.parentRowId || null;
+    }
+
+    // Check if this row has children
+    const hasChildren = rows.some(r => r.parentRowId === row.id);
+
+    return {
+      ...row,
+      isVisible,
+      hasChildren,
+    };
+  });
+
+  return visibleRows;
+}

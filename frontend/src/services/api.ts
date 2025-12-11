@@ -190,6 +190,22 @@ export const sheetApi = {
     const { data } = await api.get(`/api/v1/sheets/${sheetId}/export`);
     return data;
   },
+
+  // Row hierarchy operations (Smartsheet-style indentation)
+  indentRow: async (sheetId: string, rowId: string) => {
+    const { data } = await api.post(`/api/v1/sheets/${sheetId}/rows/${rowId}/indent`);
+    return data.data.row;
+  },
+
+  outdentRow: async (sheetId: string, rowId: string) => {
+    const { data } = await api.post(`/api/v1/sheets/${sheetId}/rows/${rowId}/outdent`);
+    return data.data.row;
+  },
+
+  toggleRowExpand: async (sheetId: string, rowId: string) => {
+    const { data } = await api.post(`/api/v1/sheets/${sheetId}/rows/${rowId}/toggle-expand`);
+    return data.data.row;
+  },
 };
 
 // Auth API

@@ -356,3 +356,55 @@ export const unmergeCells = asyncHandler(async (req: Request, res: Response) => 
     data: { cell },
   });
 });
+
+// ==========================================
+// ROW HIERARCHY CONTROLLERS
+// ==========================================
+
+// Indent a row (make it a child of the row above)
+export const indentRow = asyncHandler(async (req: Request, res: Response) => {
+  const { id, rowId } = req.params;
+
+  if (!req.user) {
+    throw new AppError('Not authenticated', 401);
+  }
+
+  const row = await sheetService.indentRow(id, rowId, req.user.userId);
+
+  res.json({
+    status: 'success',
+    data: { row },
+  });
+});
+
+// Outdent a row (move it up one level in the hierarchy)
+export const outdentRow = asyncHandler(async (req: Request, res: Response) => {
+  const { id, rowId } = req.params;
+
+  if (!req.user) {
+    throw new AppError('Not authenticated', 401);
+  }
+
+  const row = await sheetService.outdentRow(id, rowId, req.user.userId);
+
+  res.json({
+    status: 'success',
+    data: { row },
+  });
+});
+
+// Toggle expand/collapse state of a row
+export const toggleRowExpand = asyncHandler(async (req: Request, res: Response) => {
+  const { id, rowId } = req.params;
+
+  if (!req.user) {
+    throw new AppError('Not authenticated', 401);
+  }
+
+  const row = await sheetService.toggleRowExpand(id, rowId, req.user.userId);
+
+  res.json({
+    status: 'success',
+    data: { row },
+  });
+});

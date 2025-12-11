@@ -33,6 +33,9 @@ export default function SheetTable({
   copiedCellId,
   selectionRange,
   onSelectionRangeChange,
+  onIndentRow,
+  onOutdentRow,
+  onToggleRowExpand,
 }: SheetTableProps) {
   const [selectedCell, setSelectedCell] = useState<CellPosition | null>(null);
   const [editingCell, setEditingCell] = useState<string | null>(null);
@@ -71,6 +74,48 @@ export default function SheetTable({
       cumulative += rows[i].height || 40;
     }
     return offsets;
+  }, [rows]);
+
+  // Compute hasChildren for each row and filter visible rows
+  const { rowHasChildren, visibleRows } = useMemo(() => {
+    // Build a set of parent IDs to determine which rows have children
+    const parentIds = new Set<string>();
+    rows.forEach(row => {
+      if (row.parentRowId) {
+        parentIds.add(row.parentRowId);
+      }
+    });
+
+    // Build a map of rowId -> hasChildren
+    const hasChildrenMap: Record<string, boolean> = {};
+    rows.forEach(row => {
+      hasChildrenMap[row.id] = parentIds.has(row.id);
+    });
+
+    // Filter visible rows (children of collapsed parents should be hidden)
+    // A row is visible if all its ancestors are expanded
+    const collapsedParentIds = new Set<string>();
+    rows.forEach(row => {
+      if (!row.isExpanded && parentIds.has(row.id)) {
+        collapsedParentIds.add(row.id);
+      }
+    });
+
+    // Build a map of rowId -> row for quick lookup
+    const rowMap = new Map(rows.map(r => [r.id, r]));
+
+    // Check if a row's ancestors are all expanded
+    const isRowVisible = (row: typeof rows[0]): boolean => {
+      if (!row.parentRowId) return true; // Top-level rows are always visible
+      const parent = rowMap.get(row.parentRowId);
+      if (!parent) return true; // No parent found, show it
+      if (!parent.isExpanded) return false; // Parent is collapsed
+      return isRowVisible(parent); // Check parent's visibility recursively
+    };
+
+    const visible = rows.filter(row => isRowVisible(row));
+
+    return { rowHasChildren: hasChildrenMap, visibleRows: visible };
   }, [rows]);
 
   const getCellValue = useCallback((row: typeof rows[0], columnId: string): Cell | undefined => {
@@ -176,7 +221,7 @@ export default function SheetTable({
         newRowIndex = Math.max(0, rowIndex - 1);
         break;
       case 'down':
-        newRowIndex = Math.min(rows.length - 1, rowIndex + 1);
+        newRowIndex = Math.min(visibleRows.length - 1, rowIndex + 1);
         break;
       case 'left':
         newColIndex = Math.max(0, colIndex - 1);
@@ -189,7 +234,7 @@ export default function SheetTable({
     setSelectedCell({ rowIndex: newRowIndex, colIndex: newColIndex });
     // Clear selection range when navigating
     onSelectionRangeChange?.(null);
-  }, [selectedCell, rows.length, columns.length, onSelectionRangeChange]);
+  }, [selectedCell, visibleRows.length, columns.length, onSelectionRangeChange]);
 
   // Add global mouseup listener to end drag selection
   useEffect(() => {
@@ -244,7 +289,7 @@ export default function SheetTable({
       const sourceCell = fillStartRef.current;
       const endCell = fillEndRef.current;
 
-      const sourceRow = rows[sourceCell.rowIndex];
+      const sourceRow = visibleRows[sourceCell.rowIndex];
       const sourceColumn = columns[sourceCell.colIndex];
       const sourceCellData = getCellValue(sourceRow, sourceColumn.id);
 
@@ -287,7 +332,7 @@ export default function SheetTable({
           // Skip the source cell
           if (r === sourceCell.rowIndex && c === sourceCell.colIndex) continue;
 
-          const targetRow = rows[r];
+          const targetRow = visibleRows[r];
           const targetColumn = columns[c];
           const targetCell = getCellValue(targetRow, targetColumn.id);
 
@@ -309,7 +354,7 @@ export default function SheetTable({
       fillDirectionRef.current = null;
       onSelectionRangeChange?.(null);
     }
-  }, [selectedCell, rows, columns, getCellValue, onCellUpdate, onSelectionRangeChange]);
+  }, [selectedCell, visibleRows, columns, getCellValue, onCellUpdate, onSelectionRangeChange]);
 
   const handleColumnRename = useCallback((columnId: string, name: string) => {
     onColumnUpdate(columnId, name);
@@ -369,9 +414,11 @@ export default function SheetTable({
 
               {/* Body */}
               <tbody>
-                {rows.map((row, rowIndex) => {
-                  const isFrozenRow = rowIndex < frozenRows;
-                  const isLastFrozenRow = rowIndex === frozenRows - 1;
+                {visibleRows.map((row, visibleIndex) => {
+                  // Find original rowIndex for frozen row calculations
+                  const rowIndex = rows.findIndex(r => r.id === row.id);
+                  const isFrozenRow = visibleIndex < frozenRows;
+                  const isLastFrozenRow = visibleIndex === frozenRows - 1;
 
                   return (
                   <tr key={row.id} className="bg-white hover:bg-blue-50/30 transition-colors">
@@ -382,7 +429,7 @@ export default function SheetTable({
                       } ${isLastFrozenRow ? 'border-b-4 border-b-blue-500' : ''}`}
                       style={{
                         height: row.height || 40,
-                        ...(isFrozenRow ? { top: rowTopOffsets[rowIndex] } : {}),
+                        ...(isFrozenRow ? { top: rowTopOffsets[visibleIndex] } : {}),
                       }}
                     >
                       <RowHeader
@@ -394,6 +441,10 @@ export default function SheetTable({
                         onCommentClick={onCommentClick}
                         onInsertAbove={onInsertRowAbove}
                         onInsertBelow={onInsertRowBelow}
+                        hasChildren={rowHasChildren[row.id]}
+                        onIndent={onIndentRow}
+                        onOutdent={onOutdentRow}
+                        onToggleExpand={onToggleRowExpand}
                       />
                     </td>
 
@@ -406,7 +457,8 @@ export default function SheetTable({
                         return null;
                       }
 
-                      const isSelected = selectedCell?.rowIndex === rowIndex && selectedCell?.colIndex === colIndex;
+                      // Use visibleIndex for selection tracking (matches navigation/fill logic)
+                      const isSelected = selectedCell?.rowIndex === visibleIndex && selectedCell?.colIndex === colIndex;
                       const isEditing = editingCell === cell?.id;
 
                       // Get merge span values
@@ -414,17 +466,17 @@ export default function SheetTable({
                       const colSpan = cell?.mergeColSpan || 1;
                       const isMerged = rowSpan > 1 || colSpan > 1;
 
-                      // Check if this cell is in the fill range
+                      // Check if this cell is in the fill range (using visibleIndex)
                       const isInFillRange = fillStart && fillEnd &&
-                        rowIndex >= Math.min(fillStart.rowIndex, fillEnd.rowIndex) &&
-                        rowIndex <= Math.max(fillStart.rowIndex, fillEnd.rowIndex) &&
+                        visibleIndex >= Math.min(fillStart.rowIndex, fillEnd.rowIndex) &&
+                        visibleIndex <= Math.max(fillStart.rowIndex, fillEnd.rowIndex) &&
                         colIndex >= Math.min(fillStart.colIndex, fillEnd.colIndex) &&
                         colIndex <= Math.max(fillStart.colIndex, fillEnd.colIndex);
 
-                      // Check if this cell is in the selection range
+                      // Check if this cell is in the selection range (using visibleIndex)
                       const isInSelectionRange = selectionRange &&
-                        rowIndex >= Math.min(selectionRange.start.rowIndex, selectionRange.end.rowIndex) &&
-                        rowIndex <= Math.max(selectionRange.start.rowIndex, selectionRange.end.rowIndex) &&
+                        visibleIndex >= Math.min(selectionRange.start.rowIndex, selectionRange.end.rowIndex) &&
+                        visibleIndex <= Math.max(selectionRange.start.rowIndex, selectionRange.end.rowIndex) &&
                         colIndex >= Math.min(selectionRange.start.colIndex, selectionRange.end.colIndex) &&
                         colIndex <= Math.max(selectionRange.start.colIndex, selectionRange.end.colIndex);
 
@@ -457,12 +509,12 @@ export default function SheetTable({
                           style={{
                             height: row.height || 40,
                             ...(isFrozenColumn ? { left: columnLeftOffsets[colIndex] } : {}),
-                            ...(isFrozenRow ? { top: rowTopOffsets[rowIndex] } : {}),
+                            ...(isFrozenRow ? { top: rowTopOffsets[visibleIndex] } : {}),
                           }}
                         >
                           <TableCell
                             cell={cell}
-                            rowIndex={rowIndex}
+                            rowIndex={visibleIndex}
                             colIndex={colIndex}
                             isSelected={isSelected}
                             isEditing={isEditing}

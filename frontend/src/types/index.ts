@@ -41,6 +41,13 @@ export interface Row {
   _count?: {
     comments: number;
   };
+  // Row hierarchy (Smartsheet-style indentation)
+  parentRowId?: string | null;
+  level: number; // 0 = top-level, 1 = child, 2 = grandchild, etc.
+  isExpanded: boolean; // Whether children are visible
+  // Computed by frontend
+  hasChildren?: boolean;
+  isVisible?: boolean;
 }
 
 export interface Cell {

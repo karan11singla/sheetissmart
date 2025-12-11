@@ -390,22 +390,84 @@ npm run build
 - ✅ Viewers can see access list
 - ✅ Owner shown in access list
 - ✅ Light backdrop colors throughout
+- ✅ Undo/Redo for cell formatting
+- ✅ Drag selection (rectangle selection like Google Sheets)
+- ✅ Playwright E2E testing framework
 
 ### In Progress / Planned
-- ⏳ Undo/Redo functionality (Ctrl+Z, Ctrl+Y)
-- ⏳ Insert rows/columns at specific positions (Insert Above/Below, Insert Left/Right)
+- ⏳ Row Hierarchy & Indentation (parent-child rows)
+- ⏳ Sorting (multi-column, persistent)
+- ⏳ Advanced Filtering UI
 
-### Undo/Redo Implementation Notes
-- **Pattern**: Command pattern for operations
-- **Storage**: Operation history stack
-- **Scope**: Cell edits, row/column operations, etc.
-- **UI**: Keyboard shortcuts + toolbar buttons
+## Current Feature Capabilities (as of Dec 2024)
 
-### Insert Rows/Columns Notes
-- **Backend**: Need endpoints for inserting at position (not just append)
-- **Logic**: Increment position of all subsequent rows/columns
-- **UI**: Context menu or buttons on row/column headers
-- **Options**: "Insert Above", "Insert Below", "Insert Left", "Insert Right"
+### Column Types (6 types)
+- TEXT, NUMBER, DATE, DROPDOWN, CHECKBOX, FORMULA
+
+### Cell Formatting (Fully Implemented)
+- Text: Bold, Italic, Underline, Strikethrough
+- Font: Family, Size (8-72pt)
+- Colors: Text color, Background/fill color
+- Alignment: Horizontal (left/center/right), Vertical (top/middle/bottom)
+- Number formats: General, Number, Currency, Percentage, Date formats
+- Advanced: Text wrapping, rotation (-90 to 90°), decimal places
+- Borders: Individual control (top/bottom/left/right)
+- Cell merging: Merge/unmerge with row/column span
+
+### Advanced Features (DB Ready, Partial UI)
+- **Conditional Formatting**: Rules in DB (ConditionalFormat model)
+- **Charts**: Bar, Column, Line, Area, Scatter, Pie, Doughnut (Chart model)
+- **Data Validation**: Dropdown, Number, Text, Date, Formula (DataValidation model)
+- **Pivot Tables**: Row/column/value fields, aggregations (PivotTable model)
+- **Filtering**: Basic text filter per column
+- **Notifications**: Model exists for comment/share alerts
+
+### Key Component Files
+- `frontend/src/components/Toolbar.tsx` - Main formatting toolbar
+- `frontend/src/components/MenuBar.tsx` - Menu bar with sheet operations
+- `frontend/src/components/SheetTable/SheetTable.tsx` - Grid component
+- `frontend/src/components/*Panel.tsx` - Feature panels
+- `frontend/src/types/index.ts` - All TypeScript interfaces
+- `backend-service/prisma/schema.prisma` - Database models
+
+## Smartsheet Parity Roadmap
+
+### Phase 1: Core Data Modeling (HIGH PRIORITY)
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Row Hierarchy/Indentation | 🔴 Missing | Parent-child rows, tree view, expand/collapse |
+| Multi-column Sorting | 🔴 Missing | Sort by multiple columns, persist sort order |
+| Advanced Filter UI | 🟡 Partial | Need operators (equals, contains, between), AND/OR |
+| Additional Column Types | 🔴 Missing | MULTISELECT, ATTACHMENT, USER, PROGRESS |
+
+### Phase 2: Essential Views (HIGH PRIORITY)
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Timeline/Gantt View | 🔴 Missing | Date range bars, dependencies, critical path |
+| Card/Kanban View | 🔴 Missing | Board layout, drag-drop, status swimlanes |
+| Forms View | 🔴 Missing | Form builder, submissions, pre-fill links |
+
+### Phase 3: Automation (MEDIUM PRIORITY)
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Workflows | 🔴 Missing | Triggers, actions, scheduled automations |
+| Webhooks | 🔴 Missing | Event-driven integrations |
+| Bulk Operations | 🔴 Missing | Find/replace, bulk edit, duplicate rows |
+
+### Phase 4: Reporting (MEDIUM PRIORITY)
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Dashboard View | 🔴 Missing | Combine multiple reports/charts |
+| Export (CSV/PDF) | 🔴 Missing | Formatted export options |
+| Report Builder | 🔴 Missing | Advanced aggregations |
+
+### Phase 5: Collaboration (MEDIUM PRIORITY)
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Cell History/Audit | 🔴 Missing | Who changed what and when |
+| Real-time Cursors | 🔴 Missing | See other users' positions |
+| @Mentions | 🟡 Partial | UI exists, notifications partial |
+| Column/Row Permissions | 🔴 Missing | Granular access control |
 
 ## Testing
 
@@ -527,4 +589,4 @@ docker-compose logs postgres
 
 ---
 
-Last Updated: 2025-11-26
+Last Updated: 2025-12-11

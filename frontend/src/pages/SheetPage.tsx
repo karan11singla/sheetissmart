@@ -381,6 +381,28 @@ export default function SheetPage() {
     },
   });
 
+  // Row hierarchy mutations (Smartsheet-style indentation)
+  const indentRowMutation = useMutation({
+    mutationFn: (rowId: string) => sheetApi.indentRow(id!, rowId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sheets', id] });
+    },
+  });
+
+  const outdentRowMutation = useMutation({
+    mutationFn: (rowId: string) => sheetApi.outdentRow(id!, rowId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sheets', id] });
+    },
+  });
+
+  const toggleRowExpandMutation = useMutation({
+    mutationFn: (rowId: string) => sheetApi.toggleRowExpand(id!, rowId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sheets', id] });
+    },
+  });
+
   // Merge cells mutation
   const mergeCellsMutation = useMutation({
     mutationFn: ({ startRow, endRow, startCol, endCol }: {
@@ -1261,6 +1283,9 @@ export default function SheetPage() {
         copiedCellId={clipboard?.cellId}
         selectionRange={selectionRange}
         onSelectionRangeChange={setSelectionRange}
+        onIndentRow={(rowId: string) => indentRowMutation.mutate(rowId)}
+        onOutdentRow={(rowId: string) => outdentRowMutation.mutate(rowId)}
+        onToggleRowExpand={(rowId: string) => toggleRowExpandMutation.mutate(rowId)}
         />
       </div>
 

@@ -20,6 +20,9 @@ import {
   getSheetByToken,
   mergeCells,
   unmergeCells,
+  indentRow,
+  outdentRow,
+  toggleRowExpand,
 } from '../controllers/sheet.controller';
 import { authenticate } from '../middleware/auth';
 
@@ -53,6 +56,11 @@ router.delete('/:id/columns/:columnId', deleteColumn);
 router.post('/:id/rows', createRow);
 router.put('/:id/rows/:rowId', updateRow);
 router.delete('/:id/rows/:rowId', deleteRow);
+
+// Row hierarchy operations (Smartsheet-style indentation)
+router.post('/:id/rows/:rowId/indent', indentRow);
+router.post('/:id/rows/:rowId/outdent', outdentRow);
+router.post('/:id/rows/:rowId/toggle-expand', toggleRowExpand);
 
 // Cell operations
 router.put('/:id/cells/:cellId', updateCell);
