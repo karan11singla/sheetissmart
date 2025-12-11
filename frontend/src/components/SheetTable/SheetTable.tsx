@@ -138,46 +138,28 @@ export default function SheetTable({
   const handleDragSelect = useCallback((position: CellPosition, action: 'start' | 'drag' | 'end') => {
     if (action === 'start') {
       setIsDragging(true);
-      dragStartRef.current = position; // Set ref immediately
+      dragStartRef.current = position;
       setSelectedCell(position);
       onSelectionRangeChange?.(null);
       actualDragOccurred.current = false;
     } else if (action === 'drag' && dragStartRef.current) {
-      // Use ref for immediate access to start position
       const start = dragStartRef.current;
 
-      // Only create a range if we've moved to a different cell
+      // Standard rectangle selection - select all cells from start to current position
       if (position.rowIndex !== start.rowIndex || position.colIndex !== start.colIndex) {
         actualDragOccurred.current = true;
-
-        // Always compute direction based on cumulative movement from start
-        // This prevents wrong direction lock when mouse briefly crosses adjacent column
-        const rowDiff = Math.abs(position.rowIndex - start.rowIndex);
-        const colDiff = Math.abs(position.colIndex - start.colIndex);
-
-        // Constrain to dominant direction based on total movement
-        let constrainedPosition: CellPosition;
-        if (rowDiff >= colDiff) {
-          // Vertical dominant - lock to start column
-          constrainedPosition = { rowIndex: position.rowIndex, colIndex: start.colIndex };
-        } else {
-          // Horizontal dominant - lock to start row
-          constrainedPosition = { rowIndex: start.rowIndex, colIndex: position.colIndex };
-        }
-
         const range = {
           start: start,
-          end: constrainedPosition,
+          end: position, // Use actual position for rectangle selection
         };
         onSelectionRangeChange?.(range);
       }
     } else if (action === 'end') {
-      // If no actual drag occurred, clear any lingering range
       if (!actualDragOccurred.current) {
         onSelectionRangeChange?.(null);
       }
       setIsDragging(false);
-      dragStartRef.current = null; // Clear ref
+      dragStartRef.current = null;
       actualDragOccurred.current = false;
     }
   }, [onSelectionRangeChange]);
