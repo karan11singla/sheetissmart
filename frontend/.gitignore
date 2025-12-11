@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Playwright
+playwright-report/
+test-results/
+# Keep snapshot PNGs for visual regression but exclude test failure screenshots
+!e2e/**/*-snapshots/*.png
