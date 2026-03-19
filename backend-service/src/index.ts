@@ -24,7 +24,7 @@ const HOST = process.env.HOST || '0.0.0.0';
 // Middleware
 app.use(helmet()); // Security headers
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  origin: (process.env.CORS_ORIGIN || 'http://localhost:5173').split(','),
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));

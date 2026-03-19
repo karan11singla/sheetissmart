@@ -61,7 +61,7 @@ jobs:
           tags: ${{ steps.meta-frontend.outputs.tags }}
           labels: ${{ steps.meta-frontend.outputs.labels }}
           build-args: |
-            VITE_API_URL=https://ridgeport.finance
+            VITE_API_URL=https://sheetsmart.dev
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
