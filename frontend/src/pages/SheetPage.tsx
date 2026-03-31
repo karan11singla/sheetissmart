@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 import { X, Star } from 'lucide-react';
@@ -95,7 +95,7 @@ export default function SheetPage() {
   });
 
   // Copy/Cut/Paste handlers
-  const handleCopy = () => {
+  const handleCopy = useCallback(() => {
     if (!selectedCell || !sheet?.rows || !sheet?.columns) return;
 
     const row = sheet.rows[selectedCell.rowIndex];
@@ -113,9 +113,9 @@ export default function SheetPage() {
       cellId: cell.id,
       isCut: false,
     });
-  };
+  }, [selectedCell, sheet, cellFormats]);
 
-  const handleCut = () => {
+  const handleCut = useCallback(() => {
     if (!selectedCell || !sheet?.rows || !sheet?.columns) return;
 
     const row = sheet.rows[selectedCell.rowIndex];
@@ -133,10 +133,11 @@ export default function SheetPage() {
       cellId: cell.id,
       isCut: true,
     });
-  };
+  }, [selectedCell, sheet, cellFormats]);
 
-  const handlePaste = async () => {
-    if (!clipboard || !selectedCell || !sheet?.rows || !sheet?.columns || isViewOnly) return;
+  const handlePaste = useCallback(async () => {
+    const viewOnly = sheet && (sheet as any).permission === 'VIEWER';
+    if (!clipboard || !selectedCell || !sheet?.rows || !sheet?.columns || viewOnly) return;
 
     const row = sheet.rows[selectedCell.rowIndex];
     const column = sheet.columns[selectedCell.colIndex];
@@ -173,15 +174,27 @@ export default function SheetPage() {
 
     // Invalidate queries to refresh the UI
     queryClient.invalidateQueries({ queryKey: ['sheets', id] });
-  };
+  }, [clipboard, selectedCell, sheet, id, queryClient]);
 
-  // Keyboard shortcuts for undo/redo and copy/paste
+  // Use refs to keep keyboard handler stable and avoid re-registering on every state change
+  const stateRef = useRef({
+    selectedCell, clipboard, sheet, cellFormats, id, selectionRange,
+  });
+  stateRef.current = { selectedCell, clipboard, sheet, cellFormats, id, selectionRange };
+
+  const handlersRef = useRef({ handleCopy, handleCut, handlePaste, undo, redo, executeCommand });
+  handlersRef.current = { handleCopy, handleCut, handlePaste, undo, redo, executeCommand };
+
+  // Keyboard shortcuts for undo/redo and copy/paste - stable effect, registered once
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Prevent shortcuts when typing in an input
       if ((e.target as HTMLElement).tagName === 'INPUT' || (e.target as HTMLElement).tagName === 'TEXTAREA') {
         return;
       }
+
+      const { handleCopy, handleCut, handlePaste, undo, redo, executeCommand } = handlersRef.current;
+      const { selectedCell, sheet, selectionRange, id } = stateRef.current;
 
       // Ctrl+C or Cmd+C for copy
       if ((e.ctrlKey || e.metaKey) && e.key === 'c' && !e.shiftKey) {
@@ -219,31 +232,14 @@ export default function SheetPage() {
       // Ctrl++ or Cmd++ for zoom in
       if ((e.ctrlKey || e.metaKey) && (e.key === '=' || e.key === '+')) {
         e.preventDefault();
-        handleZoomIn();
+        setZoomLevel(prev => Math.min(200, prev + 10));
       }
       // Ctrl+- or Cmd+- for zoom out
       if ((e.ctrlKey || e.metaKey) && e.key === '-') {
         e.preventDefault();
-        handleZoomOut();
+        setZoomLevel(prev => Math.max(50, prev - 10));
       }
-      // Ctrl+B or Cmd+B for bold
-      if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
-        e.preventDefault();
-        const format = getCurrentFormat();
-        applyFormat({ bold: !format.bold });
-      }
-      // Ctrl+I or Cmd+I for italic
-      if ((e.ctrlKey || e.metaKey) && e.key === 'i') {
-        e.preventDefault();
-        const format = getCurrentFormat();
-        applyFormat({ italic: !format.italic });
-      }
-      // Ctrl+U or Cmd+U for underline
-      if ((e.ctrlKey || e.metaKey) && e.key === 'u') {
-        e.preventDefault();
-        const format = getCurrentFormat();
-        applyFormat({ underline: !format.underline });
-      }
+      // Ctrl+B/I/U handled by separate formatting effect
       // Delete or Backspace to clear cell contents
       const viewOnly = sheet && (sheet as any).permission === 'VIEWER';
       if ((e.key === 'Delete' || e.key === 'Backspace') && !viewOnly) {
@@ -298,7 +294,7 @@ export default function SheetPage() {
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [selectedCell, clipboard, sheet, cellFormats, id, queryClient, handleCopy, handleCut, handlePaste, undo, redo, selectionRange, executeCommand]);
+  }, [queryClient]); // Stable deps only - state accessed via refs
 
   // Load cell formatting from database when sheet loads
   useEffect(() => {
@@ -716,6 +712,38 @@ export default function SheetPage() {
     if (!cell) return {};
     return cellFormats[cell.id] || {};
   };
+
+  // Formatting keyboard shortcuts (Ctrl+B/I/U) - uses ref to avoid re-registration
+  const applyFormatRef = useRef(applyFormat);
+  applyFormatRef.current = applyFormat;
+  const getCurrentFormatRef = useRef(getCurrentFormat);
+  getCurrentFormatRef.current = getCurrentFormat;
+
+  useEffect(() => {
+    const handleFormatKeyDown = (e: KeyboardEvent) => {
+      if ((e.target as HTMLElement).tagName === 'INPUT' || (e.target as HTMLElement).tagName === 'TEXTAREA') {
+        return;
+      }
+      if (!(e.ctrlKey || e.metaKey)) return;
+
+      if (e.key === 'b') {
+        e.preventDefault();
+        const format = getCurrentFormatRef.current();
+        applyFormatRef.current({ bold: !format.bold });
+      } else if (e.key === 'i') {
+        e.preventDefault();
+        const format = getCurrentFormatRef.current();
+        applyFormatRef.current({ italic: !format.italic });
+      } else if (e.key === 'u') {
+        e.preventDefault();
+        const format = getCurrentFormatRef.current();
+        applyFormatRef.current({ underline: !format.underline });
+      }
+    };
+
+    document.addEventListener('keydown', handleFormatKeyDown);
+    return () => document.removeEventListener('keydown', handleFormatKeyDown);
+  }, []);
 
   // Format painter - copy formatting from selected cell
   const handleFormatPainterClick = () => {
