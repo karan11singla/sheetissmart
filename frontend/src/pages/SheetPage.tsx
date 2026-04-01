@@ -28,7 +28,8 @@ export default function SheetPage() {
   const [selectedRowForComment, setSelectedRowForComment] = useState<string | null>(null);
   const [isEditingName, setIsEditingName] = useState(false);
   const [sheetName, setSheetName] = useState('');
-  const [sortConfig, setSortConfig] = useState<{ columnId: string; direction: 'asc' | 'desc' } | null>(null);
+  type SortRule = { columnId: string; direction: 'asc' | 'desc' };
+  const [sortRules, setSortRules] = useState<SortRule[]>([]);
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
   const [isSearchPanelOpen, setIsSearchPanelOpen] = useState(false);
@@ -558,6 +559,26 @@ export default function SheetPage() {
     }
   };
 
+  // Toggle sort on a column: unsorted → asc → desc → remove
+  const handleColumnSort = useCallback((columnId: string) => {
+    setSortRules(prev => {
+      const existingIndex = prev.findIndex(r => r.columnId === columnId);
+      if (existingIndex === -1) {
+        // Not sorted yet — add ascending
+        return [...prev, { columnId, direction: 'asc' as const }];
+      }
+      const existing = prev[existingIndex];
+      if (existing.direction === 'asc') {
+        // Switch to descending
+        const updated = [...prev];
+        updated[existingIndex] = { columnId, direction: 'desc' as const };
+        return updated;
+      }
+      // Was desc — remove this sort rule
+      return prev.filter((_, i) => i !== existingIndex);
+    });
+  }, []);
+
   const clearAllFilters = () => {
     setFilters({});
     setIsFilterPanelOpen(false);
@@ -934,44 +955,50 @@ export default function SheetPage() {
       });
     }
 
-    // Then apply sorting
-    if (!sortConfig) return filtered;
+    // Then apply multi-column sorting
+    if (sortRules.length === 0) return filtered;
 
     const sorted = [...filtered].sort((a, b) => {
-      const cellA = a.cells?.find((c) => c.columnId === sortConfig.columnId);
-      const cellB = b.cells?.find((c) => c.columnId === sortConfig.columnId);
+      for (const rule of sortRules) {
+        const cellA = a.cells?.find((c) => c.columnId === rule.columnId);
+        const cellB = b.cells?.find((c) => c.columnId === rule.columnId);
 
-      let valueA: string | number = '';
-      let valueB: string | number = '';
+        let valueA: string | number = '';
+        let valueB: string | number = '';
 
-      try {
-        valueA = cellA?.value ? JSON.parse(cellA.value) : '';
-        valueB = cellB?.value ? JSON.parse(cellB.value) : '';
-      } catch {
-        valueA = cellA?.value || '';
-        valueB = cellB?.value || '';
+        try {
+          valueA = cellA?.value ? JSON.parse(cellA.value) : '';
+          valueB = cellB?.value ? JSON.parse(cellB.value) : '';
+        } catch {
+          valueA = cellA?.value || '';
+          valueB = cellB?.value || '';
+        }
+
+        // Try to parse as numbers
+        const numA = typeof valueA === 'string' ? parseFloat(valueA) : valueA;
+        const numB = typeof valueB === 'string' ? parseFloat(valueB) : valueB;
+
+        let result = 0;
+
+        if (!isNaN(numA) && !isNaN(numB)) {
+          result = numA - numB;
+        } else {
+          const strA = String(valueA).toLowerCase();
+          const strB = String(valueB).toLowerCase();
+          if (strA < strB) result = -1;
+          else if (strA > strB) result = 1;
+        }
+
+        if (result !== 0) {
+          return rule.direction === 'asc' ? result : -result;
+        }
+        // If equal, fall through to next sort rule
       }
-
-      // Try to parse as numbers
-      const numA = typeof valueA === 'string' ? parseFloat(valueA) : valueA;
-      const numB = typeof valueB === 'string' ? parseFloat(valueB) : valueB;
-
-      // If both are valid numbers, compare numerically
-      if (!isNaN(numA) && !isNaN(numB)) {
-        return sortConfig.direction === 'asc' ? numA - numB : numB - numA;
-      }
-
-      // Otherwise compare as strings
-      const strA = String(valueA).toLowerCase();
-      const strB = String(valueB).toLowerCase();
-
-      if (strA < strB) return sortConfig.direction === 'asc' ? -1 : 1;
-      if (strA > strB) return sortConfig.direction === 'asc' ? 1 : -1;
       return 0;
     });
 
     return sorted;
-  }, [sheet?.rows, sortConfig, filters]);
+  }, [sheet?.rows, sortRules, filters]);
 
 
   if (isLoading) {
@@ -1107,17 +1134,19 @@ export default function SheetPage() {
         }}
         onSortAsc={() => {
           if (selectedCell && sheet?.columns?.[selectedCell.colIndex]) {
-            setSortConfig({
-              columnId: sheet.columns[selectedCell.colIndex].id,
-              direction: 'asc',
+            const colId = sheet.columns[selectedCell.colIndex].id;
+            setSortRules(prev => {
+              const filtered = prev.filter(r => r.columnId !== colId);
+              return [...filtered, { columnId: colId, direction: 'asc' as const }];
             });
           }
         }}
         onSortDesc={() => {
           if (selectedCell && sheet?.columns?.[selectedCell.colIndex]) {
-            setSortConfig({
-              columnId: sheet.columns[selectedCell.colIndex].id,
-              direction: 'desc',
+            const colId = sheet.columns[selectedCell.colIndex].id;
+            setSortRules(prev => {
+              const filtered = prev.filter(r => r.columnId !== colId);
+              return [...filtered, { columnId: colId, direction: 'desc' as const }];
             });
           }
         }}
@@ -1194,7 +1223,7 @@ export default function SheetPage() {
       )}
 
       {/* Active Filters and Sort */}
-      {(Object.keys(filters).length > 0 || sortConfig) && (
+      {(Object.keys(filters).length > 0 || sortRules.length > 0) && (
         <div className="bg-primary-50 border-b border-primary-200 px-4 py-2 flex items-center justify-between">
           <div className="flex items-center space-x-4">
             {Object.keys(filters).length > 0 && (
@@ -1202,16 +1231,19 @@ export default function SheetPage() {
                 {Object.keys(filters).length} filter{Object.keys(filters).length > 1 ? 's' : ''} active
               </span>
             )}
-            {sortConfig && (
+            {sortRules.length > 0 && (
               <span className="text-xs text-primary-700">
-                Sorted by {sheet?.columns?.find(c => c.id === sortConfig.columnId)?.name || 'column'} ({sortConfig.direction === 'asc' ? 'A→Z' : 'Z→A'})
+                Sorted by {sortRules.map((r) => {
+                  const colName = sheet?.columns?.find(c => c.id === r.columnId)?.name || 'column';
+                  return `${colName} (${r.direction === 'asc' ? 'A→Z' : 'Z→A'})`;
+                }).join(', then ')}
               </span>
             )}
           </div>
           <div className="flex items-center space-x-2">
-            {sortConfig && (
+            {sortRules.length > 0 && (
               <button
-                onClick={() => setSortConfig(null)}
+                onClick={() => setSortRules([])}
                 className="inline-flex items-center px-2 py-1 text-xs font-medium text-primary-600 hover:text-primary-700 hover:bg-primary-100 rounded transition-colors"
               >
                 <X className="h-3 w-3 mr-1" />
@@ -1314,6 +1346,8 @@ export default function SheetPage() {
         onIndentRow={(rowId: string) => indentRowMutation.mutate(rowId)}
         onOutdentRow={(rowId: string) => outdentRowMutation.mutate(rowId)}
         onToggleRowExpand={(rowId: string) => toggleRowExpandMutation.mutate(rowId)}
+        sortRules={sortRules}
+        onSort={handleColumnSort}
         />
       </div>
 

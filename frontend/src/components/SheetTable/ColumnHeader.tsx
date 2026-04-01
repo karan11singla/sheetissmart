@@ -1,15 +1,18 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Edit3, Trash2, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Edit3, Trash2, ArrowLeft, ArrowRight, ArrowUp, ArrowDown } from 'lucide-react';
 import type { ColumnHeaderProps } from './types';
 
 export default function ColumnHeader({
   column,
   isViewOnly,
+  sortRule,
+  sortIndex,
   onRename,
   onDelete,
   onInsertLeft,
   onInsertRight,
   onResize,
+  onSort,
 }: ColumnHeaderProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(column.name);
@@ -50,7 +53,6 @@ export default function ColumnHeader({
     const handleMouseMove = (e: MouseEvent) => {
       const diff = e.clientX - resizeStartX.current;
       const newWidth = Math.max(50, resizeStartWidth.current + diff);
-      // Update live during drag via CSS custom property on parent
       const th = document.querySelector(`[data-column-id="${column.id}"]`) as HTMLElement;
       if (th) {
         th.style.minWidth = `${newWidth}px`;
@@ -97,7 +99,30 @@ export default function ColumnHeader({
 
   return (
     <div className="flex items-center justify-between w-full group relative">
-      <div className="flex items-center space-x-1.5 flex-1 min-w-0">
+      <div className="flex items-center space-x-1 flex-1 min-w-0">
+        {/* Sort indicator + click to sort */}
+        {onSort && (
+          <button
+            onClick={() => onSort(column.id)}
+            className={`flex-shrink-0 p-0.5 rounded transition-all ${
+              sortRule
+                ? 'text-primary-600'
+                : 'text-neutral-300 opacity-0 group-hover:opacity-100 hover:text-neutral-500'
+            }`}
+            title={sortRule ? `Sorted ${sortRule.direction === 'asc' ? 'ascending' : 'descending'}. Click to change.` : 'Click to sort'}
+          >
+            {sortRule?.direction === 'desc' ? (
+              <ArrowDown className="h-3.5 w-3.5" />
+            ) : (
+              <ArrowUp className="h-3.5 w-3.5" />
+            )}
+            {sortIndex !== undefined && sortIndex > 0 && (
+              <span className="absolute -top-1 -right-1 text-[9px] font-bold text-primary-600">
+                {sortIndex + 1}
+              </span>
+            )}
+          </button>
+        )}
         <span
           className="truncate cursor-pointer hover:text-primary-600 font-bold transition-colors"
           onDoubleClick={() => !isViewOnly && setIsEditing(true)}
@@ -144,7 +169,7 @@ export default function ColumnHeader({
           </button>
         </div>
       )}
-      {/* Resize handle - positioned at the right edge of the column header */}
+      {/* Resize handle */}
       {!isViewOnly && onResize && (
         <div
           className={`absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary-500 ${

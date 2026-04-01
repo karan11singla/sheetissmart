@@ -36,6 +36,8 @@ export default function SheetTable({
   onIndentRow,
   onOutdentRow,
   onToggleRowExpand,
+  sortRules,
+  onSort,
 }: SheetTableProps) {
   const [selectedCell, setSelectedCell] = useState<CellPosition | null>(null);
   const [editingCell, setEditingCell] = useState<string | null>(null);
@@ -400,11 +402,14 @@ export default function SheetTable({
                         <ColumnHeader
                           column={column}
                           isViewOnly={isViewOnly}
+                          sortRule={sortRules?.find(r => r.columnId === column.id)}
+                          sortIndex={sortRules && sortRules.length > 1 ? sortRules.findIndex(r => r.columnId === column.id) : undefined}
                           onRename={handleColumnRename}
                           onDelete={onColumnDelete}
                           onInsertLeft={onInsertColumnLeft}
                           onInsertRight={onInsertColumnRight}
                           onResize={onColumnResize}
+                          onSort={onSort}
                         />
                       </th>
                     );

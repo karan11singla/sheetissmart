@@ -44,6 +44,9 @@ export interface SheetTableProps {
   onIndentRow?: (rowId: string) => void;
   onOutdentRow?: (rowId: string) => void;
   onToggleRowExpand?: (rowId: string) => void;
+  // Sorting
+  sortRules?: SortRule[];
+  onSort?: (columnId: string) => void;
 }
 
 export interface TableCellProps {
@@ -67,14 +70,22 @@ export interface TableCellProps {
   onValueChange?: (value: string) => void;
 }
 
+export interface SortRule {
+  columnId: string;
+  direction: 'asc' | 'desc';
+}
+
 export interface ColumnHeaderProps {
   column: Column;
   isViewOnly: boolean;
+  sortRule?: SortRule;
+  sortIndex?: number;
   onRename: (columnId: string, name: string) => void;
   onDelete: (columnId: string) => void;
   onInsertLeft?: (position: number) => void;
   onInsertRight?: (position: number) => void;
   onResize?: (columnId: string, width: number) => void;
+  onSort?: (columnId: string) => void;
 }
 
 export interface RowHeaderProps {
