@@ -175,8 +175,8 @@ export default function CommentsPanel({
 
   if (!rowId) {
     return (
-      <div className="flex flex-col items-center justify-center h-full py-12 text-slate-400">
-        <MessageSquare className="h-16 w-16 mb-4 text-slate-300" />
+      <div className="flex flex-col items-center justify-center h-full py-12 text-neutral-400">
+        <MessageSquare className="h-16 w-16 mb-4 text-neutral-300" />
         <p className="text-sm">Select a row to view comments</p>
       </div>
     );
@@ -187,12 +187,12 @@ export default function CommentsPanel({
       {/* Comments List */}
       <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
         {isLoading ? (
-          <div className="text-center py-8 text-slate-500">
+          <div className="text-center py-8 text-neutral-500">
             <div className="animate-pulse">Loading comments...</div>
           </div>
         ) : comments.length === 0 ? (
-          <div className="text-center py-8 text-slate-500">
-            <MessageSquare className="h-12 w-12 mx-auto mb-3 text-slate-300" />
+          <div className="text-center py-8 text-neutral-500">
+            <MessageSquare className="h-12 w-12 mx-auto mb-3 text-neutral-300" />
             <p className="text-sm">No comments yet</p>
             {!isViewOnly && <p className="text-xs mt-1">Be the first to add a comment</p>}
           </div>
@@ -209,11 +209,11 @@ export default function CommentsPanel({
               <div className="flex-1 min-w-0">
                 <div className="flex items-baseline justify-between">
                   <div className="flex items-baseline space-x-2">
-                    <p className="text-sm font-medium text-slate-900">{comment.user.name}</p>
-                    <p className="text-xs text-slate-500">{formatDate(comment.createdAt)}</p>
+                    <p className="text-sm font-medium text-neutral-900">{comment.user.name}</p>
+                    <p className="text-xs text-neutral-500">{formatDate(comment.createdAt)}</p>
                   </div>
                 </div>
-                <p className="mt-1 text-sm text-slate-700 whitespace-pre-wrap break-words">
+                <p className="mt-1 text-sm text-neutral-700 whitespace-pre-wrap break-words">
                   {renderCommentContent(comment.content)}
                 </p>
               </div>
@@ -224,7 +224,7 @@ export default function CommentsPanel({
 
       {/* Comment Input */}
       {!isViewOnly && (
-        <div className="border-t border-slate-200 px-6 py-4">
+        <div className="border-t border-neutral-200 px-6 py-4">
           <form onSubmit={handleSubmit} className="flex flex-col space-y-3">
             <div className="relative">
               <textarea
@@ -234,20 +234,20 @@ export default function CommentsPanel({
                 onKeyDown={handleKeyDown}
                 placeholder="Add a comment... Use @ to mention someone"
                 rows={3}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none text-sm bg-white text-slate-900"
+                className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none text-sm bg-white text-neutral-900"
                 disabled={createCommentMutation.isPending}
               />
 
               {/* Mention Dropdown */}
               {showMentionDropdown && filteredUsers.length > 0 && (
-                <div className="absolute bottom-full left-0 right-0 mb-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-48 overflow-y-auto z-50">
+                <div className="absolute bottom-full left-0 right-0 mb-1 bg-white border border-neutral-200 rounded-lg shadow-lg max-h-48 overflow-y-auto z-50">
                   {filteredUsers.slice(0, 5).map((user, index) => (
                     <button
                       key={user.id}
                       type="button"
                       onClick={() => insertMention(user)}
-                      className={`w-full px-3 py-2 text-left flex items-center space-x-3 hover:bg-slate-100 ${
-                        index === selectedMentionIndex ? 'bg-slate-100' : ''
+                      className={`w-full px-3 py-2 text-left flex items-center space-x-3 hover:bg-neutral-100 ${
+                        index === selectedMentionIndex ? 'bg-neutral-100' : ''
                       }`}
                     >
                       <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
@@ -256,8 +256,8 @@ export default function CommentsPanel({
                         </span>
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-slate-900 truncate">{user.name}</p>
-                        <p className="text-xs text-slate-500 truncate">{user.email}</p>
+                        <p className="text-sm font-medium text-neutral-900 truncate">{user.name}</p>
+                        <p className="text-xs text-neutral-500 truncate">{user.email}</p>
                       </div>
                     </button>
                   ))}
@@ -283,8 +283,8 @@ export default function CommentsPanel({
 
       {/* View-only message */}
       {isViewOnly && (
-        <div className="border-t border-slate-200 px-6 py-4 bg-slate-50">
-          <p className="text-sm text-slate-600 text-center">
+        <div className="border-t border-neutral-200 px-6 py-4 bg-neutral-50">
+          <p className="text-sm text-neutral-600 text-center">
             You have view-only access. Contact the owner for editor permissions to comment.
           </p>
         </div>

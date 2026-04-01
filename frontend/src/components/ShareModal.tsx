@@ -152,7 +152,7 @@ export default function ShareModal({
       <div className="flex min-h-screen items-center justify-center p-4">
         {/* Backdrop */}
         <div
-          className="fixed inset-0 bg-slate-900/10 backdrop-blur-[2px] transition-opacity"
+          className="fixed inset-0 bg-neutral-900/10 backdrop-blur-[2px] transition-opacity"
           onClick={onClose}
         />
 
@@ -160,12 +160,12 @@ export default function ShareModal({
         <div className="relative w-full max-w-md rounded-lg bg-white p-4 sm:p-6 shadow-xl max-h-[90vh] overflow-y-auto">
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
+            <h2 className="text-lg sm:text-xl font-semibold text-neutral-900">
               {isViewOnly ? 'Sheet Access' : 'Share Sheet'}
             </h2>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors p-1"
+              className="text-neutral-400 hover:text-neutral-600 transition-colors p-1"
               aria-label="Close"
             >
               <X className="h-5 w-5" />
@@ -174,10 +174,10 @@ export default function ShareModal({
 
           {/* Share Link Section - Only shown for non-viewers */}
           {!isViewOnly && (
-            <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-neutral-50 rounded-lg border border-neutral-200">
               <div className="flex items-center mb-2">
-                <Link2 className="h-4 w-4 text-gray-600 mr-2" />
-                <h3 className="text-sm font-medium text-gray-900">Share via link</h3>
+                <Link2 className="h-4 w-4 text-neutral-600 mr-2" />
+                <h3 className="text-sm font-medium text-neutral-900">Share via link</h3>
               </div>
               {shareLink ? (
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
@@ -185,11 +185,11 @@ export default function ShareModal({
                     type="text"
                     value={shareLink}
                     readOnly
-                    className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md bg-white focus:outline-none min-w-0"
+                    className="flex-1 px-3 py-2 text-sm border border-neutral-300 rounded-md bg-white focus:outline-none min-w-0"
                   />
                   <button
                     onClick={handleCopyLink}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2 whitespace-nowrap"
+                    className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors flex items-center justify-center space-x-2 whitespace-nowrap"
                   >
                     {isCopied ? (
                       <>
@@ -208,7 +208,7 @@ export default function ShareModal({
                 <button
                   onClick={handleGenerateLink}
                   disabled={isGeneratingLink}
-                  className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors disabled:opacity-50"
+                  className="w-full px-4 py-2 bg-neutral-100 text-neutral-700 rounded-md hover:bg-neutral-200 transition-colors disabled:opacity-50"
                 >
                   {isGeneratingLink ? 'Generating...' : 'Generate share link'}
                 </button>
@@ -221,37 +221,37 @@ export default function ShareModal({
           <form onSubmit={handleSubmit} className="mb-6">
             <div className="space-y-4">
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="email" className="block text-sm font-medium text-neutral-700 mb-1">
                   Email address
                 </label>
                 <div className="relative" ref={dropdownRef}>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400 z-10" />
                     <input
                       type="text"
                       id="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       onFocus={() => setShowDropdown(true)}
-                      className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-400"
+                      className="w-full pl-10 pr-10 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent placeholder:text-neutral-400"
                       placeholder="Type to search users..."
                       autoComplete="off"
                     />
                     <ChevronDown
-                      className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 cursor-pointer"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400 cursor-pointer"
                       onClick={() => setShowDropdown(!showDropdown)}
                     />
                   </div>
 
                   {/* Dropdown */}
                   {showDropdown && (
-                    <div className="absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                    <div className="absolute z-20 w-full mt-1 bg-white border border-neutral-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
                       {isLoadingUsers ? (
-                        <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                        <div className="px-4 py-3 text-sm text-neutral-500 text-center">
                           Loading users...
                         </div>
                       ) : filteredUsers.length === 0 ? (
-                        <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                        <div className="px-4 py-3 text-sm text-neutral-500 text-center">
                           {email ? 'No users found' : 'No users available'}
                         </div>
                       ) : (
@@ -262,19 +262,19 @@ export default function ShareModal({
                               setEmail(user.email);
                               setShowDropdown(false);
                             }}
-                            className="px-4 py-3 hover:bg-gray-100 cursor-pointer transition-colors border-b last:border-b-0"
+                            className="px-4 py-3 hover:bg-neutral-100 cursor-pointer transition-colors border-b last:border-b-0"
                           >
                             <div className="flex items-center space-x-3">
-                              <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                                <span className="text-sm font-medium text-blue-600">
+                              <div className="flex-shrink-0 w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
+                                <span className="text-sm font-medium text-primary-600">
                                   {user.name.charAt(0).toUpperCase()}
                                 </span>
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-gray-900 truncate">
+                                <p className="text-sm font-medium text-neutral-900 truncate">
                                   {user.name}
                                 </p>
-                                <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                                <p className="text-xs text-neutral-500 truncate">{user.email}</p>
                               </div>
                             </div>
                           </div>
@@ -286,14 +286,14 @@ export default function ShareModal({
               </div>
 
               <div>
-                <label htmlFor="permission" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="permission" className="block text-sm font-medium text-neutral-700 mb-1">
                   Permission
                 </label>
                 <select
                   id="permission"
                   value={permission}
                   onChange={(e) => setPermission(e.target.value as 'VIEWER' | 'EDIT' | 'EDIT_CAN_SHARE')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 >
                   <option value="VIEWER">Can view</option>
                   <option value="EDIT">Can edit</option>
@@ -310,7 +310,7 @@ export default function ShareModal({
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <UserPlus className="h-4 w-4 mr-2" />
                 {isSubmitting ? 'Sharing...' : 'Share'}
@@ -322,22 +322,22 @@ export default function ShareModal({
           {/* Owner Section */}
           {shares.find(s => s.permission === 'OWNER') && (
             <div className="mb-4">
-              <h3 className="text-sm font-medium text-gray-900 mb-3">Owner</h3>
+              <h3 className="text-sm font-medium text-neutral-900 mb-3">Owner</h3>
               {shares
                 .filter((share) => share.permission === 'OWNER')
                 .map((share) => (
                   <div
                     key={share.id}
-                    className="flex items-center justify-between p-3 bg-blue-50 rounded-md border border-blue-200"
+                    className="flex items-center justify-between p-3 bg-primary-50 rounded-md border border-primary-200"
                   >
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">
+                      <p className="text-sm font-medium text-neutral-900 truncate">
                         {share.sharedWith?.name || share.sharedWithEmail}
                       </p>
                       {share.sharedWith && (
-                        <p className="text-xs text-gray-500 truncate">{share.sharedWithEmail}</p>
+                        <p className="text-xs text-neutral-500 truncate">{share.sharedWithEmail}</p>
                       )}
-                      <p className="text-xs text-blue-600 mt-1 font-medium">Owner</p>
+                      <p className="text-xs text-primary-600 mt-1 font-medium">Owner</p>
                     </div>
                   </div>
                 ))}
@@ -346,11 +346,11 @@ export default function ShareModal({
 
           {/* Shared With List */}
           <div>
-            <h3 className="text-sm font-medium text-gray-900 mb-3">
+            <h3 className="text-sm font-medium text-neutral-900 mb-3">
               Shared with ({shares.filter(s => s.permission !== 'OWNER').length})
             </h3>
             {shares.filter(s => s.permission !== 'OWNER').length === 0 ? (
-              <p className="text-sm text-gray-500 text-center py-4">
+              <p className="text-sm text-neutral-500 text-center py-4">
                 Not shared with anyone yet
               </p>
             ) : (
@@ -360,16 +360,16 @@ export default function ShareModal({
                   .map((share) => (
                     <div
                       key={share.id}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-md"
+                      className="flex items-center justify-between p-3 bg-neutral-50 rounded-md"
                     >
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">
+                        <p className="text-sm font-medium text-neutral-900 truncate">
                           {share.sharedWith?.name || share.sharedWithEmail}
                         </p>
                         {share.sharedWith && (
-                          <p className="text-xs text-gray-500 truncate">{share.sharedWithEmail}</p>
+                          <p className="text-xs text-neutral-500 truncate">{share.sharedWithEmail}</p>
                         )}
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-xs text-neutral-500 mt-1">
                           {share.permission === 'VIEWER'
                             ? 'Can view'
                             : share.permission === 'EDIT'

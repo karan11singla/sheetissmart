@@ -33,20 +33,20 @@ export default function FavoritesPage() {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <p className="mt-2 text-gray-600">Loading favorites...</p>
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+          <p className="mt-2 text-neutral-600">Loading favorites...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="h-full overflow-auto bg-gray-50">
+    <div className="h-full overflow-auto bg-neutral-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-6 sm:space-y-8">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Favorites</h1>
-          <p className="mt-1 text-sm text-gray-600">
+          <h1 className="text-3xl font-bold text-neutral-900">Favorites</h1>
+          <p className="mt-1 text-sm text-neutral-600">
             Quick access to your favorite spreadsheets.
           </p>
         </div>
@@ -54,10 +54,10 @@ export default function FavoritesPage() {
         {/* Favorite Sheets */}
         <div>
           {favoriteSheets.length === 0 ? (
-            <div className="text-center py-16 bg-white rounded-lg border-2 border-dashed border-gray-300">
-              <Star className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-4 text-sm font-medium text-gray-900">No favorites yet</h3>
-              <p className="mt-1 text-sm text-gray-500">
+            <div className="text-center py-16 bg-white rounded-lg border-2 border-dashed border-neutral-300">
+              <Star className="mx-auto h-12 w-12 text-neutral-400" />
+              <h3 className="mt-4 text-sm font-medium text-neutral-900">No favorites yet</h3>
+              <p className="mt-1 text-sm text-neutral-500">
                 Star your favorite sheets to see them here.
               </p>
             </div>
@@ -66,12 +66,12 @@ export default function FavoritesPage() {
               {favoriteSheets.map((sheet: Sheet) => (
                 <div
                   key={sheet.id}
-                  className="relative group bg-white p-5 rounded-lg border border-gray-200 hover:border-blue-500 hover:shadow-md transition-all cursor-pointer"
+                  className="relative group bg-white p-5 rounded-lg border border-neutral-200 hover:border-primary-500 hover:shadow-md transition-all cursor-pointer"
                   onClick={() => navigate(`/sheet/${sheet.id}`)}
                 >
                   <div className="flex items-start justify-between mb-3">
-                    <div className="p-2 bg-blue-50 rounded-lg">
-                      <FileText className="h-5 w-5 text-blue-600" />
+                    <div className="p-2 bg-primary-50 rounded-lg">
+                      <FileText className="h-5 w-5 text-primary-600" />
                     </div>
                     <div className="flex items-center space-x-1">
                       <button
@@ -85,7 +85,7 @@ export default function FavoritesPage() {
                           className={`h-4 w-4 ${
                             sheet.isFavorite
                               ? 'fill-yellow-400 text-yellow-400'
-                              : 'text-gray-400'
+                              : 'text-neutral-400'
                           }`}
                         />
                       </button>
@@ -102,15 +102,15 @@ export default function FavoritesPage() {
                       </button>
                     </div>
                   </div>
-                  <h3 className="text-base font-semibold text-gray-900 mb-1 truncate">
+                  <h3 className="text-base font-semibold text-neutral-900 mb-1 truncate">
                     {sheet.name}
                   </h3>
                   {sheet.description && (
-                    <p className="text-xs text-gray-600 mb-3 line-clamp-2 h-8">
+                    <p className="text-xs text-neutral-600 mb-3 line-clamp-2 h-8">
                       {sheet.description}
                     </p>
                   )}
-                  <div className="flex items-center text-xs text-gray-500 space-x-3">
+                  <div className="flex items-center text-xs text-neutral-500 space-x-3">
                     {sheet._count && (
                       <span className="flex items-center">
                         <Clock className="h-3 w-3 mr-1" />

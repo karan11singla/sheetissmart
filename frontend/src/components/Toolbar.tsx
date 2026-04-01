@@ -130,7 +130,7 @@ function ToolbarDropdown({
         {trigger}
       </button>
       {isOpen && !disabled && (
-        <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-50 min-w-[160px]">
+        <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-neutral-200 py-1 z-50 min-w-[160px]">
           {children}
         </div>
       )}
@@ -159,8 +159,8 @@ function IconButton({
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className={`p-1.5 rounded hover:bg-slate-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
-        active ? 'bg-blue-100 text-blue-700' : 'text-slate-600'
+      className={`p-1.5 rounded hover:bg-neutral-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+        active ? 'bg-primary-100 text-primary-700' : 'text-neutral-600'
       } ${className}`}
     >
       {icon}
@@ -170,7 +170,7 @@ function IconButton({
 
 // Separator component
 function Separator() {
-  return <div className="w-px h-6 bg-slate-200 mx-1" />;
+  return <div className="w-px h-6 bg-neutral-200 mx-1" />;
 }
 
 export default function Toolbar({
@@ -221,7 +221,7 @@ export default function Toolbar({
   const zoomLevels = [50, 75, 90, 100, 125, 150, 200];
 
   return (
-    <div className="bg-slate-50 border-b border-slate-200 px-2 py-1.5">
+    <div className="bg-neutral-50 border-b border-neutral-200 px-2 py-1.5">
       <div className="flex items-center gap-0.5 flex-wrap">
         {/* Search */}
         <IconButton
@@ -277,7 +277,7 @@ export default function Toolbar({
         {/* Zoom */}
         <ToolbarDropdown
           trigger={
-            <div className="flex items-center px-2 py-1 hover:bg-slate-100 rounded text-sm text-slate-700">
+            <div className="flex items-center px-2 py-1 hover:bg-neutral-100 rounded text-sm text-neutral-700">
               {zoom}%
               <ChevronDown className="h-3 w-3 ml-1" />
             </div>
@@ -287,8 +287,8 @@ export default function Toolbar({
             <button
               key={level}
               onClick={() => onZoomChange?.(level)}
-              className={`w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 ${
-                zoom === level ? 'bg-blue-50 text-blue-700' : 'text-slate-700'
+              className={`w-full px-3 py-1.5 text-left text-sm hover:bg-neutral-100 ${
+                zoom === level ? 'bg-primary-50 text-primary-700' : 'text-neutral-700'
               }`}
             >
               {level}%
@@ -339,77 +339,77 @@ export default function Toolbar({
         {/* Number format */}
         <ToolbarDropdown
           trigger={
-            <div className="flex items-center px-2 py-1 hover:bg-slate-100 rounded text-sm text-slate-700">
+            <div className="flex items-center px-2 py-1 hover:bg-neutral-100 rounded text-sm text-neutral-700">
               123
               <ChevronDown className="h-3 w-3 ml-1" />
             </div>
           }
           disabled={isViewOnly || !hasSelection}
         >
-          <div className="px-3 py-1 text-xs font-medium text-slate-500 uppercase tracking-wide">General</div>
+          <div className="px-3 py-1 text-xs font-medium text-neutral-500 uppercase tracking-wide">General</div>
           <button
             onClick={() => onFormatChange({ numberFormat: 'general' })}
-            className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100"
+            className="w-full px-3 py-1.5 text-left text-sm hover:bg-neutral-100"
           >
             Automatic
           </button>
-          <div className="border-t border-slate-200 my-1" />
-          <div className="px-3 py-1 text-xs font-medium text-slate-500 uppercase tracking-wide">Number</div>
+          <div className="border-t border-neutral-200 my-1" />
+          <div className="px-3 py-1 text-xs font-medium text-neutral-500 uppercase tracking-wide">Number</div>
           <button
             onClick={() => onFormatChange({ numberFormat: 'number' })}
-            className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100"
+            className="w-full px-3 py-1.5 text-left text-sm hover:bg-neutral-100"
           >
             Number (1,234.56)
           </button>
           <button
             onClick={() => onFormatChange({ numberFormat: 'currency' })}
-            className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100"
+            className="w-full px-3 py-1.5 text-left text-sm hover:bg-neutral-100"
           >
             Currency ($1,234.56)
           </button>
           <button
             onClick={() => onFormatChange({ numberFormat: 'percentage' })}
-            className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100"
+            className="w-full px-3 py-1.5 text-left text-sm hover:bg-neutral-100"
           >
             Percent (12.34%)
           </button>
-          <div className="border-t border-slate-200 my-1" />
-          <div className="px-3 py-1 text-xs font-medium text-slate-500 uppercase tracking-wide">Date</div>
+          <div className="border-t border-neutral-200 my-1" />
+          <div className="px-3 py-1 text-xs font-medium text-neutral-500 uppercase tracking-wide">Date</div>
           <button
             onClick={() => onFormatChange({ numberFormat: 'date_short' })}
-            className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100"
+            className="w-full px-3 py-1.5 text-left text-sm hover:bg-neutral-100"
           >
             1/15/2024
           </button>
           <button
             onClick={() => onFormatChange({ numberFormat: 'date_medium' })}
-            className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100"
+            className="w-full px-3 py-1.5 text-left text-sm hover:bg-neutral-100"
           >
             Jan 15, 2024
           </button>
           <button
             onClick={() => onFormatChange({ numberFormat: 'date_long' })}
-            className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100"
+            className="w-full px-3 py-1.5 text-left text-sm hover:bg-neutral-100"
           >
             January 15, 2024
           </button>
           <button
             onClick={() => onFormatChange({ numberFormat: 'date_iso' })}
-            className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100"
+            className="w-full px-3 py-1.5 text-left text-sm hover:bg-neutral-100"
           >
             2024-01-15 (ISO)
           </button>
-          <div className="border-t border-slate-200 my-1" />
-          <div className="px-3 py-1 text-xs font-medium text-slate-500 uppercase tracking-wide">Date & Time</div>
+          <div className="border-t border-neutral-200 my-1" />
+          <div className="px-3 py-1 text-xs font-medium text-neutral-500 uppercase tracking-wide">Date & Time</div>
           <button
             onClick={() => onFormatChange({ numberFormat: 'date_time' })}
-            className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100"
+            className="w-full px-3 py-1.5 text-left text-sm hover:bg-neutral-100"
           >
             1/15/2024 2:30 PM
           </button>
           <button
             onClick={() => onFormatChange({ numberFormat: 'date_time_long' })}
-            className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100"
+            className="w-full px-3 py-1.5 text-left text-sm hover:bg-neutral-100"
           >
             January 15, 2024 at 2:30 PM
           </button>
@@ -420,7 +420,7 @@ export default function Toolbar({
         {/* Font family */}
         <ToolbarDropdown
           trigger={
-            <div className="flex items-center px-2 py-1 hover:bg-slate-100 rounded text-sm text-slate-700 min-w-[80px]">
+            <div className="flex items-center px-2 py-1 hover:bg-neutral-100 rounded text-sm text-neutral-700 min-w-[80px]">
               {currentFormat.fontFamily || 'Default'}
               <ChevronDown className="h-3 w-3 ml-1" />
             </div>
@@ -431,8 +431,8 @@ export default function Toolbar({
             <button
               key={font}
               onClick={() => onFormatChange({ fontFamily: font === 'Default' ? undefined : font })}
-              className={`w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 ${
-                (currentFormat.fontFamily || 'Default') === font ? 'bg-blue-50 text-blue-700' : 'text-slate-700'
+              className={`w-full px-3 py-1.5 text-left text-sm hover:bg-neutral-100 ${
+                (currentFormat.fontFamily || 'Default') === font ? 'bg-primary-50 text-primary-700' : 'text-neutral-700'
               }`}
               style={{ fontFamily: font === 'Default' ? undefined : font }}
             >
@@ -453,7 +453,7 @@ export default function Toolbar({
           />
           <ToolbarDropdown
             trigger={
-              <div className="flex items-center px-2 py-1 hover:bg-slate-100 rounded text-sm text-slate-700 min-w-[40px] justify-center">
+              <div className="flex items-center px-2 py-1 hover:bg-neutral-100 rounded text-sm text-neutral-700 min-w-[40px] justify-center">
                 {currentFontSize}
               </div>
             }
@@ -463,8 +463,8 @@ export default function Toolbar({
               <button
                 key={size}
                 onClick={() => onFormatChange({ fontSize: size })}
-                className={`w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 ${
-                  currentFontSize === size ? 'bg-blue-50 text-blue-700' : 'text-slate-700'
+                className={`w-full px-3 py-1.5 text-left text-sm hover:bg-neutral-100 ${
+                  currentFontSize === size ? 'bg-primary-50 text-primary-700' : 'text-neutral-700'
                 }`}
               >
                 {size}
@@ -527,9 +527,9 @@ export default function Toolbar({
             className="absolute inset-0 opacity-0 w-8 h-8 cursor-pointer disabled:cursor-not-allowed"
             title="Text color"
           />
-          <div className={`p-1.5 rounded hover:bg-slate-100 ${isViewOnly || !hasSelection ? 'opacity-40' : ''}`}>
+          <div className={`p-1.5 rounded hover:bg-neutral-100 ${isViewOnly || !hasSelection ? 'opacity-40' : ''}`}>
             <div className="relative">
-              <Type className="h-4 w-4 text-slate-600" />
+              <Type className="h-4 w-4 text-neutral-600" />
               <div
                 className="absolute -bottom-0.5 left-0 right-0 h-1 rounded-sm"
                 style={{ backgroundColor: currentFormat.color || '#000000' }}
@@ -550,11 +550,11 @@ export default function Toolbar({
             className="absolute inset-0 opacity-0 w-8 h-8 cursor-pointer disabled:cursor-not-allowed"
             title="Fill color"
           />
-          <div className={`p-1.5 rounded hover:bg-slate-100 ${isViewOnly || !hasSelection ? 'opacity-40' : ''}`}>
+          <div className={`p-1.5 rounded hover:bg-neutral-100 ${isViewOnly || !hasSelection ? 'opacity-40' : ''}`}>
             <div className="relative">
-              <PaintBucket className="h-4 w-4 text-slate-600" />
+              <PaintBucket className="h-4 w-4 text-neutral-600" />
               <div
-                className="absolute -bottom-0.5 left-0 right-0 h-1 rounded-sm border border-slate-300"
+                className="absolute -bottom-0.5 left-0 right-0 h-1 rounded-sm border border-neutral-300"
                 style={{ backgroundColor: currentFormat.backgroundColor || '#ffffff' }}
               />
             </div>
@@ -566,56 +566,56 @@ export default function Toolbar({
         {/* Borders */}
         <ToolbarDropdown
           trigger={
-            <div className="flex items-center p-1.5 hover:bg-slate-100 rounded">
-              <Grid3X3 className="h-4 w-4 text-slate-600" />
-              <ChevronDown className="h-3 w-3 ml-0.5 text-slate-400" />
+            <div className="flex items-center p-1.5 hover:bg-neutral-100 rounded">
+              <Grid3X3 className="h-4 w-4 text-neutral-600" />
+              <ChevronDown className="h-3 w-3 ml-0.5 text-neutral-400" />
             </div>
           }
           disabled={isViewOnly || !hasSelection}
         >
           <button
             onClick={() => onFormatChange({ borderStyle: 'solid', borderTop: true, borderBottom: true, borderLeft: true, borderRight: true })}
-            className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 flex items-center gap-2"
+            className="w-full px-3 py-1.5 text-left text-sm hover:bg-neutral-100 flex items-center gap-2"
           >
             <Grid3X3 className="h-4 w-4" /> All borders
           </button>
           <button
             onClick={() => onFormatChange({ borderStyle: 'none', borderTop: false, borderBottom: false, borderLeft: false, borderRight: false })}
-            className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 flex items-center gap-2"
+            className="w-full px-3 py-1.5 text-left text-sm hover:bg-neutral-100 flex items-center gap-2"
           >
-            <div className="h-4 w-4 border border-dashed border-slate-300" /> No borders
+            <div className="h-4 w-4 border border-dashed border-neutral-300" /> No borders
           </button>
-          <div className="border-t border-slate-200 my-1" />
+          <div className="border-t border-neutral-200 my-1" />
           <button
             onClick={() => onFormatChange({ borderTop: true, borderBottom: false, borderLeft: false, borderRight: false })}
-            className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 flex items-center gap-2"
+            className="w-full px-3 py-1.5 text-left text-sm hover:bg-neutral-100 flex items-center gap-2"
           >
-            <div className="h-4 w-4 border-t-2 border-slate-600" /> Top border
+            <div className="h-4 w-4 border-t-2 border-neutral-600" /> Top border
           </button>
           <button
             onClick={() => onFormatChange({ borderTop: false, borderBottom: true, borderLeft: false, borderRight: false })}
-            className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 flex items-center gap-2"
+            className="w-full px-3 py-1.5 text-left text-sm hover:bg-neutral-100 flex items-center gap-2"
           >
-            <div className="h-4 w-4 border-b-2 border-slate-600" /> Bottom border
+            <div className="h-4 w-4 border-b-2 border-neutral-600" /> Bottom border
           </button>
           <button
             onClick={() => onFormatChange({ borderTop: false, borderBottom: false, borderLeft: true, borderRight: false })}
-            className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 flex items-center gap-2"
+            className="w-full px-3 py-1.5 text-left text-sm hover:bg-neutral-100 flex items-center gap-2"
           >
-            <div className="h-4 w-4 border-l-2 border-slate-600" /> Left border
+            <div className="h-4 w-4 border-l-2 border-neutral-600" /> Left border
           </button>
           <button
             onClick={() => onFormatChange({ borderTop: false, borderBottom: false, borderLeft: false, borderRight: true })}
-            className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 flex items-center gap-2"
+            className="w-full px-3 py-1.5 text-left text-sm hover:bg-neutral-100 flex items-center gap-2"
           >
-            <div className="h-4 w-4 border-r-2 border-slate-600" /> Right border
+            <div className="h-4 w-4 border-r-2 border-neutral-600" /> Right border
           </button>
-          <div className="border-t border-slate-200 my-1" />
+          <div className="border-t border-neutral-200 my-1" />
           <button
             onClick={() => onFormatChange({ borderTop: true, borderBottom: true, borderLeft: true, borderRight: true })}
-            className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 flex items-center gap-2"
+            className="w-full px-3 py-1.5 text-left text-sm hover:bg-neutral-100 flex items-center gap-2"
           >
-            <div className="h-4 w-4 border-2 border-slate-600" /> Outside borders
+            <div className="h-4 w-4 border-2 border-neutral-600" /> Outside borders
           </button>
         </ToolbarDropdown>
 
@@ -624,9 +624,9 @@ export default function Toolbar({
         {/* Merge cells */}
         <ToolbarDropdown
           trigger={
-            <div className="flex items-center p-1.5 hover:bg-slate-100 rounded">
-              <Merge className="h-4 w-4 text-slate-600" />
-              <ChevronDown className="h-3 w-3 ml-0.5 text-slate-400" />
+            <div className="flex items-center p-1.5 hover:bg-neutral-100 rounded">
+              <Merge className="h-4 w-4 text-neutral-600" />
+              <ChevronDown className="h-3 w-3 ml-0.5 text-neutral-400" />
             </div>
           }
           disabled={isViewOnly || (!hasRangeSelection && !isMerged)}
@@ -634,14 +634,14 @@ export default function Toolbar({
           <button
             onClick={onMergeCells}
             disabled={isMerged}
-            className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 flex items-center gap-2 disabled:opacity-50"
+            className="w-full px-3 py-1.5 text-left text-sm hover:bg-neutral-100 flex items-center gap-2 disabled:opacity-50"
           >
             <Merge className="h-4 w-4" /> Merge cells
           </button>
           <button
             onClick={onUnmergeCells}
             disabled={!isMerged}
-            className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 flex items-center gap-2 disabled:opacity-50"
+            className="w-full px-3 py-1.5 text-left text-sm hover:bg-neutral-100 flex items-center gap-2 disabled:opacity-50"
           >
             <SplitSquareHorizontal className="h-4 w-4" /> Unmerge cells
           </button>
@@ -652,39 +652,39 @@ export default function Toolbar({
         {/* Horizontal alignment */}
         <ToolbarDropdown
           trigger={
-            <div className="flex items-center p-1.5 hover:bg-slate-100 rounded">
+            <div className="flex items-center p-1.5 hover:bg-neutral-100 rounded">
               {currentFormat.align === 'center' ? (
-                <AlignCenter className="h-4 w-4 text-slate-600" />
+                <AlignCenter className="h-4 w-4 text-neutral-600" />
               ) : currentFormat.align === 'right' ? (
-                <AlignRight className="h-4 w-4 text-slate-600" />
+                <AlignRight className="h-4 w-4 text-neutral-600" />
               ) : (
-                <AlignLeft className="h-4 w-4 text-slate-600" />
+                <AlignLeft className="h-4 w-4 text-neutral-600" />
               )}
-              <ChevronDown className="h-3 w-3 ml-0.5 text-slate-400" />
+              <ChevronDown className="h-3 w-3 ml-0.5 text-neutral-400" />
             </div>
           }
           disabled={isViewOnly || !hasSelection}
         >
           <button
             onClick={() => onFormatChange({ align: 'left' })}
-            className={`w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 flex items-center gap-2 ${
-              currentFormat.align === 'left' ? 'bg-blue-50 text-blue-700' : ''
+            className={`w-full px-3 py-1.5 text-left text-sm hover:bg-neutral-100 flex items-center gap-2 ${
+              currentFormat.align === 'left' ? 'bg-primary-50 text-primary-700' : ''
             }`}
           >
             <AlignLeft className="h-4 w-4" /> Left
           </button>
           <button
             onClick={() => onFormatChange({ align: 'center' })}
-            className={`w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 flex items-center gap-2 ${
-              currentFormat.align === 'center' ? 'bg-blue-50 text-blue-700' : ''
+            className={`w-full px-3 py-1.5 text-left text-sm hover:bg-neutral-100 flex items-center gap-2 ${
+              currentFormat.align === 'center' ? 'bg-primary-50 text-primary-700' : ''
             }`}
           >
             <AlignCenter className="h-4 w-4" /> Center
           </button>
           <button
             onClick={() => onFormatChange({ align: 'right' })}
-            className={`w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 flex items-center gap-2 ${
-              currentFormat.align === 'right' ? 'bg-blue-50 text-blue-700' : ''
+            className={`w-full px-3 py-1.5 text-left text-sm hover:bg-neutral-100 flex items-center gap-2 ${
+              currentFormat.align === 'right' ? 'bg-primary-50 text-primary-700' : ''
             }`}
           >
             <AlignRight className="h-4 w-4" /> Right
@@ -694,39 +694,39 @@ export default function Toolbar({
         {/* Vertical alignment */}
         <ToolbarDropdown
           trigger={
-            <div className="flex items-center p-1.5 hover:bg-slate-100 rounded">
+            <div className="flex items-center p-1.5 hover:bg-neutral-100 rounded">
               {currentFormat.verticalAlign === 'top' ? (
-                <AlignVerticalJustifyStart className="h-4 w-4 text-slate-600" />
+                <AlignVerticalJustifyStart className="h-4 w-4 text-neutral-600" />
               ) : currentFormat.verticalAlign === 'bottom' ? (
-                <AlignVerticalJustifyEnd className="h-4 w-4 text-slate-600" />
+                <AlignVerticalJustifyEnd className="h-4 w-4 text-neutral-600" />
               ) : (
-                <AlignVerticalJustifyCenter className="h-4 w-4 text-slate-600" />
+                <AlignVerticalJustifyCenter className="h-4 w-4 text-neutral-600" />
               )}
-              <ChevronDown className="h-3 w-3 ml-0.5 text-slate-400" />
+              <ChevronDown className="h-3 w-3 ml-0.5 text-neutral-400" />
             </div>
           }
           disabled={isViewOnly || !hasSelection}
         >
           <button
             onClick={() => onFormatChange({ verticalAlign: 'top' })}
-            className={`w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 flex items-center gap-2 ${
-              currentFormat.verticalAlign === 'top' ? 'bg-blue-50 text-blue-700' : ''
+            className={`w-full px-3 py-1.5 text-left text-sm hover:bg-neutral-100 flex items-center gap-2 ${
+              currentFormat.verticalAlign === 'top' ? 'bg-primary-50 text-primary-700' : ''
             }`}
           >
             <AlignVerticalJustifyStart className="h-4 w-4" /> Top
           </button>
           <button
             onClick={() => onFormatChange({ verticalAlign: 'middle' })}
-            className={`w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 flex items-center gap-2 ${
-              currentFormat.verticalAlign === 'middle' || !currentFormat.verticalAlign ? 'bg-blue-50 text-blue-700' : ''
+            className={`w-full px-3 py-1.5 text-left text-sm hover:bg-neutral-100 flex items-center gap-2 ${
+              currentFormat.verticalAlign === 'middle' || !currentFormat.verticalAlign ? 'bg-primary-50 text-primary-700' : ''
             }`}
           >
             <AlignVerticalJustifyCenter className="h-4 w-4" /> Middle
           </button>
           <button
             onClick={() => onFormatChange({ verticalAlign: 'bottom' })}
-            className={`w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 flex items-center gap-2 ${
-              currentFormat.verticalAlign === 'bottom' ? 'bg-blue-50 text-blue-700' : ''
+            className={`w-full px-3 py-1.5 text-left text-sm hover:bg-neutral-100 flex items-center gap-2 ${
+              currentFormat.verticalAlign === 'bottom' ? 'bg-primary-50 text-primary-700' : ''
             }`}
           >
             <AlignVerticalJustifyEnd className="h-4 w-4" /> Bottom
@@ -745,49 +745,49 @@ export default function Toolbar({
         {/* Text rotation */}
         <ToolbarDropdown
           trigger={
-            <div className="flex items-center p-1.5 hover:bg-slate-100 rounded">
-              <RotateCcw className="h-4 w-4 text-slate-600" />
-              <ChevronDown className="h-3 w-3 ml-0.5 text-slate-400" />
+            <div className="flex items-center p-1.5 hover:bg-neutral-100 rounded">
+              <RotateCcw className="h-4 w-4 text-neutral-600" />
+              <ChevronDown className="h-3 w-3 ml-0.5 text-neutral-400" />
             </div>
           }
           disabled={isViewOnly || !hasSelection}
         >
           <button
             onClick={() => onFormatChange({ textRotation: 0 })}
-            className={`w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 flex items-center gap-2 ${
-              (currentFormat.textRotation || 0) === 0 ? 'bg-blue-50 text-blue-700' : ''
+            className={`w-full px-3 py-1.5 text-left text-sm hover:bg-neutral-100 flex items-center gap-2 ${
+              (currentFormat.textRotation || 0) === 0 ? 'bg-primary-50 text-primary-700' : ''
             }`}
           >
             <span className="w-4 text-center">—</span> None
           </button>
           <button
             onClick={() => onFormatChange({ textRotation: -45 })}
-            className={`w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 flex items-center gap-2 ${
-              currentFormat.textRotation === -45 ? 'bg-blue-50 text-blue-700' : ''
+            className={`w-full px-3 py-1.5 text-left text-sm hover:bg-neutral-100 flex items-center gap-2 ${
+              currentFormat.textRotation === -45 ? 'bg-primary-50 text-primary-700' : ''
             }`}
           >
             <span className="w-4 text-center transform -rotate-45">↗</span> Tilt up
           </button>
           <button
             onClick={() => onFormatChange({ textRotation: 45 })}
-            className={`w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 flex items-center gap-2 ${
-              currentFormat.textRotation === 45 ? 'bg-blue-50 text-blue-700' : ''
+            className={`w-full px-3 py-1.5 text-left text-sm hover:bg-neutral-100 flex items-center gap-2 ${
+              currentFormat.textRotation === 45 ? 'bg-primary-50 text-primary-700' : ''
             }`}
           >
             <span className="w-4 text-center transform rotate-45">↘</span> Tilt down
           </button>
           <button
             onClick={() => onFormatChange({ textRotation: -90 })}
-            className={`w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 flex items-center gap-2 ${
-              currentFormat.textRotation === -90 ? 'bg-blue-50 text-blue-700' : ''
+            className={`w-full px-3 py-1.5 text-left text-sm hover:bg-neutral-100 flex items-center gap-2 ${
+              currentFormat.textRotation === -90 ? 'bg-primary-50 text-primary-700' : ''
             }`}
           >
             <span className="w-4 text-center">↑</span> Vertical up
           </button>
           <button
             onClick={() => onFormatChange({ textRotation: 90 })}
-            className={`w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 flex items-center gap-2 ${
-              currentFormat.textRotation === 90 ? 'bg-blue-50 text-blue-700' : ''
+            className={`w-full px-3 py-1.5 text-left text-sm hover:bg-neutral-100 flex items-center gap-2 ${
+              currentFormat.textRotation === 90 ? 'bg-primary-50 text-primary-700' : ''
             }`}
           >
             <span className="w-4 text-center">↓</span> Vertical down

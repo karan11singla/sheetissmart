@@ -171,25 +171,25 @@ export default function SearchPanel({
   }, [onClose, goToNextMatch, goToPrevMatch]);
 
   return (
-    <div className="bg-white border-b border-slate-200 shadow-sm">
+    <div className="bg-white border-b border-neutral-200 shadow-sm">
       <div className="px-4 py-2 space-y-2">
         {/* Find row */}
         <div className="flex items-center space-x-3">
           <div className="flex items-center space-x-2 flex-1 max-w-md">
-            <Search className="h-4 w-4 text-slate-400 flex-shrink-0" />
+            <Search className="h-4 w-4 text-neutral-400 flex-shrink-0" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Find in sheet..."
               autoFocus
-              className="flex-1 text-sm border border-slate-200 rounded px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+              className="flex-1 text-sm border border-neutral-200 rounded px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
             />
           </div>
 
           <div className="flex items-center space-x-2">
             {searchTerm && (
-              <span className="text-xs text-slate-500 min-w-[70px] text-right">
+              <span className="text-xs text-neutral-500 min-w-[70px] text-right">
                 {matches.length === 0
                   ? 'No matches'
                   : `${currentMatchIndex + 1} of ${matches.length}`}
@@ -199,25 +199,25 @@ export default function SearchPanel({
             <button
               onClick={goToPrevMatch}
               disabled={matches.length === 0}
-              className="p-1 rounded hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-1 rounded hover:bg-neutral-100 disabled:opacity-50 disabled:cursor-not-allowed"
               title="Previous match (Shift+Enter)"
             >
-              <ChevronUp className="h-4 w-4 text-slate-600" />
+              <ChevronUp className="h-4 w-4 text-neutral-600" />
             </button>
 
             <button
               onClick={goToNextMatch}
               disabled={matches.length === 0}
-              className="p-1 rounded hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-1 rounded hover:bg-neutral-100 disabled:opacity-50 disabled:cursor-not-allowed"
               title="Next match (Enter)"
             >
-              <ChevronDown className="h-4 w-4 text-slate-600" />
+              <ChevronDown className="h-4 w-4 text-neutral-600" />
             </button>
 
             {!isViewOnly && (
               <button
                 onClick={() => setShowReplace(!showReplace)}
-                className={`p-1 rounded hover:bg-slate-100 ${showReplace ? 'bg-blue-100 text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
+                className={`p-1 rounded hover:bg-neutral-100 ${showReplace ? 'bg-primary-100 text-primary-600' : 'text-neutral-400 hover:text-neutral-600'}`}
                 title="Toggle replace"
               >
                 <Replace className="h-4 w-4" />
@@ -228,7 +228,7 @@ export default function SearchPanel({
               onClick={() => {
                 setCaseSensitive(!caseSensitive);
               }}
-              className={`p-1 rounded hover:bg-slate-100 text-xs font-bold ${caseSensitive ? 'bg-blue-100 text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
+              className={`p-1 rounded hover:bg-neutral-100 text-xs font-bold ${caseSensitive ? 'bg-primary-100 text-primary-600' : 'text-neutral-400 hover:text-neutral-600'}`}
               title="Match case"
             >
               Aa
@@ -238,7 +238,7 @@ export default function SearchPanel({
               onClick={() => {
                 setWholeCell(!wholeCell);
               }}
-              className={`p-1 rounded hover:bg-slate-100 text-xs font-semibold ${wholeCell ? 'bg-blue-100 text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
+              className={`p-1 rounded hover:bg-neutral-100 text-xs font-semibold ${wholeCell ? 'bg-primary-100 text-primary-600' : 'text-neutral-400 hover:text-neutral-600'}`}
               title="Match whole cell"
             >
               [ab]
@@ -246,7 +246,7 @@ export default function SearchPanel({
 
             <button
               onClick={onClose}
-              className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600"
+              className="p-1 rounded hover:bg-neutral-100 text-neutral-400 hover:text-neutral-600"
               title="Close (Escape)"
             >
               <X className="h-4 w-4" />
@@ -258,13 +258,13 @@ export default function SearchPanel({
         {showReplace && !isViewOnly && (
           <div className="flex items-center space-x-3">
             <div className="flex items-center space-x-2 flex-1 max-w-md">
-              <Replace className="h-4 w-4 text-slate-400 flex-shrink-0" />
+              <Replace className="h-4 w-4 text-neutral-400 flex-shrink-0" />
               <input
                 type="text"
                 value={replaceTerm}
                 onChange={(e) => setReplaceTerm(e.target.value)}
                 placeholder="Replace with..."
-                className="flex-1 text-sm border border-slate-200 rounded px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                className="flex-1 text-sm border border-neutral-200 rounded px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
               />
             </div>
 
@@ -272,7 +272,7 @@ export default function SearchPanel({
               <button
                 onClick={handleReplace}
                 disabled={matches.length === 0}
-                className="px-3 py-1 text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-1 text-sm font-medium text-neutral-700 bg-neutral-100 hover:bg-neutral-200 rounded disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Replace current match"
               >
                 Replace
@@ -281,7 +281,7 @@ export default function SearchPanel({
               <button
                 onClick={handleReplaceAll}
                 disabled={matches.length === 0}
-                className="px-3 py-1 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-1 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Replace all matches"
               >
                 Replace all

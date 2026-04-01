@@ -978,7 +978,7 @@ export default function SheetPage() {
     return (
       <div className="text-center py-12">
         <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-        <p className="mt-2 text-gray-600">Loading sheet...</p>
+        <p className="mt-2 text-neutral-600">Loading sheet...</p>
       </div>
     );
   }
@@ -986,17 +986,17 @@ export default function SheetPage() {
   if (!sheet) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-600">Sheet not found</p>
+        <p className="text-neutral-600">Sheet not found</p>
       </div>
     );
   }
 
   return (
-    <div className="h-full flex flex-col overflow-hidden bg-gradient-to-br from-slate-50 via-white to-slate-50">
+    <div className="h-full flex flex-col overflow-hidden bg-gradient-to-br from-neutral-50 via-white to-neutral-50">
       {/* Fixed Header Section - stays at top, never scrolls */}
-      <div className="flex-shrink-0 z-40 bg-white border-b border-slate-200">
+      <div className="flex-shrink-0 z-40 bg-white border-b border-neutral-200">
         {/* Modern Header Bar */}
-        <div className="border-b border-slate-200 shadow-sm">
+        <div className="border-b border-neutral-200 shadow-sm">
         <div className="flex items-center justify-between px-4 sm:px-6 h-16">
           <div className="flex items-center space-x-6">
             {isEditingName ? (
@@ -1010,7 +1010,7 @@ export default function SheetPage() {
                   if (e.key === 'Escape') setIsEditingName(false);
                 }}
                 autoFocus
-                className="text-xl font-bold text-slate-900 border-b-2 border-blue-500 px-2 py-1 focus:outline-none bg-transparent"
+                className="text-xl font-bold text-neutral-900 border-b-2 border-primary-500 px-2 py-1 focus:outline-none bg-transparent"
               />
             ) : (
               <button
@@ -1018,17 +1018,17 @@ export default function SheetPage() {
                   setSheetName(sheet.name);
                   setIsEditingName(true);
                 }}
-                className="text-xl font-bold text-slate-900 hover:text-blue-600 flex items-center space-x-2 transition-colors group"
+                className="text-xl font-bold text-neutral-900 hover:text-primary-600 flex items-center space-x-2 transition-colors group"
               >
                 <span>{sheet.name}</span>
-                <Star className="h-5 w-5 text-slate-400 group-hover:text-blue-500 transition-colors" />
+                <Star className="h-5 w-5 text-neutral-400 group-hover:text-primary-500 transition-colors" />
               </button>
             )}
           </div>
           <div className="flex items-center space-x-3">
             <button
               onClick={() => setIsShareModalOpen(true)}
-              className="inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg font-medium text-sm"
+              className="inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg hover:from-primary-700 hover:to-primary-800 transition-all shadow-md hover:shadow-lg font-medium text-sm"
             >
               {isViewOnly ? 'Access' : 'Share'}
             </button>
@@ -1195,15 +1195,15 @@ export default function SheetPage() {
 
       {/* Active Filters and Sort */}
       {(Object.keys(filters).length > 0 || sortConfig) && (
-        <div className="bg-blue-50 border-b border-blue-200 px-4 py-2 flex items-center justify-between">
+        <div className="bg-primary-50 border-b border-primary-200 px-4 py-2 flex items-center justify-between">
           <div className="flex items-center space-x-4">
             {Object.keys(filters).length > 0 && (
-              <span className="text-xs text-blue-700">
+              <span className="text-xs text-primary-700">
                 {Object.keys(filters).length} filter{Object.keys(filters).length > 1 ? 's' : ''} active
               </span>
             )}
             {sortConfig && (
-              <span className="text-xs text-blue-700">
+              <span className="text-xs text-primary-700">
                 Sorted by {sheet?.columns?.find(c => c.id === sortConfig.columnId)?.name || 'column'} ({sortConfig.direction === 'asc' ? 'A→Z' : 'Z→A'})
               </span>
             )}
@@ -1212,7 +1212,7 @@ export default function SheetPage() {
             {sortConfig && (
               <button
                 onClick={() => setSortConfig(null)}
-                className="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-100 rounded transition-colors"
+                className="inline-flex items-center px-2 py-1 text-xs font-medium text-primary-600 hover:text-primary-700 hover:bg-primary-100 rounded transition-colors"
               >
                 <X className="h-3 w-3 mr-1" />
                 Clear sort
@@ -1221,7 +1221,7 @@ export default function SheetPage() {
             {Object.keys(filters).length > 0 && (
               <button
                 onClick={clearAllFilters}
-                className="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-100 rounded transition-colors"
+                className="inline-flex items-center px-2 py-1 text-xs font-medium text-primary-600 hover:text-primary-700 hover:bg-primary-100 rounded transition-colors"
               >
                 <X className="h-3 w-3 mr-1" />
                 Clear filters

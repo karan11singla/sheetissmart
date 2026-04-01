@@ -52,7 +52,7 @@ export default function RowHeader({
         }}
         autoFocus
         placeholder={`${rowIndex + 1}`}
-        className="w-20 text-center font-semibold bg-white border-b-2 border-blue-500 px-2 py-1 focus:outline-none rounded"
+        className="w-20 text-center font-semibold bg-white border-b-2 border-primary-500 px-2 py-1 focus:outline-none rounded"
       />
     );
   }
@@ -68,13 +68,13 @@ export default function RowHeader({
             e.stopPropagation();
             onToggleExpand?.(row.id);
           }}
-          className="w-4 h-4 flex items-center justify-center hover:bg-slate-200 rounded transition-colors mr-0.5"
+          className="w-4 h-4 flex items-center justify-center hover:bg-neutral-200 rounded transition-colors mr-0.5"
           title={row.isExpanded ? 'Collapse' : 'Expand'}
         >
           {row.isExpanded ? (
-            <ChevronDown className="h-3.5 w-3.5 text-slate-600" />
+            <ChevronDown className="h-3.5 w-3.5 text-neutral-600" />
           ) : (
-            <ChevronRight className="h-3.5 w-3.5 text-slate-600" />
+            <ChevronRight className="h-3.5 w-3.5 text-neutral-600" />
           )}
         </button>
       ) : (
@@ -84,7 +84,7 @@ export default function RowHeader({
 
       {/* Row number/name */}
       <span
-        className="cursor-pointer hover:text-blue-600 transition-colors flex-shrink-0"
+        className="cursor-pointer hover:text-primary-600 transition-colors flex-shrink-0"
         onDoubleClick={() => !isViewOnly && setIsEditing(true)}
         title="Double-click to rename row"
       >
@@ -99,7 +99,7 @@ export default function RowHeader({
             onCommentClick(row.id);
           }}
           className={`ml-1 p-0.5 rounded hover:bg-indigo-100 transition-all ${
-            hasComments ? 'opacity-100 text-indigo-600' : 'opacity-0 group-hover:opacity-100 text-slate-400 hover:text-indigo-600'
+            hasComments ? 'opacity-100 text-indigo-600' : 'opacity-0 group-hover:opacity-100 text-neutral-400 hover:text-indigo-600'
           }`}
           title={hasComments ? `${row._count?.comments} comment${row._count?.comments !== 1 ? 's' : ''}` : 'Add comment'}
         >
@@ -158,14 +158,14 @@ export default function RowHeader({
           {/* Edit/Delete buttons */}
           <button
             onClick={() => setIsEditing(true)}
-            className="p-0.5 rounded hover:bg-blue-100 transition-all"
+            className="p-0.5 rounded hover:bg-primary-100 transition-all"
             title="Rename row"
           >
-            <Edit3 className="h-3 w-3 text-blue-600" />
+            <Edit3 className="h-3 w-3 text-primary-600" />
           </button>
           <button
             onClick={handleDelete}
-            className="p-1 rounded-md hover:bg-red-100 transition-colors text-slate-400 hover:text-red-600"
+            className="p-1 rounded-md hover:bg-red-100 transition-colors text-neutral-400 hover:text-red-600"
             title="Delete row"
           >
             <Trash2 className="h-3.5 w-3.5" />

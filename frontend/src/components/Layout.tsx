@@ -12,20 +12,20 @@ export default function Layout() {
   const [showNotifications, setShowNotifications] = useState(false);
 
   return (
-    <div className="h-screen overflow-hidden bg-white flex">
+    <div className="h-screen overflow-hidden bg-neutral-50 flex">
       {/* Mobile hamburger menu button */}
       <button
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-slate-800 text-white rounded-lg shadow-lg hover:bg-slate-700 transition-colors"
+        className="lg:hidden fixed top-3 left-3 z-50 p-2 bg-white text-neutral-700 rounded-lg shadow-md border border-neutral-200 hover:bg-neutral-50 transition-colors"
         aria-label="Toggle menu"
       >
-        {isSidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+        {isSidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
       </button>
 
       {/* Mobile overlay */}
       {isSidebarOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/50 z-30"
+          className="lg:hidden fixed inset-0 bg-neutral-900/20 backdrop-blur-sm z-30"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
@@ -43,12 +43,12 @@ export default function Layout() {
         />
       </div>
 
-      {/* Main Content - overflow-hidden so each page controls its own scroll */}
-      <main className="flex-1 overflow-hidden bg-gray-50 w-full lg:w-auto">
+      {/* Main Content */}
+      <main className="flex-1 overflow-hidden w-full lg:w-auto">
         <Outlet />
       </main>
 
-      {/* Global Search Modal - Rendered at layout level */}
+      {/* Global Search Modal */}
       <GlobalSearch isOpen={showSearch} onClose={() => setShowSearch(false)} />
 
       {/* Notifications Panel */}

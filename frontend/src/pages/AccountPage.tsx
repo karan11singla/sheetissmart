@@ -91,59 +91,59 @@ export default function AccountPage() {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <p className="mt-2 text-gray-600">Loading account...</p>
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+          <p className="mt-2 text-neutral-600">Loading account...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="h-full overflow-auto bg-gray-50">
+    <div className="h-full overflow-auto bg-neutral-50">
       <div className="max-w-4xl mx-auto px-8 py-8 space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Account Settings</h1>
-          <p className="mt-1 text-sm text-gray-600">
+          <h1 className="text-3xl font-bold text-neutral-900">Account Settings</h1>
+          <p className="mt-1 text-sm text-neutral-600">
             Manage your profile, security, and account information
           </p>
         </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <div className="bg-white rounded-lg border border-neutral-200 p-6">
             <div className="flex items-center">
-              <div className="p-3 bg-blue-50 rounded-lg">
-                <FileText className="h-6 w-6 text-blue-600" />
+              <div className="p-3 bg-primary-50 rounded-lg">
+                <FileText className="h-6 w-6 text-primary-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Owned Sheets</p>
-                <p className="text-2xl font-bold text-gray-900">{stats?.ownedSheets || 0}</p>
+                <p className="text-sm font-medium text-neutral-600">Owned Sheets</p>
+                <p className="text-2xl font-bold text-neutral-900">{stats?.ownedSheets || 0}</p>
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <div className="bg-white rounded-lg border border-neutral-200 p-6">
             <div className="flex items-center">
               <div className="p-3 bg-green-50 rounded-lg">
                 <Share2 className="h-6 w-6 text-green-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Shared with Me</p>
-                <p className="text-2xl font-bold text-gray-900">{stats?.sharedWithMe || 0}</p>
+                <p className="text-sm font-medium text-neutral-600">Shared with Me</p>
+                <p className="text-2xl font-bold text-neutral-900">{stats?.sharedWithMe || 0}</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Profile Section */}
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Profile Information</h2>
-            <p className="text-sm text-gray-600">Update your account profile information</p>
+        <div className="bg-white rounded-lg border border-neutral-200 shadow-sm">
+          <div className="px-6 py-4 border-b border-neutral-200">
+            <h2 className="text-lg font-semibold text-neutral-900">Profile Information</h2>
+            <p className="text-sm text-neutral-600">Update your account profile information</p>
           </div>
           <div className="px-6 py-6 space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-neutral-700 mb-2">
                 <User className="inline h-4 w-4 mr-2" />
                 Name
               </label>
@@ -152,14 +152,14 @@ export default function AccountPage() {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
               ) : (
-                <p className="text-gray-900 px-3 py-2 bg-gray-50 rounded-md">{user?.name}</p>
+                <p className="text-neutral-900 px-3 py-2 bg-neutral-50 rounded-md">{user?.name}</p>
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-neutral-700 mb-2">
                 <Mail className="inline h-4 w-4 mr-2" />
                 Email
               </label>
@@ -168,10 +168,10 @@ export default function AccountPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
               ) : (
-                <p className="text-gray-900 px-3 py-2 bg-gray-50 rounded-md">{user?.email}</p>
+                <p className="text-neutral-900 px-3 py-2 bg-neutral-50 rounded-md">{user?.email}</p>
               )}
             </div>
             <div className="pt-2">
@@ -179,14 +179,14 @@ export default function AccountPage() {
                 <div className="flex space-x-3">
                   <button
                     onClick={() => setIsEditingProfile(false)}
-                    className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                    className="px-4 py-2 border border-neutral-300 rounded-md text-sm font-medium text-neutral-700 bg-white hover:bg-neutral-50 transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleSaveProfile}
                     disabled={updateProfileMutation.isPending}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                    className="px-4 py-2 bg-primary-600 text-white rounded-md text-sm font-medium hover:bg-primary-700 disabled:opacity-50 transition-colors"
                   >
                     {updateProfileMutation.isPending ? 'Saving...' : 'Save Changes'}
                   </button>
@@ -194,7 +194,7 @@ export default function AccountPage() {
               ) : (
                 <button
                   onClick={handleEditProfile}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
+                  className="px-4 py-2 bg-primary-600 text-white rounded-md text-sm font-medium hover:bg-primary-700 transition-colors"
                 >
                   Edit Profile
                 </button>
@@ -204,10 +204,10 @@ export default function AccountPage() {
         </div>
 
         {/* Password Section */}
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Change Password</h2>
-            <p className="text-sm text-gray-600">Update your password to keep your account secure</p>
+        <div className="bg-white rounded-lg border border-neutral-200 shadow-sm">
+          <div className="px-6 py-4 border-b border-neutral-200">
+            <h2 className="text-lg font-semibold text-neutral-900">Change Password</h2>
+            <p className="text-sm text-neutral-600">Update your password to keep your account secure</p>
           </div>
           <div className="px-6 py-6">
             <form onSubmit={handleChangePassword} className="space-y-4">
@@ -228,7 +228,7 @@ export default function AccountPage() {
                 </div>
               )}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-neutral-700 mb-2">
                   <Lock className="inline h-4 w-4 mr-2" />
                   Current Password
                 </label>
@@ -236,12 +236,12 @@ export default function AccountPage() {
                   type="password"
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-neutral-700 mb-2">
                   <Lock className="inline h-4 w-4 mr-2" />
                   New Password
                 </label>
@@ -249,13 +249,13 @@ export default function AccountPage() {
                   type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   required
                   minLength={6}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-neutral-700 mb-2">
                   <Lock className="inline h-4 w-4 mr-2" />
                   Confirm New Password
                 </label>
@@ -263,7 +263,7 @@ export default function AccountPage() {
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   required
                   minLength={6}
                 />
@@ -272,7 +272,7 @@ export default function AccountPage() {
                 <button
                   type="submit"
                   disabled={changePasswordMutation.isPending}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                  className="px-4 py-2 bg-primary-600 text-white rounded-md text-sm font-medium hover:bg-primary-700 disabled:opacity-50 transition-colors"
                 >
                   {changePasswordMutation.isPending ? 'Changing...' : 'Change Password'}
                 </button>

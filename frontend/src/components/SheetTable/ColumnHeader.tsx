@@ -89,7 +89,7 @@ export default function ColumnHeader({
             if (e.key === 'Escape') setIsEditing(false);
           }}
           autoFocus
-          className="w-full font-bold bg-white border-b-2 border-blue-500 px-2 py-1 focus:outline-none rounded"
+          className="w-full font-bold bg-white border-b-2 border-primary-500 px-2 py-1 focus:outline-none rounded"
         />
       </div>
     );
@@ -99,7 +99,7 @@ export default function ColumnHeader({
     <div className="flex items-center justify-between w-full group relative">
       <div className="flex items-center space-x-1.5 flex-1 min-w-0">
         <span
-          className="truncate cursor-pointer hover:text-blue-600 font-bold transition-colors"
+          className="truncate cursor-pointer hover:text-primary-600 font-bold transition-colors"
           onDoubleClick={() => !isViewOnly && setIsEditing(true)}
           title="Double-click to rename"
         >
@@ -108,10 +108,10 @@ export default function ColumnHeader({
         {!isViewOnly && (
           <button
             onClick={() => setIsEditing(true)}
-            className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-blue-100 transition-all flex-shrink-0"
+            className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-primary-100 transition-all flex-shrink-0"
             title="Rename column"
           >
-            <Edit3 className="h-3 w-3 text-blue-600" />
+            <Edit3 className="h-3 w-3 text-primary-600" />
           </button>
         )}
       </div>
@@ -137,7 +137,7 @@ export default function ColumnHeader({
           )}
           <button
             onClick={handleDelete}
-            className="p-0.5 rounded hover:bg-red-100 transition-colors text-gray-400 hover:text-red-600"
+            className="p-0.5 rounded hover:bg-red-100 transition-colors text-neutral-400 hover:text-red-600"
             title="Delete column"
           >
             <Trash2 className="h-3 w-3" />
@@ -147,8 +147,8 @@ export default function ColumnHeader({
       {/* Resize handle - positioned at the right edge of the column header */}
       {!isViewOnly && onResize && (
         <div
-          className={`absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-500 ${
-            isResizing ? 'bg-blue-500' : 'bg-transparent'
+          className={`absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary-500 ${
+            isResizing ? 'bg-primary-500' : 'bg-transparent'
           }`}
           onMouseDown={handleResizeStart}
           title="Drag to resize column"

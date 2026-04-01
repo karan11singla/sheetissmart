@@ -34,7 +34,7 @@ export default function RightSidebar({ isOpen, onClose, title, children, width =
       {/* Backdrop */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-slate-900/10 backdrop-blur-[2px] z-40 transition-opacity"
+          className="fixed inset-0 bg-neutral-900/15 backdrop-blur-sm backdrop-blur-[2px] z-40 transition-opacity"
           onClick={onClose}
         />
       )}
@@ -47,14 +47,14 @@ export default function RightSidebar({ isOpen, onClose, title, children, width =
       >
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
-            <h2 className="text-lg font-semibold text-slate-900">{title || 'Sidebar'}</h2>
+          <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200">
+            <h2 className="text-lg font-semibold text-neutral-900">{title || 'Sidebar'}</h2>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+              className="p-1.5 rounded-lg hover:bg-neutral-100 transition-colors"
               aria-label="Close sidebar"
             >
-              <X className="h-5 w-5 text-slate-500" />
+              <X className="h-5 w-5 text-neutral-400" />
             </button>
           </div>
 

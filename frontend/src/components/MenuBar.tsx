@@ -263,7 +263,7 @@ export default function MenuBar({
   };
 
   return (
-    <div ref={menuRef} className="flex items-center bg-white border-b border-slate-200 px-2">
+    <div ref={menuRef} className="flex items-center bg-white border-b border-neutral-200 px-2">
       {menus.map((menu) => (
         <div key={menu.label} className="relative">
           <button
@@ -271,18 +271,18 @@ export default function MenuBar({
             onMouseEnter={() => openMenu && setOpenMenu(menu.label)}
             className={`px-3 py-1.5 text-sm font-medium rounded transition-colors ${
               openMenu === menu.label
-                ? 'bg-slate-100 text-slate-900'
-                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                ? 'bg-neutral-100 text-neutral-900'
+                : 'text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900'
             }`}
           >
             {menu.label}
           </button>
 
           {openMenu === menu.label && (
-            <div className="absolute left-0 top-full mt-0.5 w-56 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-50">
+            <div className="absolute left-0 top-full mt-0.5 w-56 bg-white rounded-lg shadow-lg border border-neutral-200 py-1 z-50">
               {menu.items.map((item, index) =>
                 item.divider ? (
-                  <div key={index} className="my-1 border-t border-slate-200" />
+                  <div key={index} className="my-1 border-t border-neutral-200" />
                 ) : (
                   <button
                     key={item.label}
@@ -290,14 +290,14 @@ export default function MenuBar({
                     disabled={item.disabled}
                     className={`w-full flex items-center px-3 py-2 text-sm ${
                       item.disabled
-                        ? 'text-slate-300 cursor-not-allowed'
-                        : 'text-slate-700 hover:bg-slate-100'
+                        ? 'text-neutral-300 cursor-not-allowed'
+                        : 'text-neutral-700 hover:bg-neutral-100'
                     }`}
                   >
                     <span className="w-6 flex-shrink-0">{item.icon}</span>
                     <span className="flex-1 text-left">{item.label}</span>
                     {item.shortcut && (
-                      <span className="text-xs text-slate-400">{item.shortcut}</span>
+                      <span className="text-xs text-neutral-400">{item.shortcut}</span>
                     )}
                   </button>
                 )
