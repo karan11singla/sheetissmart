@@ -1134,11 +1134,10 @@ export default function SheetPage() {
         onFreezeColumns={setFrozenColumns}
         selectedRow={selectedCell?.rowIndex ?? null}
         selectedColumn={selectedCell?.colIndex ?? null}
-        onExport={async () => {
+        onExportCsv={async () => {
           if (!id) return;
           try {
             const csv = await sheetApi.exportToCsv(id);
-            // Create blob and download
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
@@ -1149,7 +1148,74 @@ export default function SheetPage() {
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
           } catch (error) {
-            console.error('Export failed:', error);
+            console.error('CSV export failed:', error);
+          }
+        }}
+        onExportPdf={async () => {
+          if (!sheet?.columns || !sheet?.rows) return;
+          try {
+            const { default: jsPDF } = await import('jspdf');
+            await import('jspdf-autotable');
+
+            const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+
+            // Title
+            doc.setFontSize(16);
+            doc.setTextColor(23, 23, 23);
+            doc.text(sheet.name || 'Sheet Export', 40, 40);
+
+            // Subtitle
+            doc.setFontSize(9);
+            doc.setTextColor(115, 115, 115);
+            doc.text(`Exported on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`, 40, 56);
+
+            // Table data
+            const columns = sheet.columns.map(c => c.name);
+            const rows = filteredAndSortedRows.map(row =>
+              sheet.columns!.map(col => {
+                const cell = row.cells?.find(c => c.columnId === col.id);
+                if (!cell?.value) return '';
+                try { return String(JSON.parse(cell.value)); } catch { return cell.value || ''; }
+              })
+            );
+
+            (doc as any).autoTable({
+              head: [columns],
+              body: rows,
+              startY: 70,
+              margin: { left: 40, right: 40 },
+              styles: {
+                fontSize: 8,
+                cellPadding: 6,
+                lineColor: [229, 229, 229],
+                lineWidth: 0.5,
+                textColor: [38, 38, 38],
+              },
+              headStyles: {
+                fillColor: [22, 163, 74],
+                textColor: [255, 255, 255],
+                fontStyle: 'bold',
+                fontSize: 8.5,
+              },
+              alternateRowStyles: {
+                fillColor: [250, 250, 250],
+              },
+              didDrawPage: (data: any) => {
+                // Footer with page number
+                const pageCount = (doc as any).internal.getNumberOfPages();
+                doc.setFontSize(8);
+                doc.setTextColor(163, 163, 163);
+                doc.text(
+                  `Page ${data.pageNumber} of ${pageCount}`,
+                  doc.internal.pageSize.getWidth() - 80,
+                  doc.internal.pageSize.getHeight() - 20
+                );
+              },
+            });
+
+            doc.save(`${sheet.name || 'sheet'}.pdf`);
+          } catch (error) {
+            console.error('PDF export failed:', error);
           }
         }}
         onPrint={() => {

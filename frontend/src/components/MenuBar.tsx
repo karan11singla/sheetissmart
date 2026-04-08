@@ -49,7 +49,8 @@ interface MenuBarProps {
   onInsertColumnLeft?: () => void;
   onInsertColumnRight?: () => void;
   onShare?: () => void;
-  onExport?: () => void;
+  onExportCsv?: () => void;
+  onExportPdf?: () => void;
   onPrint?: () => void;
   onBold?: () => void;
   onItalic?: () => void;
@@ -110,7 +111,8 @@ export default function MenuBar({
   onInsertColumnLeft,
   onInsertColumnRight,
   onShare,
-  onExport,
+  onExportCsv,
+  onExportPdf,
   onPrint,
   onBold,
   onItalic,
@@ -160,7 +162,9 @@ export default function MenuBar({
       items: [
         { label: 'Share', icon: <Share2 className="h-4 w-4" />, onClick: onShare },
         { label: 'divider', divider: true },
-        { label: 'Download', icon: <Download className="h-4 w-4" />, onClick: onExport, shortcut: '⌘+S' },
+        { label: 'Export as CSV', icon: <Download className="h-4 w-4" />, onClick: onExportCsv },
+        { label: 'Export as PDF', icon: <Download className="h-4 w-4" />, onClick: onExportPdf },
+        { label: 'divider', divider: true },
         { label: 'Print', icon: <Printer className="h-4 w-4" />, onClick: onPrint, shortcut: '⌘+P' },
       ],
     },
