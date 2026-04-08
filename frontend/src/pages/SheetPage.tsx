@@ -30,7 +30,7 @@ export default function SheetPage() {
   const [sheetName, setSheetName] = useState('');
   type SortRule = { columnId: string; direction: 'asc' | 'desc' };
   const [sortRules, setSortRules] = useState<SortRule[]>([]);
-  const [filters, setFilters] = useState<Record<string, string>>({});
+  const [filterConfig, setFilterConfig] = useState<import('../components/FilterPanel').FilterConfig>({ rules: [], logic: 'and' });
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
   const [isSearchPanelOpen, setIsSearchPanelOpen] = useState(false);
   const [isConditionalFormatOpen, setIsConditionalFormatOpen] = useState(false);
@@ -580,19 +580,8 @@ export default function SheetPage() {
   }, []);
 
   const clearAllFilters = () => {
-    setFilters({});
+    setFilterConfig({ rules: [], logic: 'and' });
     setIsFilterPanelOpen(false);
-  };
-
-  const handleFilterChange = (columnId: string, value: string) => {
-    setFilters(prev => {
-      if (!value) {
-        const newFilters = { ...prev };
-        delete newFilters[columnId];
-        return newFilters;
-      }
-      return { ...prev, [columnId]: value };
-    });
   };
 
   const handleNavigateToCell = useCallback((rowIndex: number, colIndex: number) => {
@@ -939,19 +928,53 @@ export default function SheetPage() {
 
     // First apply filters
     let filtered = sheet.rows;
-    if (Object.keys(filters).length > 0) {
+    if (filterConfig.rules.length > 0) {
       filtered = sheet.rows.filter((row) => {
-        return Object.entries(filters).every(([columnId, filterValue]) => {
-          const cell = row.cells?.find((c) => c.columnId === columnId);
-          if (!cell || !cell.value) return filterValue === '';
-
+        const results = filterConfig.rules.map((rule) => {
+          const cell = row.cells?.find((c) => c.columnId === rule.columnId);
+          let cellValue = '';
           try {
-            const value = JSON.parse(cell.value);
-            return String(value).toLowerCase().includes(filterValue.toLowerCase());
+            cellValue = cell?.value ? String(JSON.parse(cell.value)) : '';
           } catch {
-            return false;
+            cellValue = cell?.value || '';
+          }
+
+          const val = cellValue.toLowerCase();
+          const filterVal = (rule.value || '').toLowerCase();
+
+          switch (rule.operator) {
+            case 'contains': return val.includes(filterVal);
+            case 'not_contains': return !val.includes(filterVal);
+            case 'equals': return val === filterVal;
+            case 'not_equals': return val !== filterVal;
+            case 'starts_with': return val.startsWith(filterVal);
+            case 'ends_with': return val.endsWith(filterVal);
+            case 'is_empty': return cellValue === '';
+            case 'is_not_empty': return cellValue !== '';
+            case 'greater_than': {
+              const num = parseFloat(cellValue);
+              const fNum = parseFloat(rule.value);
+              return !isNaN(num) && !isNaN(fNum) ? num > fNum : val > filterVal;
+            }
+            case 'less_than': {
+              const num = parseFloat(cellValue);
+              const fNum = parseFloat(rule.value);
+              return !isNaN(num) && !isNaN(fNum) ? num < fNum : val < filterVal;
+            }
+            case 'between': {
+              const num = parseFloat(cellValue);
+              const lo = parseFloat(rule.value);
+              const hi = parseFloat(rule.value2 || '');
+              if (!isNaN(num) && !isNaN(lo) && !isNaN(hi)) return num >= lo && num <= hi;
+              return val >= filterVal && val <= (rule.value2 || '').toLowerCase();
+            }
+            default: return true;
           }
         });
+
+        return filterConfig.logic === 'and'
+          ? results.every(Boolean)
+          : results.some(Boolean);
       });
     }
 
@@ -998,7 +1021,7 @@ export default function SheetPage() {
     });
 
     return sorted;
-  }, [sheet?.rows, sortRules, filters]);
+  }, [sheet?.rows, sortRules, filterConfig]);
 
 
   if (isLoading) {
@@ -1203,8 +1226,8 @@ export default function SheetPage() {
       {isFilterPanelOpen && (
         <FilterPanel
           columns={sheet.columns || []}
-          filters={filters}
-          onFilterChange={handleFilterChange}
+          filterConfig={filterConfig}
+          onFilterConfigChange={setFilterConfig}
           onClearAll={clearAllFilters}
           onClose={() => setIsFilterPanelOpen(false)}
         />
@@ -1223,12 +1246,12 @@ export default function SheetPage() {
       )}
 
       {/* Active Filters and Sort */}
-      {(Object.keys(filters).length > 0 || sortRules.length > 0) && (
+      {(filterConfig.rules.length > 0 || sortRules.length > 0) && (
         <div className="bg-primary-50 border-b border-primary-200 px-4 py-2 flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            {Object.keys(filters).length > 0 && (
+            {filterConfig.rules.length > 0 && (
               <span className="text-xs text-primary-700">
-                {Object.keys(filters).length} filter{Object.keys(filters).length > 1 ? 's' : ''} active
+                {filterConfig.rules.length} filter{filterConfig.rules.length > 1 ? 's' : ''} active ({filterConfig.logic.toUpperCase()})
               </span>
             )}
             {sortRules.length > 0 && (
@@ -1250,7 +1273,7 @@ export default function SheetPage() {
                 Clear sort
               </button>
             )}
-            {Object.keys(filters).length > 0 && (
+            {filterConfig.rules.length > 0 && (
               <button
                 onClick={clearAllFilters}
                 className="inline-flex items-center px-2 py-1 text-xs font-medium text-primary-600 hover:text-primary-700 hover:bg-primary-100 rounded transition-colors"
